@@ -1,0 +1,29 @@
+## Interface: 16001
+## Title: Forever Data Bar
+## Notes: One thin strip across the screen: experience, gold, durability, bags, clock, professions and reputation.
+## Notes-deDE: Eine schmale Leiste über den ganzen Bildschirm: Erfahrung, Gold, Haltbarkeit, Taschen, Uhr, Berufe und Ruf.
+## Notes-esES: Una franja fina a lo ancho de la pantalla: experiencia, oro, durabilidad, bolsas, reloj, profesiones y reputación.
+## Notes-esMX: Una franja fina a lo ancho de la pantalla: experiencia, oro, durabilidad, bolsas, reloj, profesiones y reputación.
+## Notes-frFR: Une fine bande sur toute la largeur de l'écran : expérience, or, durabilité, sacs, horloge, métiers et réputation.
+## Version: 1.0.0
+## X-Curse-Project-ID: 1794694
+## IconTexture: Interface\AddOns\ForeverDataBar\Media\StatOptions.tga
+## AddonCompartmentFunc: ForeverDataBar_OnAddonCompartmentClick
+## SavedVariables: ForeverDataBarDB
+## SavedVariablesPerCharacter: ForeverDataBarChar
+
+Locales\enUS.lua
+Locales\deDE.lua
+Locales\esES.lua
+Locales\frFR.lua
+Settings.lua
+Locale.lua
+Media.lua
+Data.lua
+Xp.lua
+DataBar.lua
+Options\Style.lua
+Options\Widgets.lua
+Options\Window.lua
+Options\Panel.lua
+Commands.lua

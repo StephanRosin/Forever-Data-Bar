@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="70%">
+      <stop offset="0" stop-color="#2a3346"/>
+      <stop offset="0.6" stop-color="#151a26"/>
+      <stop offset="1" stop-color="#0a0d14"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff2b0"/>
+      <stop offset="0.35" stop-color="#e8c25a"/>
+      <stop offset="0.7" stop-color="#a87a22"/>
+      <stop offset="1" stop-color="#6e4c12"/>
+    </linearGradient>
+    <linearGradient id="strip" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c2232"/>
+      <stop offset="1" stop-color="#0b0e15"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-40%" width="140%" height="180%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity="0.7"/>
+    </filter>
+    <filter id="glow" x="-10%" y="-200%" width="120%" height="500%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="72" fill="url(#bg)"/>
+
+  <!-- the data strip -->
+  <g filter="url(#shadow)">
+    <rect x="28" y="340" width="456" height="96" rx="10" fill="url(#strip)"/>
+    <rect x="28" y="340" width="456" height="4" fill="url(#gold)"/>
+
+    <!-- XP: glowing gold line, rested part faint -->
+    <rect x="52" y="406" width="150" height="8" rx="2" fill="#000" opacity="0.6"/>
+    <rect x="52" y="406" width="112" height="8" rx="2" fill="#FFCA30" filter="url(#glow)"/>
+    <rect x="52" y="406" width="112" height="8" rx="2" fill="#FFCA30"/>
+    <rect x="164" y="406" width="22" height="8" fill="#FFCA30" opacity="0.3"/>
+    <rect x="52" y="374" width="70" height="12" rx="6" fill="#FFCA30" opacity="0.9"/>
+    <rect x="128" y="374" width="44" height="12" rx="6" fill="#d8dce6" opacity="0.6"/>
+
+    <!-- gold coin -->
+    <circle cx="246" cy="390" r="15" fill="url(#gold)"/>
+    <circle cx="246" cy="390" r="9" fill="none" stroke="#6e4c12" stroke-width="2.5"/>
+
+    <!-- bag -->
+    <path d="M286 380 h28 l4 26 h-36 Z" fill="#FFCA30"/>
+    <path d="M292 380 q8 -14 16 0" fill="none" stroke="#FFCA30" stroke-width="4"/>
+
+    <!-- profession: anvil-like mark over a thin line -->
+    <path d="M350 378 h34 l-8 8 h-6 v8 h8 v5 h-22 v-5 h8 v-8 h-14 Z" fill="#FFCA30"/>
+    <rect x="344" y="410" width="54" height="5" rx="2" fill="#000" opacity="0.6"/>
+    <rect x="344" y="410" width="38" height="5" rx="2" fill="#FFCA30"/>
+
+    <!-- gear at the right edge -->
+    <g transform="translate(446 392)" fill="#FFCA30">
+      <circle r="11"/>
+      <g id="t"><rect x="-3.5" y="-17" width="7" height="8" rx="1"/></g>
+      <use href="#t" transform="rotate(60)"/>
+      <use href="#t" transform="rotate(120)"/>
+      <use href="#t" transform="rotate(180)"/>
+      <use href="#t" transform="rotate(240)"/>
+      <use href="#t" transform="rotate(300)"/>
+      <circle r="5" fill="#141925"/>
+    </g>
+  </g>
+
+  <!-- title -->
+  <text x="256" y="150" text-anchor="middle" font-family="Georgia, 'DejaVu Serif', serif"
+        font-weight="bold" font-size="64" fill="url(#gold)" stroke="#3a2708" stroke-width="1.5">Data Bar</text>
+  <text x="256" y="200" text-anchor="middle" font-family="Georgia, 'DejaVu Serif', serif"
+        font-size="30" letter-spacing="8" fill="#c9b27a" opacity="0.85">FOREVER</text>
+</svg>
