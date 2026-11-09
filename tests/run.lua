@@ -222,6 +222,7 @@ do
     ToggleAllBags = nil
     M.state.durability = nil
     M.Fire("UPDATE_INVENTORY_DURABILITY")
+    check("durability: no click (taint)", dura:GetScript("OnClick"), nil)
     check("nothing equipped: no durability", dura:IsShown(), false)
     Settings.Set("dataBarGold", false)
     check("gold off", gold:IsShown(), false)

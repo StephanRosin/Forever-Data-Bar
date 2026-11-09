@@ -355,10 +355,10 @@ DataBar.STATS = {
             GameTooltip:AddLine(L.DATABAR_PART_DURA, 1, 1, 1)
             local link = slot and GetInventoryItemLink and GetInventoryItemLink("player", slot)
             if link then GameTooltip:AddLine(L.DATABAR_TIP_DURA_WORST:format(link), 0.8, 0.8, 0.8) end
-            GameTooltip:AddLine(L.DATABAR_TIP_DURA_CLICK, 0.4, 0.8, 1)
             GameTooltip:Show()
         end,
-        click = function() if ToggleCharacter then ToggleCharacter("PaperDollFrame") end end,
+        -- No click: the character window opened from addon code is tainted,
+        -- and its health text then fails on Forever's secret values.
     },
     BAGS = {
         icon = "StatBags",
