@@ -29,8 +29,8 @@ local CFG = {
     ICON = 15,
     ICON_GAP = 6,
     TEXT_GAP = 3,           -- between a label and its line
-    FONT_SIZE = 11,
-    CLOCK_SIZE = 13,
+    CLOCK_PLUS = 2,         -- the clock: larger than its font size
+    ADD_PLUS = 5,           -- the reputation's "+"
     CLOCK_INTERVAL = 1,     -- seconds between clock checks
     TRACK = { 0.12, 0.12, 0.12 },   -- the empty part of a line (white at 12 %)
     CAP_COLOR = { 0.89, 0.71, 0.29 },  -- at the cap: time for the trainer
@@ -95,11 +95,37 @@ end
 -- -----------------------------------------------------------------------------
 -- Building
 -- -----------------------------------------------------------------------------
-local function Font(fs, size)
-    local path, _, flags = fs:GetFont()
-    if path then pcall(fs.SetFont, fs, path, size, flags) end
+-- The font of a part: its own, or the one for all parts.
+-- Returns path, size, outline and colour.
+function DataBar.FontFor(key)
+    local own = S(key .. "FontOwn") and key or "dataBar"
+    return ns.Media.FontPath(S(own .. "Font")), S(own .. "FontSize"), S("dataBarFontOutline"), S(own .. "FontColor")
+end
+
+-- Every text, with its part and how it takes the part's font: "text" in
+-- the colour, "value" in the colour but fainter, "size" the font only
+-- (its colour means something); plus: larger by this much.
+local texts = {}
+local VALUE_ALPHA = 0.63
+local function Font(fs, key, role, plus)
+    texts[#texts + 1] = { fs = fs, key = key, role = role or "text", plus = plus or 0 }
     if fs.SetWordWrap then fs:SetWordWrap(false) end
 end
+
+local function ApplyFonts()
+    for _, t in ipairs(texts) do
+        local path, size, outline, c = DataBar.FontFor(t.key)
+        if not t.fs:SetFont(path, size + t.plus, outline) then
+            t.fs:SetFont(ns.Media.DEFAULT_FONT, size + t.plus, outline)
+        end
+        if t.role == "text" then t.fs:SetTextColor(c[1], c[2], c[3], 1)
+        elseif t.role == "value" then t.fs:SetTextColor(c[1], c[2], c[3], VALUE_ALPHA) end
+    end
+end
+
+-- The text colour of a part, for texts coloured later (gold, bags).
+function DataBar.TextColour(key) return select(4, DataBar.FontFor(key)) end
+local function TextHeight(key) return select(2, DataBar.FontFor(key)) end
 
 -- A line: track, rested part, fill, glow, and dividers made on demand.
 local function NewLine(parent, width)
@@ -251,7 +277,7 @@ end
 
 -- One entry of the professions or reputations: icon (professions), name,
 -- value and line.
-local function BuildEntry(parent, index, onClick, onEnter)
+local function BuildEntry(parent, index, onClick, onEnter, key)
     local b = CreateFrame("Button", nil, parent)
     b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     b:SetScript("OnClick", onClick)
@@ -261,11 +287,11 @@ local function BuildEntry(parent, index, onClick, onEnter)
     b.icon:SetSize(CFG.ICON, CFG.ICON)
     b.name = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     b.name:SetJustifyH("LEFT")
-    Font(b.name, CFG.FONT_SIZE)
+    Font(b.name, key)
     b.value = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     b.value:SetJustifyH("RIGHT")
-    b.value:SetTextColor(1, 1, 1, 0.63)
-    Font(b.value, CFG.FONT_SIZE)
+    Font(b.value, key, "value")
+    b.key = key
     b.line = NewLine(b, CFG.PROF_TEXT_WIDTH)
     b.index = index
     b:Hide()
@@ -395,7 +421,8 @@ local function BuildStat(id)
     g.icon:SetTexture(CFG.MEDIA .. def.icon)
     g.text = g:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     g.text:SetPoint("LEFT", g.icon, "RIGHT", CFG.ICON_GAP, 0)
-    Font(g.text, CFG.FONT_SIZE)
+    for _, p in ipairs(DataBar.PARTS) do if p.id == id then g.key = p.key end end
+    Font(g.text, g.key, "size")
     g.id = id
     g:Hide()
     return g
@@ -427,7 +454,7 @@ local function Build()
     xp.text = main:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     xp.text:SetPoint("TOPLEFT", main, "TOPLEFT", 0, 0)
     xp.text:SetJustifyH("LEFT")
-    Font(xp.text, CFG.FONT_SIZE)
+    Font(xp.text, "dataBarXp")
     xp.line = NewLine(main, CFG.XP_WIDTH)
     xp.line:SetPoint("BOTTOMLEFT", main, "BOTTOMLEFT", 0, 0)
     frame.xp = xp
@@ -435,7 +462,7 @@ local function Build()
     -- Unspent talent points: "Talents" beside the line, pulsing with a
     -- glow behind it, as the level does in the Forever theme.
     local t = CreateFrame("Button", nil, xp)
-    t:SetSize(CFG.TALENT_WIDTH, CFG.FONT_SIZE + 4)
+    t:SetWidth(CFG.TALENT_WIDTH)   -- height: ApplyFrame, from the font
     t:RegisterForClicks("LeftButtonUp")
     t:SetScript("OnClick", function() ns.Xp.ToggleTalents() end)
     t:SetScript("OnEnter", function(self)
@@ -452,7 +479,7 @@ local function Build()
     t.sun:SetSize(CFG.TALENT_WIDTH, CFG.TALENT_WIDTH)
     t.text = t:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     t.text:SetPoint("CENTER", t, "CENTER", 0, 0)
-    Font(t.text, CFG.FONT_SIZE)
+    Font(t.text, "dataBarXp", "size")
     t:SetScript("OnUpdate", function(self)
         local wave = (math.sin(GetTime() * ns.Xp.TALENT_PULSE_SPEED) + 1) / 2
         local c = S("dataBarAccent")
@@ -469,8 +496,7 @@ local function Build()
     xp.info = {}
     for _, place in ipairs(DataBar.XP_INFO_PLACES) do
         local fs = xp:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        fs:SetTextColor(1, 1, 1, 0.63)
-        Font(fs, CFG.FONT_SIZE)
+        Font(fs, "dataBarXp", "value")
         fs:Hide()
         xp.info[place] = fs
     end
@@ -480,16 +506,16 @@ local function Build()
 
     local clock = NewGroup()
     clock.width = CFG.CLOCK_WIDTH
-    clock:SetSize(CFG.CLOCK_WIDTH, CFG.CLOCK_SIZE)
+    clock:SetWidth(CFG.CLOCK_WIDTH)   -- grows with the font: ApplyFrame
     clock.text = clock:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     clock.text:SetPoint("CENTER", clock, "CENTER", 0, 0)
-    Font(clock.text, CFG.CLOCK_SIZE)
+    Font(clock.text, "dataBarClock", "text", CFG.CLOCK_PLUS)
     frame.clock = clock
 
     frame.profBox, frame.repBox = NewGroup(), NewGroup()
     frame.profs, frame.reps = {}, {}
-    for i = 1, ns.CFG.NUM_SLOTS do frame.profs[i] = BuildEntry(frame.profBox, i, OpenProf, ShowProfTooltip) end
-    for i = 1, ns.CFG.NUM_REP_SLOTS do frame.reps[i] = BuildEntry(frame.repBox, i, ClickRep, ShowRepTooltip) end
+    for i = 1, ns.CFG.NUM_SLOTS do frame.profs[i] = BuildEntry(frame.profBox, i, OpenProf, ShowProfTooltip, "dataBarProfs") end
+    for i = 1, ns.CFG.NUM_REP_SLOTS do frame.reps[i] = BuildEntry(frame.repBox, i, ClickRep, ShowRepTooltip, "dataBarReps") end
     -- "+": a faction for the first empty reputation slot.
     local add = CreateFrame("Button", nil, frame.repBox)
     add:SetSize(CFG.ICON, CFG.ICON)
@@ -505,7 +531,7 @@ local function Build()
     add.text = add:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     add.text:SetPoint("CENTER", add, "CENTER", 0, 0)
     add.text:SetText("+")
-    Font(add.text, CFG.CLOCK_SIZE + 3)
+    Font(add.text, "dataBarReps", "size", CFG.ADD_PLUS)
     add:Hide()
     frame.addRep = add
     frame.parts = { XP = frame.xp, CLOCK = frame.clock, PROFS = frame.profBox, REPS = frame.repBox }
@@ -645,12 +671,18 @@ local function ApplyFrame(design)
     frame.edge:SetColorTexture(c[1], c[2], c[3], CFG.EDGE_ALPHA)
     frame.edge:SetShown(S("dataBarEdge"))
 
-    frame.xp:SetHeight(CFG.FONT_SIZE + CFG.TEXT_GAP + design.track)
-    frame.xp.main:SetHeight(CFG.FONT_SIZE + CFG.TEXT_GAP + design.track)
+    ApplyFonts()
+    local xpHeight = TextHeight("dataBarXp") + CFG.TEXT_GAP + design.track
+    frame.xp:SetHeight(xpHeight)
+    frame.xp.main:SetHeight(xpHeight)
+    frame.xp.talents:SetHeight(TextHeight("dataBarXp") + 4)
     frame.gear:SetShown(S("dataBarGear"))
     frame.gear.icon:SetVertexColor(c[1], c[2], c[3], 1)
     frame.clock:SetShown(S("dataBarClock"))
     frame.clock.text:SetText(date("%H:%M"))
+    local clock = frame.clock
+    clock.width = math.max(CFG.CLOCK_WIDTH, math.ceil(clock.text:GetStringWidth() or 0) + 4)
+    clock:SetSize(clock.width, TextHeight("dataBarClock") + CFG.CLOCK_PLUS)
 end
 
 -- Where XP per hour and the time to the level can sit on the XP part.
@@ -753,7 +785,7 @@ local function FillEntry(b, design, x, colour, name, value, share, icon)
         lineWidth = CFG.PROF_TEXT_WIDTH
         local left = icon and (CFG.ICON + CFG.ICON_GAP) or 0
         width = left + lineWidth
-        b:SetSize(width, CFG.FONT_SIZE + CFG.TEXT_GAP + design.track)
+        b:SetSize(width, TextHeight(b.key) + CFG.TEXT_GAP + design.track)
         if icon then b.icon:SetPoint("LEFT", b, "LEFT", 0, 0) end
         b.value:SetPoint("TOPRIGHT", b, "TOPRIGHT", 0, 0)
         b.name:SetPoint("TOPLEFT", b, "TOPLEFT", left, 0)
@@ -855,7 +887,7 @@ function DataBar.UpdateStats()
             if text then
                 g.icon:SetVertexColor(accent[1], accent[2], accent[3], 1)
                 g.text:SetText(text)
-                colour = colour or { 1, 1, 1 }
+                colour = colour or DataBar.TextColour(p.key)
                 g.text:SetTextColor(colour[1], colour[2], colour[3])
                 g.width = CFG.ICON + CFG.ICON_GAP + math.ceil(g.text:GetStringWidth() or 0)
                 g:SetWidth(g.width)

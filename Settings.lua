@@ -22,7 +22,7 @@ Settings.DEFAULTS = {
     -- line up in this order) and a shift to the right (px).
     dataBarXp = true, dataBarXpColumn = 1, dataBarXpX = 0,
     -- On the XP part: shown, LEFT or RIGHT of it.
-    dataBarXpPerHour = true, dataBarXpPerHourPlace = "LEFT",
+    dataBarXpPerHour = true, dataBarXpPerHourPlace = "RIGHT",
     dataBarXpToLevel = true, dataBarXpToLevelPlace = "RIGHT",
     dataBarGold = true, dataBarGoldColumn = 2, dataBarGoldX = 0,
     dataBarDura = true, dataBarDuraColumn = 2, dataBarDuraX = 0,
@@ -32,7 +32,25 @@ Settings.DEFAULTS = {
     dataBarReps = true, dataBarRepsColumn = 4, dataBarRepsX = 0,
     hideInCombat = false,
     hideInGroup = false,
+    -- The font of every part (the Forever Quest Log's); the clock
+    -- is two points larger.
+    dataBarFont = "Friz Quadrata",
+    dataBarFontSize = 11,
+    dataBarFontOutline = "",    -- "", OUTLINE or THICKOUTLINE
+    dataBarFontColor = { 0.729, 0.639, 0.478 },   -- parchment, #BAA37A
 }
+
+-- A part may have a font of its own: <part key>FontOwn, …Font, …FontSize,
+-- …FontColor (see DataBar.PARTS).
+Settings.FONT_PARTS = { "dataBarXp", "dataBarGold", "dataBarDura", "dataBarBags", "dataBarClock",
+    "dataBarProfs", "dataBarReps" }
+Settings.FONT_SIZES = { 8, 20 }
+for _, key in ipairs(Settings.FONT_PARTS) do
+    Settings.DEFAULTS[key .. "FontOwn"] = false
+    Settings.DEFAULTS[key .. "Font"] = Settings.DEFAULTS.dataBarFont
+    Settings.DEFAULTS[key .. "FontSize"] = Settings.DEFAULTS.dataBarFontSize
+    Settings.DEFAULTS[key .. "FontColor"] = Settings.DEFAULTS.dataBarFontColor
+end
 
 Settings.RANGES = {
     dataBarHeight = { 16, 40 },
@@ -41,6 +59,8 @@ Settings.RANGES = {
     dataBarDuraX = { -2000, 2000 }, dataBarBagsX = { -2000, 2000 }, dataBarClockX = { -2000, 2000 },
     dataBarProfsX = { -2000, 2000 }, dataBarRepsX = { -2000, 2000 },
 }
+Settings.RANGES.dataBarFontSize = Settings.FONT_SIZES
+for _, key in ipairs(Settings.FONT_PARTS) do Settings.RANGES[key .. "FontSize"] = Settings.FONT_SIZES end
 
 -- The capital cities of the player's side, until other factions are chosen.
 Settings.DEFAULT_REPS = {

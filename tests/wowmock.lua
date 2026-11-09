@@ -42,7 +42,7 @@ local function newWidget(name, kind)
     function w:SetStatusBarColor(r, g, b, a) self._color = { r, g, b, a } end
     function w:SetStatusBarTexture(t) self._barTex = t end
     function w:SetTextureSliceMargins(...) self._slice = { ... } end
-    function w:SetTextColor(r, g, b) self._textColor = { r, g, b } end
+    function w:SetTextColor(r, g, b, a) self._textColor = { r, g, b, a } end
     function w:SetChecked(v) self._checked = not not v end
     function w:GetChecked() return self._checked end
     function w:SetAttribute(k, v) self._attr[k] = v end

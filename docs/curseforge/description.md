@@ -1,6 +1,6 @@
 **Summary**
 
-One thin strip across the top or bottom of the screen: experience, gold, durability, bags, clock, up to four professions and four reputations, in five column slots. Five designs, your own accent colour, click a part to open its window.
+One thin strip across the top or bottom of the screen: experience, gold, durability, bags, clock, up to four professions and four reputations, in five column slots. Five designs, your own accent colour and font, click a part to open its window.
 
 ---
 
@@ -30,6 +30,7 @@ Five looks for the lines:
 - Height, background colour and opacity.
 - Accent colour, by default Forever gold (#FFCA30), and if you like a line in the accent colour along the edge towards the game.
 - Professions and standings in their own colours instead of the accent.
+- Font: typeface, size, outline and text colour for all parts, and if you like a font of its own for each part.
 - Hide in combat or in a group.
 - A gear at the right edge of the strip opens the options.
 

@@ -101,7 +101,7 @@ check("no rate without time", ns.Xp.PerHour(100, 0), nil)
 section("Defaults (Stephan's own setup)")
 check("reputation shown, column 4", tostring(S("dataBarReps")) .. S("dataBarRepsColumn"), "true4")
 check("gold, durability, bags in column 2", S("dataBarGoldColumn") .. S("dataBarDuraColumn") .. S("dataBarBagsColumn"), "222")
-check("XP per hour left, to level right", S("dataBarXpPerHourPlace") .. S("dataBarXpToLevelPlace"), "LEFTRIGHT")
+check("XP per hour and to level right", S("dataBarXpPerHourPlace") .. S("dataBarXpToLevelPlace"), "RIGHTRIGHT")
 check("own colours", S("dataBarProfColours"), true)
 -- The rest runs on a fixed layout, so it does not change with the defaults.
 for k, v in pairs({ dataBarReps = false, dataBarRepsColumn = 5, dataBarGoldColumn = 1, dataBarDuraColumn = 1,
@@ -316,6 +316,36 @@ do
     StatusTrackingBarManager = nil
 end
 
+
+section("Fonts")
+do
+    local f = ns.DataBar.frame
+    local function font(fs) return fs._font[1] end
+    check("default: the Quest Log's font", S("dataBarFont"), "Friz Quadrata")
+    check("default: size 11", S("dataBarFontSize"), 11)
+    check("XP text in it", font(f.xp.text), "Fonts\\FRIZQT__.TTF")
+    check("clock two points larger", f.clock.text._font[2], 13)
+    Settings.Set("dataBarFont", "Morpheus")
+    Settings.Set("dataBarFontColor", { 1, 0, 0 })
+    check("all: the XP text follows", font(f.xp.text), "Fonts\\MORPHEUS.TTF")
+    check("all: a profession's name too", font(f.profs[1].name), "Fonts\\MORPHEUS.TTF")
+    check("all: the colour", f.xp.text._textColor[2], 0)
+    check("values fainter", f.profs[1].value._textColor[4] < 1, true)
+    Settings.Set("dataBarClockFontOwn", true)
+    Settings.Set("dataBarClockFontSize", 18)
+    check("own font: the clock alone", font(f.clock.text) .. f.clock.text._font[2], "Fonts\\FRIZQT__.TTF20")
+    check("own font: the clock grows", f.clock.width >= 40, true)
+    check("own font: the others keep all", font(f.xp.text), "Fonts\\MORPHEUS.TTF")
+    Settings.Set("dataBarFontSize", 99)
+    check("size kept in its range", S("dataBarFontSize"), 20)
+    check("the XP part grows with it", f.xp:GetHeight() > 20, true)
+    for _, k in ipairs({ "dataBarFont", "dataBarFontColor", "dataBarFontSize", "dataBarClockFontOwn",
+        "dataBarClockFontSize" }) do Settings.Set(k, nil) end
+    ns.Window.Open("fonts")
+    check("font page", ns.Window.Current(), "fonts")
+    ns.Window.ShowPage("databar")
+    ns.Window.Toggle()
+end
 
 section("Options window")
 local W = ns.Window

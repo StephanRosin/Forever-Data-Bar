@@ -333,9 +333,63 @@ end
 
 -- In two groups: the progress bars (professions, reputation, the level
 
+-- A font by name, each shown in itself.
+local function fontRow(key, label)
+    return {
+        type = "select", label = label,
+        choices = function()
+            local list = {}
+            for _, name in ipairs(ns.Media.FontNames()) do list[#list + 1] = { label = name, value = name, font = name } end
+            return list
+        end,
+        get = function() return S(key) end,
+        set = function(v) Settings.Set(key, v) end,
+    }
+end
+
+local function outlineRow(key)
+    return {
+        type = "select", label = "OPT_OUTLINE",
+        choices = function()
+            return {
+                { label = L.OUTLINE_NONE, value = "" },
+                { label = L.OUTLINE_NORMAL, value = "OUTLINE" },
+                { label = L.OUTLINE_THICK, value = "THICKOUTLINE" },
+            }
+        end,
+        get = function() return S(key) end,
+        set = function(v) Settings.Set(key, v) end,
+    }
+end
+
+-- The font of all parts, then each part's own (dimmed while it follows all).
+local function fontRows()
+    local rows = {
+        { type = "header", label = "OPT_FONT_ALL" },
+        fontRow("dataBarFont", "OPT_FONT"),
+        num("dataBarFontSize", "OPT_FONT_SIZE"),
+        outlineRow("dataBarFontOutline"),
+        colorRow("dataBarFontColor", "OPT_FONT_COLOR", true),
+        { type = "text", label = "OPT_FONT_HINT", height = 40 },
+    }
+    for _, part in ipairs(ns.DataBar.PARTS) do
+        local key = part.key
+        local function own() return S(key .. "FontOwn") == true end
+        rows[#rows + 1] = { type = "header", label = "DATABAR_PART_" .. part.id }
+        rows[#rows + 1] = check(key .. "FontOwn", "OPT_FONT_OWN")
+        for _, row in ipairs({ fontRow(key .. "Font", "OPT_FONT"), num(key .. "FontSize", "OPT_FONT_SIZE"),
+            colorRow(key .. "FontColor", "OPT_FONT_COLOR", true) }) do
+            row.enabled = own
+            rows[#rows + 1] = row
+        end
+    end
+    return rows
+end
+
 Window.PAGES = {
     { id = "databar", label = "PAGE_DATABAR", rows = dataBarRows },
     { id = "parts", label = "PAGE_DATABAR_PARTS", rows = dataBarPartRows },
+    { id = "fonts", label = "PAGE_FONTS", rows = fontRows },
     { id = "professions", label = "PAGE_PROFESSIONS", build = buildSkillPage },
     { id = "reputation", label = "PAGE_REPUTATION", rows = repRows },
 }
