@@ -17,19 +17,19 @@ Settings.DEFAULTS = {
     dataBarAccent = { 1, 0.792, 0.188 },  -- Forever's gold, #FFCA30
     dataBarEdge = true,         -- a line in the accent on the side towards the game
     dataBarGear = true,         -- the options' gear at the right edge
-    dataBarProfColours = false, -- professions and standings in their own colours, not the accent
+    dataBarProfColours = true,  -- professions and standings in their own colours, not the accent
     -- The parts: shown, column (1..5, DataBar.Layout; parts in one column
     -- line up in this order) and a shift to the right (px).
     dataBarXp = true, dataBarXpColumn = 1, dataBarXpX = 0,
     -- On the XP part: shown, LEFT or RIGHT of it.
-    dataBarXpPerHour = false, dataBarXpPerHourPlace = "RIGHT",
-    dataBarXpToLevel = false, dataBarXpToLevelPlace = "RIGHT",
-    dataBarGold = true, dataBarGoldColumn = 1, dataBarGoldX = 0,
-    dataBarDura = true, dataBarDuraColumn = 1, dataBarDuraX = 0,
-    dataBarBags = true, dataBarBagsColumn = 1, dataBarBagsX = 0,
+    dataBarXpPerHour = true, dataBarXpPerHourPlace = "LEFT",
+    dataBarXpToLevel = true, dataBarXpToLevelPlace = "RIGHT",
+    dataBarGold = true, dataBarGoldColumn = 2, dataBarGoldX = 0,
+    dataBarDura = true, dataBarDuraColumn = 2, dataBarDuraX = 0,
+    dataBarBags = true, dataBarBagsColumn = 2, dataBarBagsX = 0,
     dataBarClock = true, dataBarClockColumn = 3, dataBarClockX = 0,
     dataBarProfs = true, dataBarProfsColumn = 5, dataBarProfsX = 0,
-    dataBarReps = false, dataBarRepsColumn = 5, dataBarRepsX = 0,
+    dataBarReps = true, dataBarRepsColumn = 4, dataBarRepsX = 0,
     hideInCombat = false,
     hideInGroup = false,
 }

@@ -98,6 +98,19 @@ check("duration", ns.Xp.Duration(3 * 3600 + 120), "3h 2m")
 check("gain across a level-up", ns.Xp.Gain(900, 1000, 50), 150)
 check("no rate without time", ns.Xp.PerHour(100, 0), nil)
 
+section("Defaults (Stephan's own setup)")
+check("reputation shown, column 4", tostring(S("dataBarReps")) .. S("dataBarRepsColumn"), "true4")
+check("gold, durability, bags in column 2", S("dataBarGoldColumn") .. S("dataBarDuraColumn") .. S("dataBarBagsColumn"), "222")
+check("XP per hour left, to level right", S("dataBarXpPerHourPlace") .. S("dataBarXpToLevelPlace"), "LEFTRIGHT")
+check("own colours", S("dataBarProfColours"), true)
+-- The rest runs on a fixed layout, so it does not change with the defaults.
+for k, v in pairs({ dataBarReps = false, dataBarRepsColumn = 5, dataBarGoldColumn = 1, dataBarDuraColumn = 1,
+    dataBarBagsColumn = 1, dataBarProfColours = false, dataBarXpPerHour = false, dataBarXpToLevel = false,
+    dataBarXpPerHourPlace = "RIGHT" }) do
+    Settings.DEFAULTS[k] = v
+end
+Settings.Changed(nil)
+
 section("Data bar")
 do
     local D, W = ns.DataBar, ns.Window
