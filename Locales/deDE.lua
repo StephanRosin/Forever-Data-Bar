@@ -156,3 +156,5 @@ L.OPT_FONT_HINT = "Werte erscheinen etwas blasser; die Haltbarkeit behält ihre 
 L.OPT_FONT_OWN = "Eigene Schrift"
 L.OPT_DATABAR_MICRO = "Micro-Menü um die Uhr"
 L.OPT_DATABAR_MICRO_COLLECTIONS = "Mit Sammlungen"
+L.OPT_DATABAR_XP_WIDTH = "Breite der Linie"
+L.OPT_DATABAR_ENTRY_WIDTH = "Breite je Linie"

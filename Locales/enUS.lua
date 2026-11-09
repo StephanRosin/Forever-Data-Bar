@@ -181,3 +181,5 @@ L.OPT_FONT_HINT = "Values show a little fainter; durability keeps its warning co
 L.OPT_FONT_OWN = "Own font"
 L.OPT_DATABAR_MICRO = "Micro menu around the clock"
 L.OPT_DATABAR_MICRO_COLLECTIONS = "With collections"
+L.OPT_DATABAR_XP_WIDTH = "Width of the line"
+L.OPT_DATABAR_ENTRY_WIDTH = "Width of each line"

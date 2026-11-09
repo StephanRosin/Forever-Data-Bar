@@ -323,6 +323,12 @@ local function dataBarPartRows()
             collections.enabled = function() return S("dataBarMicro") == true end
             rows[#rows + 1] = collections
         end
+        -- The width of the line (each entry's, for professions and reputation).
+        if part.id == "XP" or part.id == "PROFS" or part.id == "REPS" then
+            local width = num(part.key .. "Width", part.id == "XP" and "OPT_DATABAR_XP_WIDTH" or "OPT_DATABAR_ENTRY_WIDTH")
+            width.enabled = on
+            rows[#rows + 1] = width
+        end
         if part.id == "XP" then
             for _, info in ipairs(ns.DataBar.XP_INFOS) do
                 local show = check(info.key, "OPT_XPINFO_" .. info.id:upper())

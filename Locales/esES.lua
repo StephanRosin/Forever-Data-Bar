@@ -157,3 +157,5 @@ L.OPT_FONT_HINT = "Los valores se ven algo más tenues; la durabilidad mantiene 
 L.OPT_FONT_OWN = "Fuente propia"
 L.OPT_DATABAR_MICRO = "Micromenú alrededor del reloj"
 L.OPT_DATABAR_MICRO_COLLECTIONS = "Con colecciones"
+L.OPT_DATABAR_XP_WIDTH = "Ancho de la línea"
+L.OPT_DATABAR_ENTRY_WIDTH = "Ancho de cada línea"

@@ -129,8 +129,8 @@ do
     check("background colour chosen", near(f.bg._texColor[1], 0.2), true)
     Settings.Set("dataBarBgColor", nil)
     check("XP text", f.xp.text:GetText(), "75% to level 44")
-    check("XP fill: three quarters", near(f.xp.line.fill:GetWidth(), D.CFG.XP_WIDTH * 0.75), true)
-    check("rested part after the fill", near(f.xp.line.rest:GetWidth(), D.CFG.XP_WIDTH * 0.1), true)
+    check("XP fill: three quarters", near(f.xp.line.fill:GetWidth(), S("dataBarXpWidth") * 0.75), true)
+    check("rested part after the fill", near(f.xp.line.rest:GetWidth(), S("dataBarXpWidth") * 0.1), true)
     -- The professions as the progress bars found them, right to left.
     local p = f.profs
     check("first profession", p[1].data and p[1].data.name, Data.Professions()[1].name)
@@ -159,6 +159,13 @@ do
     check("all empty: the part stays for the +", f.repBox:IsShown() and f.addRep.slot == 1, true)
     for i = 1, 4 do Settings.SetRep(i, reps[i]) end
     Settings.SetRep(2, keep)
+    Settings.Set("dataBarRepsWidth", 150)
+    check("reputation width: each line", f.reps[1].line.width, 150)
+    check("professions keep theirs", p[1].line.width, 96)
+    Settings.Set("dataBarProfsWidth", 1)
+    check("profession width: at least 40", p[1].line.width, 40)
+    Settings.Set("dataBarProfsWidth", nil)
+    Settings.Set("dataBarRepsWidth", nil)
     check("standing short", D.ShortStanding({ standing = 5, standingText = "Friendly" }), "F")
     check("standing unknown: the full word", D.ShortStanding({ standing = 9, standingText = "Paragon" }), "Paragon")
     check("reputation outermost in column 5", x(f.repBox) + f.repBox.width, rightEdge)
@@ -194,8 +201,14 @@ do
     Settings.Set("dataBarXpPerHour", true)
     check("per hour right of the XP", f.xp.info.RIGHT:IsShown(), true)
     check("right: on the XP text's line", select(3, f.xp.info.RIGHT:GetPoint("TOPLEFT")), "TOPRIGHT")
-    check("right: the line keeps its width", f.xp.line.width, D.CFG.XP_WIDTH)
-    check("right: the part grows", f.xp.width, D.CFG.XP_WIDTH + D.CFG.PROF_GAP + #f.xp.info.RIGHT:GetText() * 7)
+    Settings.Set("dataBarXpWidth", 300)
+    check("XP width: the line", f.xp.line.width .. " " .. f.xp.main:GetWidth(), "300 300")
+    check("XP width: the part", f.xp.width, 300 + D.CFG.PROF_GAP + #f.xp.info.RIGHT:GetText() * 7)
+    Settings.Set("dataBarXpWidth", 5)
+    check("XP width: at least 80", S("dataBarXpWidth"), 80)
+    Settings.Set("dataBarXpWidth", nil)
+    check("right: the line keeps its width", f.xp.line.width, S("dataBarXpWidth"))
+    check("right: the part grows", f.xp.width, S("dataBarXpWidth") + D.CFG.PROF_GAP + #f.xp.info.RIGHT:GetText() * 7)
     Settings.Set("dataBarXpToLevel", true)
     check("same side: side by side", f.xp.info.RIGHT:GetText():find("XP/h   Level in", 1, true) ~= nil, true)
     Settings.Set("dataBarXpToLevelPlace", "LEFT")
@@ -203,7 +216,7 @@ do
     local leftRoom = #f.xp.info.LEFT:GetText() * 7 + D.CFG.PROF_GAP
     check("left: the XP moves right", select(4, f.xp.main:GetPoint("LEFT")), leftRoom)
     check("left and right: the part holds both", f.xp.width,
-        leftRoom + D.CFG.XP_WIDTH + D.CFG.PROF_GAP + #f.xp.info.RIGHT:GetText() * 7)
+        leftRoom + S("dataBarXpWidth") + D.CFG.PROF_GAP + #f.xp.info.RIGHT:GetText() * 7)
     for _, k in ipairs({ "dataBarXpPerHour", "dataBarXpToLevel", "dataBarXpPerHourPlace", "dataBarXpToLevelPlace" }) do
         Settings.Set(k, nil)
     end

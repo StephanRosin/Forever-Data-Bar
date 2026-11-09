@@ -20,7 +20,7 @@ Settings.DEFAULTS = {
     dataBarProfColours = true,  -- professions and standings in their own colours, not the accent
     -- The parts: shown, column (1..5, DataBar.Layout; parts in one column
     -- line up in this order) and a shift to the right (px).
-    dataBarXp = true, dataBarXpColumn = 1, dataBarXpX = 0,
+    dataBarXp = true, dataBarXpColumn = 1, dataBarXpX = 0, dataBarXpWidth = 200,
     -- On the XP part: shown, LEFT or RIGHT of it.
     dataBarXpPerHour = true, dataBarXpPerHourPlace = "RIGHT",
     dataBarXpToLevel = true, dataBarXpToLevelPlace = "RIGHT",
@@ -30,8 +30,8 @@ Settings.DEFAULTS = {
     dataBarClock = true, dataBarClockColumn = 3, dataBarClockX = 0,
     dataBarMicro = true,        -- Blizzard's micro menu around the clock (Micro.lua)
     dataBarMicroCollections = false,
-    dataBarProfs = true, dataBarProfsColumn = 5, dataBarProfsX = 0,
-    dataBarReps = true, dataBarRepsColumn = 4, dataBarRepsX = 0,
+    dataBarProfs = true, dataBarProfsColumn = 5, dataBarProfsX = 0, dataBarProfsWidth = 96,
+    dataBarReps = true, dataBarRepsColumn = 4, dataBarRepsX = 0, dataBarRepsWidth = 96,
     hideInCombat = false,
     hideInGroup = false,
     -- The font of every part (the Forever Quest Log's); the clock
@@ -56,6 +56,8 @@ end
 
 Settings.RANGES = {
     dataBarHeight = { 16, 40 },
+    dataBarXpWidth = { 80, 800 },
+    dataBarProfsWidth = { 40, 400 }, dataBarRepsWidth = { 40, 400 },
     dataBarAlpha = { 0, 100 },
     dataBarXpX = { -2000, 2000 }, dataBarGoldX = { -2000, 2000 },
     dataBarDuraX = { -2000, 2000 }, dataBarBagsX = { -2000, 2000 }, dataBarClockX = { -2000, 2000 },

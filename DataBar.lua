@@ -21,8 +21,6 @@ ns.DataBar = DataBar
 -- Fixed values: not settings.
 local CFG = {
     PAD = 12,               -- from the screen edges
-    XP_WIDTH = 200,
-    PROF_TEXT_WIDTH = 96,
     PROF_GAP = 16,          -- between entries, and between parts at one place
     CLOCK_WIDTH = 40,
     TALENT_WIDTH = 48,      -- "Talents" beside the XP line
@@ -292,7 +290,7 @@ local function BuildEntry(parent, index, onClick, onEnter, key)
     b.value:SetJustifyH("RIGHT")
     Font(b.value, key, "value")
     b.key = key
-    b.line = NewLine(b, CFG.PROF_TEXT_WIDTH)
+    b.line = NewLine(b, 1)   -- its width: FillEntry, from <part>Width
     b.index = index
     b:Hide()
     return b
@@ -443,10 +441,8 @@ local function Build()
     -- The XP part: [texts left] [XP text over its line] [texts right]
     -- [Talents], each anchored to the one before it.
     local xp = NewGroup()
-    xp.width = CFG.XP_WIDTH
-    xp:SetWidth(CFG.XP_WIDTH)
+    -- Widths from dataBarXpWidth: ApplyFrame.
     local main = CreateFrame("Frame", nil, xp)
-    main:SetWidth(CFG.XP_WIDTH)
     main:EnableMouse(true)
     main:SetScript("OnEnter", ShowXpTooltip)
     main:SetScript("OnLeave", HideTooltip)
@@ -455,7 +451,7 @@ local function Build()
     xp.text:SetPoint("TOPLEFT", main, "TOPLEFT", 0, 0)
     xp.text:SetJustifyH("LEFT")
     Font(xp.text, "dataBarXp")
-    xp.line = NewLine(main, CFG.XP_WIDTH)
+    xp.line = NewLine(main, 1)
     xp.line:SetPoint("BOTTOMLEFT", main, "BOTTOMLEFT", 0, 0)
     frame.xp = xp
 
@@ -679,6 +675,10 @@ local function ApplyFrame(design)
     frame.edge:SetShown(S("dataBarEdge"))
 
     ApplyFonts()
+    local xpWidth = S("dataBarXpWidth")
+    frame.xp.main:SetWidth(xpWidth)
+    frame.xp.line:SetWidth(xpWidth)
+    frame.xp.line.width = xpWidth
     local xpHeight = TextHeight("dataBarXp") + CFG.TEXT_GAP + design.track
     frame.xp:SetHeight(xpHeight)
     frame.xp.main:SetHeight(xpHeight)
@@ -760,7 +760,7 @@ function DataBar.UpdateXp()
     local left = textWidth("LEFT")
     xp.main:ClearAllPoints()
     xp.main:SetPoint("LEFT", xp, "LEFT", left, 0)
-    local width = active and (left + CFG.XP_WIDTH + textWidth("RIGHT")) or 0
+    local width = active and (left + S("dataBarXpWidth") + textWidth("RIGHT")) or 0
     xp.talents:SetShown(talents)
     xp.talents.text:SetText(L.DATABAR_TALENTS)
     xp.talents:ClearAllPoints()
@@ -798,7 +798,7 @@ local function FillEntry(b, design, x, colour, name, value, share, icon)
         b.name:Hide()
         b.value:Hide()
     else
-        lineWidth = CFG.PROF_TEXT_WIDTH
+        lineWidth = S(b.key .. "Width")
         local left = icon and (CFG.ICON + CFG.ICON_GAP) or 0
         width = left + lineWidth
         b:SetSize(width, TextHeight(b.key) + CFG.TEXT_GAP + design.track)

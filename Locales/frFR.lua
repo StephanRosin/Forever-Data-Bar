@@ -156,3 +156,5 @@ L.OPT_FONT_HINT = "Les valeurs sont un peu plus pâles ; la durabilité garde se
 L.OPT_FONT_OWN = "Police propre"
 L.OPT_DATABAR_MICRO = "Micro-menu autour de l'horloge"
 L.OPT_DATABAR_MICRO_COLLECTIONS = "Avec les collections"
+L.OPT_DATABAR_XP_WIDTH = "Largeur de la ligne"
+L.OPT_DATABAR_ENTRY_WIDTH = "Largeur de chaque ligne"

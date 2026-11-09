@@ -28,6 +28,7 @@ Five looks for the lines:
 
 ## Settings
 - Height, background colour and opacity.
+- Width of the experience line and of each profession and reputation line.
 - Accent colour, by default Forever gold (#FFCA30), and if you like a line in the accent colour along the edge towards the game.
 - Professions and standings in their own colours instead of the accent.
 - Font: typeface, size, outline and text colour for all parts, and if you like a font of its own for each part.
