@@ -347,6 +347,50 @@ do
     ns.Window.Toggle()
 end
 
+section("Micro menu")
+do
+    local D, Mi = ns.DataBar, ns.Micro
+    local f = D.frame
+    for _, b in ipairs(Mi.BUTTONS) do _G[b.name] = CreateFrame("Button", b.name) end
+    Settings.Changed("dataBarMicro")
+    local holder = Mi.Holder()
+    local function count()
+        local n = 0
+        for _, b in ipairs(Mi.Buttons()) do if b:IsShown() then n = n + 1 end end
+        return n
+    end
+    check("eight icons without collections", count(), 8)
+    check("four left of the clock", f.clock.microLeft, 4 * (D.CFG.ICON + D.CFG.ICON_GAP))
+    check("the clock part holds them", f.clock.width, 8 * (D.CFG.ICON + D.CFG.ICON_GAP) + f.clock.textWidth)
+    check("the clock text between them", select(4, f.clock.text:GetPoint("CENTER")), f.clock.microLeft + f.clock.textWidth / 2)
+    check("holder at the clock's place", select(4, holder:GetPoint("LEFT")), f.clock.x)
+    check("holder not on the bar", holder:GetParent(), UIParent)
+    local first = Mi.Buttons()[1]
+    check("secure click on Blizzard's button", first:GetAttribute("type") .. " " .. tostring(first:GetAttribute("clickbutton") == CharacterMicroButton), "click true")
+    check("shown by a state driver", holder._driver, "show")
+    Settings.Set("hideInCombat", true)
+    check("hides in combat as the bar", holder._driver, "[combat] hide; show")
+    Settings.Set("hideInCombat", nil)
+    Settings.Set("dataBarMicroCollections", true)
+    check("collections as an option", count(), 9)
+    check("then five left", f.clock.microLeft, 5 * (D.CFG.ICON + D.CFG.ICON_GAP))
+    Settings.Set("dataBarMicroCollections", nil)
+    M.state.combat = true
+    Settings.Set("dataBarMicro", false)
+    check("in combat: the icons wait", count(), 8)
+    M.state.combat = false
+    M.Fire("PLAYER_REGEN_ENABLED")
+    check("after combat: gone", holder:IsShown(), false)
+    Settings.Set("dataBarMicro", nil)
+    check("back", holder:IsShown() and count(), 8)
+    Settings.Set("dataBarClock", false)
+    check("clock off: the icons stay", holder:IsShown() and f.clock:IsShown() and not f.clock.text:IsShown(), true)
+    Settings.Set("dataBarClock", nil)
+    for _, b in ipairs(Mi.BUTTONS) do _G[b.name] = nil end
+    Settings.Changed("dataBarMicro")
+    check("no Blizzard buttons: no icons", holder:IsShown(), false)
+end
+
 section("Options window")
 local W = ns.Window
 W.Open()

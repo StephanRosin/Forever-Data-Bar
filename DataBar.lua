@@ -615,8 +615,15 @@ function DataBar.Layout()
         for _, e in ipairs(list) do
             e.g:ClearAllPoints()
             e.g:SetPoint("LEFT", frame, "LEFT", cursor + e.x, 0)
+            e.g.x = cursor + e.x
             cursor = cursor + e.g.width + CFG.PROF_GAP
         end
+    end
+    local clock = frame.clock
+    if frame:IsShown() and clock:IsShown() and clock.micro then
+        ns.Micro.Place(clock.x, frame:GetHeight(), frame.atTop, clock.microLeft, clock.textWidth)
+    else
+        ns.Micro.Hide()
     end
 end
 
@@ -678,11 +685,20 @@ local function ApplyFrame(design)
     frame.xp.talents:SetHeight(TextHeight("dataBarXp") + 4)
     frame.gear:SetShown(S("dataBarGear"))
     frame.gear.icon:SetVertexColor(c[1], c[2], c[3], 1)
-    frame.clock:SetShown(S("dataBarClock"))
-    frame.clock.text:SetText(date("%H:%M"))
-    local clock = frame.clock
-    clock.width = math.max(CFG.CLOCK_WIDTH, math.ceil(clock.text:GetStringWidth() or 0) + 4)
-    clock:SetSize(clock.width, TextHeight("dataBarClock") + CFG.CLOCK_PLUS)
+    -- The clock with the micro menu around it: [icons] 12:34 [icons].
+    -- The icons are secure and sit elsewhere (Micro.lua); here only the room.
+    local clock, clockOn = frame.clock, S("dataBarClock")
+    clock.text:SetText(date("%H:%M"))
+    clock.text:SetShown(clockOn)
+    clock.textWidth = clockOn and math.max(CFG.CLOCK_WIDTH, math.ceil(clock.text:GetStringWidth() or 0) + 4) or 0
+    local left, right = ns.Micro.Count()
+    local step = CFG.ICON + CFG.ICON_GAP
+    clock.microLeft, clock.micro = left * step, left + right > 0
+    clock.width = clock.microLeft + clock.textWidth + right * step
+    clock:SetSize(math.max(1, clock.width), TextHeight("dataBarClock") + CFG.CLOCK_PLUS)
+    clock.text:ClearAllPoints()
+    clock.text:SetPoint("CENTER", clock, "LEFT", clock.microLeft + clock.textWidth / 2, 0)
+    clock:SetShown(clockOn or clock.micro)
 end
 
 -- Where XP per hour and the time to the level can sit on the XP part.
@@ -911,7 +927,11 @@ function DataBar.Update()
 end
 
 function DataBar.UpdateVisibility()
-    if frame then frame:SetShown(DataBar.Wanted()) end
+    if not frame then return end
+    local was = frame:IsShown()
+    frame:SetShown(DataBar.Wanted())
+    -- Shown again (out of combat, the group left): the icons come back.
+    if frame:IsShown() and not was then DataBar.Layout() end
 end
 
 function DataBar.Apply()

@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24"><!-- collections: a horseshoe; white, tinted in game -->
+<defs><mask id="m"><rect width="24" height="24" fill="#fff"/><g fill="#000"><circle cx="6.6" cy="9" r=".9"/><circle cx="17.4" cy="9" r=".9"/><circle cx="7.6" cy="14.5" r=".9"/><circle cx="16.4" cy="14.5" r=".9"/></g></mask></defs><path mask="url(#m)" fill="#fff" d="M3.5 21.5V10.5a8.5 8.5 0 0 1 17 0v11h-4.5v-11a4 4 0 0 0-8 0v11Z"/>
+</svg>

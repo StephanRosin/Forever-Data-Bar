@@ -164,6 +164,11 @@ M.build = { "1.60.1", "70009", "Sep 25 2026", 16001 }
 function GetBuildInfo() return M.build[1], M.build[2], M.build[3], M.build[4] end
 M.state = { combat = false, time = 1000, level = 43, faction = "Alliance", class = "WARLOCK", sex = 2 }
 function InCombatLockdown() return M.state.combat end
+function RegisterStateDriver(f, kind, rule)
+    f._driver = rule
+    if kind == "visibility" then f:SetShown(not (M.state.combat and rule:find("[combat] hide", 1, true))) end
+end
+function UnregisterStateDriver(f) f._driver = nil end
 function GetTime() return M.state.time end
 date = os.date
 function GetMoney() return M.state.money or 0 end

@@ -317,6 +317,12 @@ local function dataBarPartRows()
         column.enabled, x.enabled = on, on
         rows[#rows + 1] = column
         rows[#rows + 1] = x
+        if part.id == "CLOCK" then
+            rows[#rows + 1] = check("dataBarMicro", "OPT_DATABAR_MICRO")
+            local collections = check("dataBarMicroCollections", "OPT_DATABAR_MICRO_COLLECTIONS")
+            collections.enabled = function() return S("dataBarMicro") == true end
+            rows[#rows + 1] = collections
+        end
         if part.id == "XP" then
             for _, info in ipairs(ns.DataBar.XP_INFOS) do
                 local show = check(info.key, "OPT_XPINFO_" .. info.id:upper())

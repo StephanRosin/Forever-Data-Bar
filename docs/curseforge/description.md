@@ -14,7 +14,7 @@ Each part can be shown or hidden, put into one of five columns (1 = left edge, 3
 - **Gold**.
 - **Durability**: your worst equipped item in %, yellow below 50, red below 25; the tooltip names it.
 - **Bags**: free slots. Click to open your bags.
-- **Clock**.
+- **Clock**, with the **micro menu** around it in its own icons, half on each side: character, professions, spellbook, talents, legacy, quest log, guild, group finder, and collections if you like. They click Blizzard's own buttons, so the windows open cleanly, in combat too.
 - **Professions**: up to four, each with its icon, name, skill and a thin line. At the skill cap the line turns gold: time for the trainer. Click to open the profession window.
 - **Reputations**: up to four, each with its name, a short standing ("F" for Friendly, "H" for Honored) and a thin line. Left-click to pick the faction, right-click to open the reputation tab; a **+** adds a faction to an empty slot.
 

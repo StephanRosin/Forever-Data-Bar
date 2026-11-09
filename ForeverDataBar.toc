@@ -5,7 +5,7 @@
 ## Notes-esES: Una franja fina a lo ancho de la pantalla: experiencia, oro, durabilidad, bolsas, reloj, profesiones y reputación.
 ## Notes-esMX: Una franja fina a lo ancho de la pantalla: experiencia, oro, durabilidad, bolsas, reloj, profesiones y reputación.
 ## Notes-frFR: Une fine bande sur toute la largeur de l'écran : expérience, or, durabilité, sacs, horloge, métiers et réputation.
-## Version: 1.1.0
+## Version: 1.2.0
 ## X-Curse-Project-ID: 1794694
 ## IconTexture: Interface\AddOns\ForeverDataBar\Media\StatOptions.tga
 ## AddonCompartmentFunc: ForeverDataBar_OnAddonCompartmentClick
@@ -22,6 +22,7 @@ Media.lua
 Data.lua
 Xp.lua
 DataBar.lua
+Micro.lua
 Options\Style.lua
 Options\Widgets.lua
 Options\Window.lua
