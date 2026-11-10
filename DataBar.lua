@@ -455,8 +455,8 @@ local function Build()
     xp.line:SetPoint("BOTTOMLEFT", main, "BOTTOMLEFT", 0, 0)
     frame.xp = xp
 
-    -- Unspent talent points: "Talents" beside the line, pulsing with a
-    -- glow behind it, as the level does in the Forever theme.
+    -- Unspent talent points: "Talents" beside the line, the text pulsing
+    -- between the accent colour and white.
     local t = CreateFrame("Button", nil, xp)
     t:SetWidth(CFG.TALENT_WIDTH)   -- height: ApplyFrame, from the font
     t:RegisterForClicks("LeftButtonUp")
@@ -468,21 +468,12 @@ local function Build()
         GameTooltip:Show()
     end)
     t:SetScript("OnLeave", HideTooltip)
-    t.sun = t:CreateTexture(nil, "BACKGROUND")
-    t.sun:SetTexture(ns.Xp.SUN_TEXTURE)
-    t.sun:SetBlendMode("ADD")
-    t.sun:SetPoint("CENTER", t, "CENTER", 0, 0)
-    t.sun:SetSize(CFG.TALENT_WIDTH, CFG.TALENT_WIDTH)
     t.text = t:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     t.text:SetPoint("CENTER", t, "CENTER", 0, 0)
     Font(t.text, "dataBarXp", "size")
     t:SetScript("OnUpdate", function(self)
         local wave = (math.sin(GetTime() * ns.Xp.TALENT_PULSE_SPEED) + 1) / 2
-        local c = S("dataBarAccent")
-        self.text:SetTextColor(ns.Xp.PulseColour(c, wave))
-        self.sun:SetVertexColor(c[1], c[2], c[3])
-        -- Squared: the shine belongs to the bright end of the pulse.
-        self.sun:SetAlpha(wave * wave)
+        self.text:SetTextColor(ns.Xp.PulseColour(S("dataBarAccent"), wave))
     end)
     t:Hide()
     xp.talents = t

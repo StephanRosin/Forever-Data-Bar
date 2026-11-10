@@ -11,8 +11,7 @@ local Xp = {}
 ns.Xp = Xp
 
 Xp.TALENT_PULSE_SPEED = 3
-Xp.SUN_TEXTURE = "Interface\\AddOns\\ForeverDataBar\\Media\\SunGlow.tga"
-local PULSE_BRIGHTEST = 0.6
+local PULSE_BRIGHTEST = 1
 
 -- Whether there is experience to show: not at the maximum level, not
 -- switched off.
