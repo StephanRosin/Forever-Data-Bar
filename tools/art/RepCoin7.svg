@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24"><!-- standing 7 (Revered), coin face, features cut out; white, tinted in game -->
+<defs><mask id="m27"><rect width="24" height="24" fill="#fff"/><path fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" d="M7 10.6q1.6-2.2 3.2 0M13.8 10.6q1.6-2.2 3.2 0"/><path fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" d="M8 14.8Q12 18.8 16 14.8"/></mask></defs>
+    <g mask="url(#m27)" fill="#fff"><circle cx="12" cy="12" r="10.4"/></g>
+</svg>

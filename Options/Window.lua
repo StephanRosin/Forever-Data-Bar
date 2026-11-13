@@ -66,6 +66,7 @@ local function repRows()
         { type = "header", label = "OPT_REPUTATION" },
         -- Off by default: chosen factions would not show without it.
         check("dataBarReps", "OPT_DATABAR_SHOW"),
+        choice("dataBarRepIcons", "OPT_REP_ICONS", ns.DataBar.STANDING_ICON_ORDER, "REP_ICONS_"),
         { type = "text", label = "OPT_REP_HINT" },
     }
     for slot = 1, 4 do

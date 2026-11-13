@@ -66,6 +66,23 @@ DataBar.ICONS = {
     FISHING = "ProfFishing", RIDING = "ProfRiding",
 }
 
+-- The standing as an icon (Media/Rep<Set><1..8>.tga, own art, white) or
+-- LETTER for the short word. The order is the options' list.
+DataBar.STANDING_ICONS = {
+    ROUND = "RepRound", COIN = "RepCoin", LINES = "RepLines", WOLF = "RepWolf",
+    MONSTER = "RepMonster", WEATHER = "RepWeather", HEART = "RepHeart", GROWTH = "RepGrowth",
+}
+DataBar.STANDING_ICON_ORDER = { "ROUND", "COIN", "LINES", "WOLF", "MONSTER", "WEATHER", "HEART", "GROWTH", "LETTER" }
+
+-- The icon file of a standing, nil for LETTER or a standing beyond
+-- Hated (1) .. Exalted (8): those keep the word.
+function DataBar.StandingIcon(standing)
+    local set = DataBar.STANDING_ICONS[S("dataBarRepIcons")]
+    standing = tonumber(standing)
+    if not set or not standing or standing < 1 or standing > 8 then return nil end
+    return CFG.MEDIA .. set .. standing .. ".tga"
+end
+
 -- Plain values in, text out, so the tests need no game.
 function DataBar.XpText(level, cur, max)
     if type(cur) ~= "number" or type(max) ~= "number" or max <= 0 then return "" end
@@ -859,8 +876,11 @@ function DataBar.ShortStanding(d)
     return d.standingText or ""
 end
 
+-- With an icon the standing sits in front of the name, as a profession's.
 local function FillRep(b, d, design, x)
-    return FillEntry(b, design, x, RepColour(d), d.name, DataBar.ShortStanding(d), d.rank / math.max(1, d.maxRank))
+    local icon = DataBar.StandingIcon(d.standing)
+    return FillEntry(b, design, x, RepColour(d), d.name, icon and "" or DataBar.ShortStanding(d),
+        d.rank / math.max(1, d.maxRank), icon)
 end
 
 function DataBar.UpdateProfessions()

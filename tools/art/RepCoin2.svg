@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24"><!-- standing 2 (Hostile), coin face, features cut out; white, tinted in game -->
+<defs><mask id="m22"><rect width="24" height="24" fill="#fff"/><path fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" d="M6.6 7.2l3.4 1.1M17.4 7.2l-3.4 1.1"/><circle cx="8.6" cy="10" r="1.35" fill="#000"/><circle cx="15.4" cy="10" r="1.35" fill="#000"/><path fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" d="M8 16.55Q12 13.55 16 16.55"/></mask></defs>
+    <g mask="url(#m22)" fill="#fff"><circle cx="12" cy="12" r="10.4"/></g>
+</svg>
