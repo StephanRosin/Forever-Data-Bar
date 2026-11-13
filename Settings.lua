@@ -31,7 +31,7 @@ Settings.DEFAULTS = {
     dataBarMicro = true,        -- Blizzard's micro menu around the clock (Micro.lua)
     dataBarMicroCollections = false,
     dataBarProfs = true, dataBarProfsColumn = 5, dataBarProfsX = 0, dataBarProfsWidth = 96,
-    dataBarRepIcons = "ROUND",  -- the standing as icon set or LETTER, see DataBar.STANDING_ICONS
+    dataBarRepIcons = "LINES",  -- the standing as icon set or LETTER, see DataBar.STANDING_ICONS
     dataBarReps = true, dataBarRepsColumn = 4, dataBarRepsX = 0, dataBarRepsWidth = 96,
     hideInCombat = false,
     hideInGroup = false,

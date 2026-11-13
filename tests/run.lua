@@ -149,7 +149,7 @@ do
     check("reputation: shown", f.repBox:IsShown(), true)
     check("reputation: the slot's faction", f.reps[1].data and f.reps[1].data.name, Data.RepData(1) and Data.RepData(1).name)
     local standing = f.reps[1].data.standing
-    check("reputation: standing icon by default", f.reps[1].icon._texture, D.CFG.MEDIA .. "RepRound" .. standing .. ".tga")
+    check("reputation: standing icon by default", f.reps[1].icon._texture, D.CFG.MEDIA .. "RepLines" .. standing .. ".tga")
     check("reputation: no letter beside the icon", f.reps[1].value:GetText(), "")
     for _, id in ipairs(D.STANDING_ICON_ORDER) do
         check("standing icons " .. id .. ": label", ns.L["REP_ICONS_" .. id] ~= nil, true)
