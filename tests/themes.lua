@@ -120,16 +120,31 @@ return function(ns, M, check, ROOT)
     check("upgrade: revision stored", ForeverDataBarDB.themeSets.revision, Themes.REVISION)
     Themes.Switch("CLASSIC")
 
+    -- Body text (all of the bar's): the theme font where it reads, else the
+    -- standard font at the player's size.
+    local BODY = { WOOD = "Cinzel", TECH = "Space Grotesk", RUNESTONE = "Marcellus", PIXEL = "VT323",
+        PARCHMENT = "Friz Quadrata", FROST = "Friz Quadrata", GLASS = "Friz Quadrata", COMIC = "Friz Quadrata" }
+    for id, font in pairs(BODY) do
+        Themes.Switch(id)
+        local add = font == "Friz Quadrata" and 0 or (Themes.SPECS[id].fontSizeAdd or 0)
+        check("body font " .. id, S("dataBarFont") .. S("dataBarFontSize"), font .. (Settings.DEFAULTS.dataBarFontSize + add))
+        check("outline " .. id, S("dataBarFontOutline") ~= "" and S("dataBarFontOutline"):find("MONOCHROME") == nil, true)
+        Themes.Switch("CLASSIC")
+    end
+    check("revision raised for the new looks", Themes.REVISION, 2)
+
     -- The theme fonts have Latin letters only.
     M.locale = "koKR"
     Themes.Switch("TECH")
+    Themes.Reset()   -- made under enUS above
     check("korean client: the font stays", S("dataBarFont"), "Friz Quadrata")
     check("korean client: the rest of the look", S("dataBarFontOutline"), "OUTLINE")
+    check("korean client: the size stays", S("dataBarFontSize"), Settings.DEFAULTS.dataBarFontSize)
     Themes.Switch("CLASSIC")
     M.locale = "enUS"
 
     -- A refused font: the default meanwhile, tried again.
-    Themes.Switch("FROST")
+    Themes.Switch("RUNESTONE")
     local fs, refusals = f.xp.text, 1
     local set = fs.SetFont
     function fs:SetFont(p, s, o)
@@ -139,7 +154,7 @@ return function(ns, M, check, ROOT)
     Settings.Changed(nil)
     check("refused font: the default meanwhile", fs._font[1], ns.Media.DEFAULT_FONT)
     M.RunTimers()
-    check("refused font: taken on the next try", fs._font[1], ns.Media.FontPath("Cormorant SC"))
+    check("refused font: taken on the next try", fs._font[1], ns.Media.FontPath("Marcellus"))
     fs.SetFont = set
 
     -- The options: the theme first on the first page.

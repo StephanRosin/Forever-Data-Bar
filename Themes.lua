@@ -31,9 +31,13 @@ local LATIN_CLIENTS = { enUS = true, enGB = true, deDE = true, frFR = true, esES
     ptBR = true }
 
 -- look: settings the theme sets (light text with the client's OUTLINE on
--- every backdrop; the background colour tints the backdrop). font: shipped
--- (Media.lua); fontSizeAdd: how much larger it must be to read like Friz
--- Quadrata. art (ThemeArt.lua): back = backdrop in Media/Themes, tint = its
+-- every backdrop but the comic's light paper, which has dark ink; the
+-- background colour tints the backdrop, kept dark enough for about 4.5:1).
+-- font: shipped (Media.lua), for display text; bodyFont: for body text where
+-- the theme font does not read at small sizes (nil: the theme font).
+-- fontSizeAdd: how much larger the theme font must be to read like Friz
+-- Quadrata; the standard font keeps the player's size. Every text on the bar
+-- is body text (values, names, the clock): it has no headers. art (ThemeArt.lua): back = backdrop in Media/Themes, tint = its
 -- colour; rim = the line towards the game and rimSize; ornament on corners
 -- (INNER = towards the game, OUTER = at the screen edge); shadow = a soft
 -- shadow over the game, hardShadow = a solid one; bar = the lines' texture,
@@ -62,8 +66,8 @@ Themes.SPECS = {
     },
     -- Parchment, a brown ink line, a wax seal.
     PARCHMENT = {
-        font = "IM Fell English SC", fontSizeAdd = 1,
-        look = look({ 1, 0.95, 0.82 }, { 0.85, 0.62, 0.30 }, { 0.22, 0.15, 0.07 }, 55),
+        font = "IM Fell English SC", bodyFont = "Friz Quadrata", fontSizeAdd = 1,
+        look = look({ 1, 0.95, 0.82 }, { 0.85, 0.62, 0.30 }, { 0.22, 0.15, 0.07 }, 65),
         art = { back = "ParchmentBack", rim = { 0.29, 0.2, 0.12, 1 }, rimSize = 2, ornament = "Seal",
             corners = { "INNERLEFT" }, shadow = 5, shadowAlpha = 0.45, bar = "ParchmentBar", track = 4 },
     },
@@ -75,25 +79,27 @@ Themes.SPECS = {
             corners = { "INNERLEFT", "INNERRIGHT" }, ornamentColor = { 0.35, 0.95, 0.85, 1 },
             shadow = 6, shadowAlpha = 0.7, bar = "StoneBar", track = 4 },
     },
-    -- A mosaic of coloured glass, dark lead.
+    -- A mosaic of coloured glass, dark lead; darkened, the whole strip being
+    -- behind text.
     GLASS = {
-        font = "Morpheus", fontSizeAdd = 1,
+        font = "Morpheus", bodyFont = "Friz Quadrata", fontSizeAdd = 1,
         look = look({ 1, 0.93, 0.75 }, { 1, 0.75, 0.3 }, { 0.05, 0.04, 0.06 }, 35),
-        art = { back = "GlassBack", rim = { 0.07, 0.06, 0.05, 1 }, rimSize = 3, shadow = 6, shadowAlpha = 0.55,
+        art = { back = "GlassBack", tint = { 0.3, 0.3, 0.3, 1 }, rim = { 0.07, 0.06, 0.05, 1 }, rimSize = 3, shadow = 6, shadowAlpha = 0.55,
             bar = "GlassBar", track = 4 },
     },
-    -- Halftone paper, white lettering in a thick ink line, a solid shadow.
+    -- Halftone paper toned down, dark ink lettering, a solid shadow. The
+    -- outline keeps the light warning colours (durability) readable on it.
     COMIC = {
-        font = "Bangers", fontSizeAdd = 2,
-        look = look({ 1, 1, 1 }, { 0.95, 0.2, 0.15 }, { 0, 0, 0 }, 0, "THICKOUTLINE"),
-        art = { back = "ComicBack", rim = { 0.07, 0.07, 0.07, 1 }, rimSize = 3, hardShadow = 4,
+        font = "Bangers", bodyFont = "Friz Quadrata", fontSizeAdd = 2,
+        look = look({ 0.1, 0.08, 0.06 }, { 0.95, 0.2, 0.15 }, { 0, 0, 0 }, 0),
+        art = { back = "ComicBack", tint = { 0.9, 0.87, 0.8, 1 }, rim = { 0.07, 0.07, 0.07, 1 }, rimSize = 3, hardShadow = 4,
             bar = "ComicBar", track = 4 },
     },
-    -- Translucent ice, a pale rim, a long soft shadow.
+    -- Translucent ice with quieter cracks, a pale rim, a long soft shadow.
     FROST = {
-        font = "Cormorant SC", fontSizeAdd = 2,
+        font = "Cormorant SC", bodyFont = "Friz Quadrata", fontSizeAdd = 2,
         look = look({ 0.92, 0.98, 1 }, { 0.6, 0.88, 1 }, { 0.04, 0.12, 0.22 }, 50),
-        art = { back = "FrostBack", tint = { 1, 1, 1, 0.75 }, rim = { 0.86, 0.96, 1, 0.8 }, rimSize = 1,
+        art = { back = "FrostBack", tint = { 0.6, 0.6, 0.6, 0.75 }, rim = { 0.86, 0.96, 1, 0.8 }, rimSize = 1,
             shadow = 8, shadowAlpha = 0.55, bar = "FrostBar", track = 3 },
     },
     -- Scan lines, a light pixel rim, a solid shadow.
@@ -111,7 +117,7 @@ local META = { language = true, theme = true, themeSets = true }
 -- Raised whenever SPECS change a look: theme sets made before are made
 -- anew from CLASSIC (Themes.Upgrade), so a changed theme shows as it is
 -- now. CLASSIC is never touched.
-Themes.REVISION = 1
+Themes.REVISION = 2
 
 local function copy(v)
     if type(v) ~= "table" then return v end
@@ -164,8 +170,9 @@ function Themes.Seed(id, base)
         return v
     end
     for key, value in pairs(spec.look or {}) do put(key, value) end
-    local font = LATIN_CLIENTS[GetLocale()] and spec.font or nil
-    local add = spec.fontSizeAdd or 0
+    -- Every text on the bar is body text.
+    local font = LATIN_CLIENTS[GetLocale()] and (spec.bodyFont or spec.font) or nil
+    local add = (font and not spec.bodyFont) and spec.fontSizeAdd or 0
     if font then put("dataBarFont", font) end
     put("dataBarFontSize", get("dataBarFontSize") + add)
     for _, key in ipairs(Settings.FONT_PARTS) do
