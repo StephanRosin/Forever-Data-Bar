@@ -57,12 +57,11 @@ Themes.SPECS = {
         art = { back = "WoodBack", rim = { 0.76, 0.56, 0.33, 1 }, rimSize = 2, ornament = "Rivet", corners = ALL,
             shadow = 6, shadowAlpha = 0.6, bar = "WoodBar", track = 4 },
     },
-    -- Dark navy with a faint grid, a thin cyan line, corner brackets.
+    -- Dark navy with a faint grid, a thin cyan line.
     TECH = {
         font = "Space Grotesk",
         look = look({ 0.80, 0.97, 1 }, { 0.25, 0.88, 0.94 }, { 0.02, 0.05, 0.08 }, 40),
-        art = { back = "TechBack", rim = { 0.25, 0.88, 0.94, 0.9 }, rimSize = 1, ornament = "Bracket", corners = ALL,
-            ornamentInset = 0, ornamentColor = { 0.25, 0.88, 0.94, 1 }, bar = "TechBar", track = 3 },
+        art = { back = "TechBack", rim = { 0.25, 0.88, 0.94, 0.9 }, rimSize = 1, bar = "TechBar", track = 3 },
     },
     -- Parchment, a brown ink line, a wax seal.
     PARCHMENT = {
@@ -79,20 +78,20 @@ Themes.SPECS = {
             corners = { "INNERLEFT", "INNERRIGHT" }, ornamentColor = { 0.35, 0.95, 0.85, 1 },
             shadow = 6, shadowAlpha = 0.7, bar = "StoneBar", track = 4 },
     },
-    -- A mosaic of coloured glass, dark lead; darkened, the whole strip being
-    -- behind text.
+    -- A mosaic of coloured glass, dark lead.
     GLASS = {
         font = "Morpheus", bodyFont = "Friz Quadrata", fontSizeAdd = 1,
         look = look({ 1, 0.93, 0.75 }, { 1, 0.75, 0.3 }, { 0.05, 0.04, 0.06 }, 35),
-        art = { back = "GlassBack", tint = { 0.3, 0.3, 0.3, 1 }, rim = { 0.07, 0.06, 0.05, 1 }, rimSize = 3, shadow = 6, shadowAlpha = 0.55,
+        art = { back = "GlassBack", rim = { 0.07, 0.06, 0.05, 1 }, rimSize = 3, shadow = 6, shadowAlpha = 0.55,
             bar = "GlassBar", track = 4 },
     },
-    -- Halftone paper toned down, dark ink lettering, a solid shadow. The
+    -- Halftone paper in the same grey as every Forever addon's comic, dark
+    -- ink lettering, a solid shadow. The
     -- outline keeps the light warning colours (durability) readable on it.
     COMIC = {
         font = "Bangers", bodyFont = "Friz Quadrata", fontSizeAdd = 2,
         look = look({ 0.1, 0.08, 0.06 }, { 0.95, 0.2, 0.15 }, { 0, 0, 0 }, 0),
-        art = { back = "ComicBack", tint = { 0.9, 0.87, 0.8, 1 }, rim = { 0.07, 0.07, 0.07, 1 }, rimSize = 3, hardShadow = 4,
+        art = { back = "ComicBack", tint = { 0.7, 0.7, 0.7, 1 }, rim = { 0.07, 0.07, 0.07, 1 }, rimSize = 3, hardShadow = 4,
             bar = "ComicBar", track = 4 },
     },
     -- Translucent ice with quieter cracks, a pale rim, a long soft shadow.

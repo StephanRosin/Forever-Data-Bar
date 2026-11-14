@@ -64,6 +64,9 @@ return function(ns, M, check, ROOT)
     check("pixel: font larger", S("dataBarFontSize"), Settings.DEFAULTS.dataBarFontSize + 4)
     check("pixel: solid shadow", f.themeShadow:IsShown() and f.themeShadow._texColor[4], 1)
     check("pixel: no ornaments", f.themeOrnaments[1]:IsShown(), false)
+    check("comic: paper grey as in every addon", Themes.SPECS.COMIC.art.tint[1] .. Themes.SPECS.COMIC.art.tint[4], "0.71")
+    check("glass: the mosaic at full brightness", Themes.SPECS.GLASS.art.tint, nil)
+    check("tech: no corner brackets", Themes.SPECS.TECH.art.ornament, nil)
     check("pixel: two to copy from", #Themes.Stored(), 2)
 
     -- Positions from another theme, and back.
