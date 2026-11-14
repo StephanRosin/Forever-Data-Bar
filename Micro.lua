@@ -124,7 +124,7 @@ function Micro.Place(x, barHeight, atTop, left, gap)
     holder:ClearAllPoints()
     holder:SetPoint("LEFT", UIParent, atTop and "TOPLEFT" or "BOTTOMLEFT", x, atTop and -barHeight / 2 or barHeight / 2)
     holder:SetSize(math.max(1, left + gap + (#shown - nLeft) * step), cfg.ICON)
-    local accent = S("dataBarAccent")
+    local accent = ns.Themes.Accent()
     for _, button in ipairs(buttons) do button:Hide() end
     for i, b in ipairs(shown) do
         local button

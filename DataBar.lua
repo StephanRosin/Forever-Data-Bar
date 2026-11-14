@@ -560,7 +560,7 @@ local function Build()
     Font(t.text, "dataBarXp", "size")
     t:SetScript("OnUpdate", function(self)
         local wave = (math.sin(GetTime() * ns.Xp.TALENT_PULSE_SPEED) + 1) / 2
-        self.text:SetTextColor(ns.Xp.PulseColour(S("dataBarAccent"), wave))
+        self.text:SetTextColor(ns.Xp.PulseColour(ns.Themes.Accent(), wave))
     end)
     t:Hide()
     xp.talents = t
@@ -705,7 +705,7 @@ end
 -- Look and values
 -- -----------------------------------------------------------------------------
 local function Accent()
-    local c = S("dataBarAccent")
+    local c = ns.Themes.Accent()
     return { c[1], c[2], c[3] }
 end
 

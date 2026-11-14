@@ -87,10 +87,11 @@ Themes.SPECS = {
     },
     -- Halftone paper in the same grey as every Forever addon's comic,
     -- lettered like the Quest Log's titles: white Bangers, black outline
-    -- (dark ink without one read as a smear); values as strong (valueAlpha).
+    -- (dark ink without one read as a smear); values as strong (valueAlpha);
+    -- a yellow accent (red was bad on the icons).
     COMIC = {
         font = "Bangers", fontSizeAdd = 2, valueAlpha = 1,
-        look = look({ 1, 1, 1 }, { 0.95, 0.2, 0.15 }, { 0, 0, 0 }, 0, "OUTLINE"),
+        look = look({ 1, 1, 1 }, { 1, 0.9, 0.1 }, { 0, 0, 0 }, 0, "OUTLINE"),
         art = { back = "ComicBack", tint = { 0.7, 0.7, 0.7, 1 }, rim = { 0.07, 0.07, 0.07, 1 }, rimSize = 3,
             bar = "ComicBar", track = 4 },
     },
@@ -111,12 +112,25 @@ Themes.SPECS = {
 }
 
 -- Keys of ForeverDataBarDB that belong to no theme's set.
-local META = { language = true, theme = true, themeSets = true }
+local META = { language = true, theme = true, themeSets = true, comicColor = true }
+
+-- The comic's colours, the same in every Forever addon: the paper's tint and
+-- the accent. GREY is the comic as it is (accent nil: the set's own).
+Themes.COMIC_COLORS = { "GREY", "YELLOW", "BLUE", "RED", "GREEN", "PURPLE" }
+local COMIC_YELLOW = { 1, 0.9, 0.1 }
+local COMIC_PAINT = {
+    GREY = { paper = { 0.70, 0.70, 0.70 } },
+    YELLOW = { paper = { 0.86, 0.76, 0.36 }, accent = { 0.15, 0.45, 0.95 } },
+    BLUE = { paper = { 0.45, 0.60, 0.86 }, accent = COMIC_YELLOW },
+    RED = { paper = { 0.86, 0.44, 0.40 }, accent = COMIC_YELLOW },
+    GREEN = { paper = { 0.50, 0.76, 0.46 }, accent = COMIC_YELLOW },
+    PURPLE = { paper = { 0.70, 0.52, 0.84 }, accent = COMIC_YELLOW },
+}
 
 -- Raised whenever SPECS change a look: theme sets made before are made
 -- anew from CLASSIC (Themes.Upgrade), so a changed theme shows as it is
 -- now. CLASSIC is never touched.
-Themes.REVISION = 5
+Themes.REVISION = 6
 
 local function copy(v)
     if type(v) ~= "table" then return v end
@@ -131,6 +145,31 @@ end
 
 function Themes.Spec(id)
     return Themes.SPECS[id] or Themes.SPECS.CLASSIC
+end
+
+-- The comic colour chosen; an unknown one stored reads as GREY.
+function Themes.ComicColor()
+    local id = Settings.Get("comicColor")
+    return COMIC_PAINT[id] and id or "GREY"
+end
+
+-- The comic's paint in use, or nil under any other theme.
+local function comicPaint()
+    if Themes.Current() ~= "COMIC" then return nil end
+    return COMIC_PAINT[Themes.ComicColor()]
+end
+
+-- The backdrop's tint: the comic's paper in its colour.
+function Themes.Tint(art)
+    local paint = comicPaint()
+    if paint and art.tint then return { paint.paper[1], paint.paper[2], paint.paper[3], art.tint[4] } end
+    return art.tint
+end
+
+-- The accent the bar shows: the comic colour's, else the setting.
+function Themes.Accent()
+    local paint = comicPaint()
+    return paint and paint.accent or Settings.Get("dataBarAccent")
 end
 
 -- The settings in use, without the keys of no theme.
@@ -200,6 +239,17 @@ end
 local function refuse()
     if InCombatLockdown() then return "COMBAT" end
     return nil
+end
+
+-- Stored outside the theme sets; repaints at once under the comic, which
+-- restyles the micro menu's secure buttons.
+function Themes.SetComicColor(id)
+    if not COMIC_PAINT[id] then return nil, "UNKNOWN" end
+    local why = Themes.Current() == "COMIC" and refuse()
+    if why then return nil, why end
+    ns.DB().comicColor = id ~= "GREY" and id or nil
+    Settings.Changed(nil)
+    return true
 end
 
 -- Moves to theme id: the current settings are kept for the current theme,
@@ -305,6 +355,9 @@ _G.ForeverThemes[ADDON] = {
     title = "Forever Data Bar",
     Current = function() return Themes.Current() end,
     Switch = function(id) return Themes.Switch(id) end,
+    ComicColors = Themes.COMIC_COLORS,
+    ComicColor = function() return Themes.ComicColor() end,
+    SetComicColor = function(id) return Themes.SetComicColor(id) end,
 }
 
 local events = CreateFrame("Frame")

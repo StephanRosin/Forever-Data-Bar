@@ -135,11 +135,41 @@ return function(ns, M, check, ROOT)
         check("outline " .. id, S("dataBarFontOutline"), "OUTLINE")
         Themes.Switch("CLASSIC")
     end
-    check("revision raised for the new looks", Themes.REVISION, 5)
+    check("revision raised for the new looks", Themes.REVISION, 6)
     Themes.Switch("COMIC")
     check("comic: values at full strength", f.profs[1].value._textColor[4], 1)
     Themes.Switch("CLASSIC")
     check("classic: values fainter again", f.profs[1].value._textColor[4] < 1, true)
+
+    -- The comic's colours: paper and accent, kept apart from the theme sets.
+    check("comic colours: registry list", table.concat(registry.ComicColors, ","), "GREY,YELLOW,BLUE,RED,GREEN,PURPLE")
+    check("comic colours: grey by default", registry.ComicColor(), "GREY")
+    Themes.Switch("COMIC")
+    local function back() return table.concat({ f.themeBack._vertex[1], f.themeBack._vertex[2], f.themeBack._vertex[3] }, ",") end
+    local function accent() local c = Themes.Accent(); return table.concat({ c[1], c[2], c[3] }, ",") end
+    check("comic grey: paper as today", back(), "0.7,0.7,0.7")
+    check("comic grey: the yellow accent", accent(), "1,0.9,0.1")
+    check("comic blue: set", registry.SetComicColor("BLUE"), true)
+    check("comic blue: paper", back(), "0.45,0.6,0.86")
+    check("comic blue: accent yellow", accent(), "1,0.9,0.1")
+    check("comic yellow: set", Themes.SetComicColor("YELLOW"), true)
+    check("comic yellow: accent blue", accent(), "0.15,0.45,0.95")
+    check("comic colour: not in the set", Settings.Get("dataBarAccent")[1], 1)
+    check("comic colour: unknown refused", select(2, Themes.SetComicColor("NOPE")), "UNKNOWN")
+    M.state.combat = true
+    check("comic colour: combat refused under the comic", select(2, Themes.SetComicColor("RED")), "COMBAT")
+    M.state.combat = false
+    Themes.Switch("WOOD")
+    check("comic colour: nothing under wood", accent(), table.concat(Themes.SPECS.WOOD.look.dataBarAccent, ","))
+    check("comic colour: chosen under wood", Themes.SetComicColor("RED"), true)
+    Themes.Switch("COMIC")
+    check("comic colour: survives the switch", registry.ComicColor() .. back(), "RED0.86,0.44,0.4")
+    ForeverDataBarDB.comicColor = "NOPE"
+    check("comic colour: unknown stored reads grey", Themes.ComicColor(), "GREY")
+    check("comic grey back: set", Themes.SetComicColor("GREY"), true)
+    check("comic grey back: paper", back(), "0.7,0.7,0.7")
+    check("comic grey back: nothing stored", ForeverDataBarDB.comicColor, nil)
+    Themes.Switch("CLASSIC")
 
     -- Nothing but a soft shadow outside the bar's Classic box.
     local classicHeight = f:GetHeight()

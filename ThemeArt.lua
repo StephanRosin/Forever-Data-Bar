@@ -49,7 +49,7 @@ local function paintBack(back, art)
         back:SetHorizTile(true)
         back:SetVertTile(true)
     end
-    local tint = art.tint or { 1, 1, 1, 1 }
+    local tint = ns.Themes.Tint(art) or { 1, 1, 1, 1 }
     back:SetVertexColor(tint[1], tint[2], tint[3], tint[4])
     back:Show()
 end

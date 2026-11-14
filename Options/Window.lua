@@ -299,6 +299,21 @@ local function themeRow()
     }
 end
 
+-- The comic's colour, kept apart from the theme sets; chosen under another
+-- theme it waits for the comic.
+local function comicColorRow()
+    return {
+        type = "select", label = "OPT_THEME_COMIC_COLOR",
+        choices = function()
+            local list = {}
+            for _, id in ipairs(ns.Themes.COMIC_COLORS) do list[#list + 1] = { label = L["COMIC_COLOR_" .. id], value = id } end
+            return list
+        end,
+        get = function() return ns.Themes.ComicColor() end,
+        set = function(v) themeRefused(ns.Themes.SetComicColor(v)) end,
+    }
+end
+
 -- The positions another theme's set has, taken over into the current one.
 -- What it replaced comes back with "Undo" in the same list, until the theme
 -- changes or /reload.
@@ -337,6 +352,7 @@ local function dataBarRows()
     return {
         { type = "header", label = "OPT_THEME" },
         themeRow(),
+        comicColorRow(),
         { type = "text", label = "OPT_THEME_HINT", height = 40 },
         themeCopyRow(),
         { type = "buttons", buttons = {
