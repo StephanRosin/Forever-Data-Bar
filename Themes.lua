@@ -86,11 +86,11 @@ Themes.SPECS = {
             bar = "GlassBar", track = 4 },
     },
     -- Halftone paper in the same grey as every Forever addon's comic, dark
-    -- ink lettering, a solid shadow. The
-    -- outline keeps the light warning colours (durability) readable on it.
+    -- ink lettering without an outline (an outline smears it into blobs),
+    -- values as dark as the rest (valueAlpha), a solid shadow.
     COMIC = {
-        font = "Bangers", bodyFont = "Friz Quadrata", fontSizeAdd = 2,
-        look = look({ 0.1, 0.08, 0.06 }, { 0.95, 0.2, 0.15 }, { 0, 0, 0 }, 0),
+        font = "Bangers", bodyFont = "Friz Quadrata", fontSizeAdd = 2, valueAlpha = 1,
+        look = look({ 0.1, 0.08, 0.06 }, { 0.95, 0.2, 0.15 }, { 0, 0, 0 }, 0, ""),
         art = { back = "ComicBack", tint = { 0.7, 0.7, 0.7, 1 }, rim = { 0.07, 0.07, 0.07, 1 }, rimSize = 3, hardShadow = 4,
             bar = "ComicBar", track = 4 },
     },
@@ -116,7 +116,7 @@ local META = { language = true, theme = true, themeSets = true }
 -- Raised whenever SPECS change a look: theme sets made before are made
 -- anew from CLASSIC (Themes.Upgrade), so a changed theme shows as it is
 -- now. CLASSIC is never touched.
-Themes.REVISION = 2
+Themes.REVISION = 3
 
 local function copy(v)
     if type(v) ~= "table" then return v end

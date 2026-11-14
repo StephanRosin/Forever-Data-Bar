@@ -193,11 +193,13 @@ local function SetFont(fs, path, size, outline, retries)
 end
 
 local function ApplyFonts()
+    -- A theme may want values as strong as the rest (dark ink on paper).
+    local valueAlpha = ns.Themes.Spec(S("theme")).valueAlpha or VALUE_ALPHA
     for _, t in ipairs(texts) do
         local path, size, outline, c = DataBar.FontFor(t.key)
         SetFont(t.fs, path, size + t.plus, outline)
         if t.role == "text" then t.fs:SetTextColor(c[1], c[2], c[3], 1)
-        elseif t.role == "value" then t.fs:SetTextColor(c[1], c[2], c[3], VALUE_ALPHA) end
+        elseif t.role == "value" then t.fs:SetTextColor(c[1], c[2], c[3], valueAlpha) end
     end
 end
 

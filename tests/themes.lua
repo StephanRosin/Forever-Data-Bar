@@ -131,10 +131,16 @@ return function(ns, M, check, ROOT)
         Themes.Switch(id)
         local add = font == "Friz Quadrata" and 0 or (Themes.SPECS[id].fontSizeAdd or 0)
         check("body font " .. id, S("dataBarFont") .. S("dataBarFontSize"), font .. (Settings.DEFAULTS.dataBarFontSize + add))
-        check("outline " .. id, S("dataBarFontOutline") ~= "" and S("dataBarFontOutline"):find("MONOCHROME") == nil, true)
+        -- Light text outlined; the comic's dark ink plain (an outline smears it).
+        local outline = S("dataBarFontOutline")
+        check("outline " .. id, (id == "COMIC") == (outline == "") and outline:find("MONOCHROME") == nil, true)
         Themes.Switch("CLASSIC")
     end
-    check("revision raised for the new looks", Themes.REVISION, 2)
+    check("revision raised for the new looks", Themes.REVISION, 3)
+    Themes.Switch("COMIC")
+    check("comic: values at full strength", f.profs[1].value._textColor[4], 1)
+    Themes.Switch("CLASSIC")
+    check("classic: values fainter again", f.profs[1].value._textColor[4] < 1, true)
 
     -- The theme fonts have Latin letters only.
     M.locale = "koKR"
