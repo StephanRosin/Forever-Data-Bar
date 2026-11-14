@@ -52,7 +52,7 @@ Themes.SPECS = {
     CLASSIC = {},
     -- Oak boards, a bronze rim, brass rivets.
     WOOD = {
-        font = "Cinzel",
+        font = "Cinzel", bodyFont = "Friz Quadrata",
         look = look({ 0.96, 0.88, 0.70 }, { 0.94, 0.78, 0.55 }, { 0.1, 0.06, 0.02 }, 30),
         art = { back = "WoodBack", rim = { 0.76, 0.56, 0.33, 1 }, rimSize = 2, ornament = "Rivet", corners = ALL,
             shadow = 6, shadowAlpha = 0.6, bar = "WoodBar", track = 4 },
@@ -203,7 +203,7 @@ local COMIC_PAINT = {
 -- Raised whenever SPECS change a look: theme sets made before are made
 -- anew from CLASSIC (Themes.Upgrade), so a changed theme shows as it is
 -- now. CLASSIC is never touched.
-Themes.REVISION = 6
+Themes.REVISION = 7
 
 local function copy(v)
     if type(v) ~= "table" then return v end
