@@ -216,7 +216,18 @@ return function(ns, M, check, ROOT)
     Themes.Switch("PITWALL")
     check("pitwall: a carbon line", f.themeRim:IsShown() and f.themeRim:GetHeight(), 1)
     check("pitwall: red wedge at the left end", f.themeWedge:IsShown() and rgb(f.themeWedge._vertex), "0.88,0.02,0")
-    check("pitwall: wedge in the margin", f.themeWedge:GetWidth() <= D.CFG.PAD, true)
+    local h = f:GetHeight()
+    check("pitwall: wedge as high as the bar, as wide as high", f.themeWedge:GetHeight() .. "x" .. f.themeWedge:GetWidth(),
+        h .. "x" .. h)
+    -- The family rule: the first part starts 8 past the wedge's edge at mid-height.
+    local first
+    for _, p in ipairs(D.PARTS) do
+        local g = f.parts[p.id]
+        if not first and g:IsShown() and g.width > 0 and tonumber(S(p.key .. "Column")) == 1 then
+            first = g.x - S(p.key .. "X")
+        end
+    end
+    check("pitwall: first part 8 past the wedge", first, math.floor(0.8 * h + 0.5) + 8)
     Themes.SetColor("ORANGE")
     check("pitwall orange: the wedge's colour", rgb(f.themeWedge._vertex), "1,0.54,0")
     check("pitwall orange: accent kept", accent(), rgb(Themes.SPECS.PITWALL.look.dataBarAccent))

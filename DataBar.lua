@@ -685,7 +685,7 @@ function DataBar.Layout()
         for _, e in ipairs(list) do total = total + e.g.width + CFG.PROF_GAP end
         local cursor
         if column == 1 then
-            cursor = CFG.PAD
+            cursor = ns.ThemeArt.TextStart(frame:GetHeight()) or CFG.PAD
         elseif column == 5 then
             cursor = width - CFG.PAD - total - (frame.gear:IsShown() and (CFG.ICON + CFG.PROF_GAP) or 0)
         else
