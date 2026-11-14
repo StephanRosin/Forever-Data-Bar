@@ -142,6 +142,23 @@ return function(ns, M, check, ROOT)
     Themes.Switch("CLASSIC")
     check("classic: values fainter again", f.profs[1].value._textColor[4] < 1, true)
 
+    -- Nothing but a soft shadow outside the bar's Classic box.
+    local classicHeight = f:GetHeight()
+    for _, id in ipairs(Themes.IDS) do
+        Themes.Switch(id)
+        local art = Themes.SPECS[id].art or {}
+        local inside = f:GetHeight() == classicHeight
+        if art.hardShadow then inside = inside and f.themeShadow:GetPoint("BOTTOMLEFT") ~= nil end
+        for _, o in ipairs(f.themeOrnaments) do
+            if o:IsShown() then
+                local point, _, _, x, y = o:GetPoint(next(o._points))
+                inside = inside and (point:find("LEFT") and x >= 0 or x <= 0) and (point:find("TOP") and y <= 0 or y >= 0)
+            end
+        end
+        check("inside the Classic box: " .. id, inside, true)
+    end
+    Themes.Switch("CLASSIC")
+
     -- The theme fonts have Latin letters only.
     M.locale = "koKR"
     Themes.Switch("TECH")

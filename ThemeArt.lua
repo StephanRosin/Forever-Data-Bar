@@ -5,8 +5,10 @@ local S = ns.Settings.Get
 ThemeArt.lua -- a theme's art on the bar beyond settings (Themes.lua): the
 backdrop tiled across the whole strip under the background colour (which
 tints it, so the art frames every part), a rim on the side towards the
-game, small ornaments at the strip's corners and a shadow over the game
-along the rim. Plain textures on the bar, which has no secure children:
+game, small ornaments at the strip's corners and a shadow along the rim.
+Everything but the soft shadow stays inside the bar's box: windows placed
+edge to edge with it in Classic are not covered under a theme. The solid
+shadow (comic, pixel) is therefore a stripe inside, next to the rim. Plain textures on the bar, which has no secure children:
 they may change any time.
 -----------------------------------------------------------------------------]]
 local ThemeArt = {}
@@ -67,7 +69,11 @@ local function paintShadow(shadow, frame, art, inner)
         shadow:Hide()
         return
     end
-    alongEdge(shadow, frame, inner, true, size)
+    if art.hardShadow then
+        alongEdge(shadow, frame, inner, false, (art.rimSize or 0) + size)
+    else
+        alongEdge(shadow, frame, inner, true, size)
+    end
     if art.hardShadow or not (shadow.SetGradient and CreateColor) then
         shadow:SetColorTexture(0, 0, 0, art.hardShadow and 1 or art.shadowAlpha)
         shadow:SetVertexColor(1, 1, 1, 1)
