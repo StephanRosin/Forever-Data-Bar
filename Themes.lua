@@ -85,12 +85,12 @@ Themes.SPECS = {
         art = { back = "GlassBack", rim = { 0.07, 0.06, 0.05, 1 }, rimSize = 3, shadow = 6, shadowAlpha = 0.55,
             bar = "GlassBar", track = 4 },
     },
-    -- Halftone paper in the same grey as every Forever addon's comic, dark
-    -- ink lettering without an outline (an outline smears it into blobs),
-    -- values as dark as the rest (valueAlpha), a solid shadow.
+    -- Halftone paper in the same grey as every Forever addon's comic,
+    -- lettered like the Quest Log's titles: white Bangers, black outline
+    -- (dark ink without one read as a smear); values as strong (valueAlpha).
     COMIC = {
-        font = "Bangers", fontSizeAdd = 2, valueAlpha = 1,   -- no headings: Bangers throughout, like the unit frames
-        look = look({ 0.1, 0.08, 0.06 }, { 0.95, 0.2, 0.15 }, { 0, 0, 0 }, 0, ""),
+        font = "Bangers", fontSizeAdd = 2, valueAlpha = 1,
+        look = look({ 1, 1, 1 }, { 0.95, 0.2, 0.15 }, { 0, 0, 0 }, 0, "OUTLINE"),
         art = { back = "ComicBack", tint = { 0.7, 0.7, 0.7, 1 }, rim = { 0.07, 0.07, 0.07, 1 }, rimSize = 3,
             bar = "ComicBar", track = 4 },
     },
@@ -116,7 +116,7 @@ local META = { language = true, theme = true, themeSets = true }
 -- Raised whenever SPECS change a look: theme sets made before are made
 -- anew from CLASSIC (Themes.Upgrade), so a changed theme shows as it is
 -- now. CLASSIC is never touched.
-Themes.REVISION = 4
+Themes.REVISION = 5
 
 local function copy(v)
     if type(v) ~= "table" then return v end
