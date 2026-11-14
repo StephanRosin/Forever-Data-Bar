@@ -137,7 +137,7 @@ return function(ns, M, check, ROOT)
         check("outline " .. id, S("dataBarFontOutline"), "OUTLINE")
         Themes.Switch("CLASSIC")
     end
-    check("revision raised for the Wood body font", Themes.REVISION, 7)
+    check("revision raised for Swiss and Pitwall in one black", Themes.REVISION, 8)
     Themes.Switch("COMIC")
     check("comic: values at full strength", f.profs[1].value._textColor[4], 1)
     Themes.Switch("CLASSIC")
@@ -221,6 +221,13 @@ return function(ns, M, check, ROOT)
     check("pitwall orange: the wedge's colour", rgb(f.themeWedge._vertex), "1,0.54,0")
     check("pitwall orange: accent kept", accent(), rgb(Themes.SPECS.PITWALL.look.dataBarAccent))
     Themes.SetColor("RED")
+    -- Swiss and Pitwall share one black with every Forever addon: the flat
+    -- backdrop untinted, the background #0a0a0a, opaque.
+    for _, id in ipairs({ "SWISS", "PITWALL" }) do
+        Themes.Switch(id)
+        check(id .. ": the shared black", f.themeBack._texture .. " " .. back() .. "," .. alpha() .. " "
+            .. table.concat(f.bg._texColor, ","), PATH .. "SwissBack 1,1,1,1 0.039,0.039,0.039,1")
+    end
     Themes.Switch("CLASSIC")
     check("classic: no wedge", f.themeWedge:IsShown(), false)
     -- The rim is the same in every Forever addon, for every theme and

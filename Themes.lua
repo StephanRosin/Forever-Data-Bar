@@ -115,7 +115,7 @@ Themes.SPECS = {
     -- Swiss style: flat black, one white rule, one red accent (never on the icons).
     SWISS = {
         font = "Inter Tight", iconColor = { 0.95, 0.95, 0.95 },
-        look = look({ 0.95, 0.95, 0.95 }, { 1, 0.18, 0.13 }, { 0.04, 0.04, 0.04 }, 40),
+        look = look({ 0.95, 0.95, 0.95 }, { 1, 0.18, 0.13 }, { 0.039, 0.039, 0.039 }, 100),
         art = { back = "SwissBack", rim = { 0.95, 0.95, 0.95, 1 }, rimSize = 3, bar = "SwissBar", track = 3 },
     },
     -- A terminal: near black with faint scan lines, a mint line, dashed lines.
@@ -124,11 +124,11 @@ Themes.SPECS = {
         look = look({ 0.9, 0.91, 0.93 }, { 0.306, 0.929, 0.69 }, { 0.06, 0.06, 0.07 }, 40),
         art = { back = "ConsoleBack", rim = { 0.306, 0.929, 0.69, 1 }, rimSize = 1, bar = "ConsoleBar", track = 3 },
     },
-    -- A timing screen: carbon, a carbon line, a red wedge, LED segments.
+    -- A timing screen: flat black, a carbon line, a red wedge, LED segments.
     PITWALL = {
         font = "Titillium Web",
-        look = look({ 0.95, 0.95, 0.96 }, { 0.13, 0.77, 0.37 }, { 0.04, 0.05, 0.05 }, 40),
-        art = { back = "PitwallBack", rim = { 0.043, 0.047, 0.055, 1 }, rimSize = 1, wedge = "PitwallWedge", wedgeColor = { 0.88, 0.02, 0, 1 }, bar = "PitwallBar",
+        look = look({ 0.95, 0.95, 0.96 }, { 0.13, 0.77, 0.37 }, { 0.039, 0.039, 0.039 }, 100),
+        art = { back = "SwissBack", rim = { 0.043, 0.047, 0.055, 1 }, rimSize = 1, wedge = "PitwallWedge", wedgeColor = { 0.88, 0.02, 0, 1 }, bar = "PitwallBar",
             track = 4 },
     },
 }
@@ -250,7 +250,7 @@ local COMIC_PAINT = {
 -- Raised whenever SPECS change a look: theme sets made before are made
 -- anew from CLASSIC (Themes.Upgrade), so a changed theme shows as it is
 -- now. CLASSIC is never touched.
-Themes.REVISION = 7
+Themes.REVISION = 8
 
 local function copy(v)
     if type(v) ~= "table" then return v end
