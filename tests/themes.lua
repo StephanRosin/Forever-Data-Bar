@@ -142,7 +142,7 @@ return function(ns, M, check, ROOT)
     check("classic: values fainter again", f.profs[1].value._textColor[4] < 1, true)
 
     -- The comic's colours: paper and accent, kept apart from the theme sets.
-    check("comic colours: registry list", table.concat(registry.ComicColors, ","), "GREY,YELLOW,BLUE,RED,GREEN,PURPLE")
+    check("comic colours: registry list", table.concat(registry.ComicColors, ","), "GREY,DARKGREY,BLACK,WHITE,YELLOW,BLUE,RED,GREEN,PURPLE")
     check("comic colours: grey by default", registry.ComicColor(), "GREY")
     Themes.Switch("COMIC")
     local function back() return table.concat({ f.themeBack._vertex[1], f.themeBack._vertex[2], f.themeBack._vertex[3] }, ",") end
@@ -164,6 +164,13 @@ return function(ns, M, check, ROOT)
     check("comic colour: chosen under wood", Themes.SetComicColor("RED"), true)
     Themes.Switch("COMIC")
     check("comic colour: survives the switch", registry.ComicColor() .. back(), "RED0.86,0.44,0.4")
+    check("comic black: set", Themes.SetComicColor("BLACK"), true)
+    check("comic black: paper", back(), "0.16,0.16,0.16")
+    check("comic black: accent yellow", accent(), "1,0.9,0.1")
+    check("comic black: text stays white", S("dataBarFontColor")[1], 1)
+    check("comic white: set", Themes.SetComicColor("WHITE"), true)
+    check("comic white: paper", back(), "1,1,1")
+    check("comic white: accent blue", accent(), "0.15,0.45,0.95")
     ForeverDataBarDB.comicColor = "NOPE"
     check("comic colour: unknown stored reads grey", Themes.ComicColor(), "GREY")
     check("comic grey back: set", Themes.SetComicColor("GREY"), true)

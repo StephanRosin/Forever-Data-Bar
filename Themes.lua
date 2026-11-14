@@ -115,11 +115,15 @@ Themes.SPECS = {
 local META = { language = true, theme = true, themeSets = true, comicColor = true }
 
 -- The comic's colours, the same in every Forever addon: the paper's tint and
--- the accent. GREY is the comic as it is (accent nil: the set's own).
-Themes.COMIC_COLORS = { "GREY", "YELLOW", "BLUE", "RED", "GREEN", "PURPLE" }
+-- the accent. GREY is the comic as it is (accent nil: the set's own). The
+-- bar has no dark ink (white outlined text): dark papers need nothing more.
+Themes.COMIC_COLORS = { "GREY", "DARKGREY", "BLACK", "WHITE", "YELLOW", "BLUE", "RED", "GREEN", "PURPLE" }
 local COMIC_YELLOW = { 1, 0.9, 0.1 }
 local COMIC_PAINT = {
     GREY = { paper = { 0.70, 0.70, 0.70 } },
+    DARKGREY = { paper = { 0.38, 0.38, 0.38 }, accent = COMIC_YELLOW },
+    BLACK = { paper = { 0.16, 0.16, 0.16 }, accent = COMIC_YELLOW },
+    WHITE = { paper = { 1, 1, 1 }, accent = { 0.15, 0.45, 0.95 } },
     YELLOW = { paper = { 0.86, 0.76, 0.36 }, accent = { 0.15, 0.45, 0.95 } },
     BLUE = { paper = { 0.45, 0.60, 0.86 }, accent = COMIC_YELLOW },
     RED = { paper = { 0.86, 0.44, 0.40 }, accent = COMIC_YELLOW },
