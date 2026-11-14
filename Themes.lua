@@ -23,7 +23,8 @@ ns.Themes = Themes
 
 Themes.CLASSIC = "CLASSIC"
 -- The options' order. Stored by id: a new theme gets a new id.
-Themes.IDS = { "CLASSIC", "WOOD", "TECH", "PARCHMENT", "RUNESTONE", "GLASS", "COMIC", "FROST", "PIXEL" }
+Themes.IDS = { "CLASSIC", "WOOD", "TECH", "PARCHMENT", "RUNESTONE", "GLASS", "COMIC", "FROST", "PIXEL", "SWISS",
+    "CONSOLE", "PITWALL" }
 
 -- The theme fonts have Latin letters only: on any other client the bar
 -- keeps its font.
@@ -39,9 +40,11 @@ local LATIN_CLIENTS = { enUS = true, enGB = true, deDE = true, frFR = true, esES
 -- Quadrata; the standard font keeps the player's size. Every text on the bar
 -- is body text (values, names, the clock): it has no headers. art (ThemeArt.lua): back = backdrop in Media/Themes, tint = its
 -- colour; rim = the line towards the game and rimSize; ornament on corners
--- (INNER = towards the game, OUTER = at the screen edge); shadow = a soft
--- shadow over the game, hardShadow = a solid one; bar = the lines' texture,
--- track = their thickness (thick enough to show it).
+-- (INNER = towards the game, OUTER = at the screen edge); wedge = a slanted
+-- band at the bar's left end in wedgeColor; shadow = a soft shadow over the
+-- game, hardShadow = a solid one; bar = the lines' texture, track = their
+-- thickness (thick enough to show it). iconColor: the icons' colour where
+-- the accent must not reach them (nil: the accent).
 local function look(text, accent, bg, alpha, outline)
     return { dataBarFontOutline = outline or "OUTLINE", dataBarFontColor = text, dataBarAccent = accent,
         dataBarBgColor = bg, dataBarAlpha = alpha, dataBarEdge = false, dataBarDesign = "GLASS" }
@@ -109,6 +112,25 @@ Themes.SPECS = {
         art = { back = "PixelBack", rim = { 1, 0.95, 0.91, 1 }, rimSize = 2,
             bar = "PixelBar", track = 4 },
     },
+    -- Swiss style: flat black, one white rule, one red accent (never on the icons).
+    SWISS = {
+        font = "Inter Tight", iconColor = { 0.95, 0.95, 0.95 },
+        look = look({ 0.95, 0.95, 0.95 }, { 1, 0.18, 0.13 }, { 0.04, 0.04, 0.04 }, 40),
+        art = { back = "SwissBack", rim = { 0.95, 0.95, 0.95, 1 }, rimSize = 3, bar = "SwissBar", track = 3 },
+    },
+    -- A terminal: near black with faint scan lines, a mint line, dashed lines.
+    CONSOLE = {
+        font = "IBM Plex Mono",
+        look = look({ 0.9, 0.91, 0.93 }, { 0.31, 0.93, 0.69 }, { 0.06, 0.06, 0.07 }, 40),
+        art = { back = "ConsoleBack", rim = { 0.31, 0.93, 0.69, 1 }, rimSize = 1, bar = "ConsoleBar", track = 3 },
+    },
+    -- A timing screen: carbon, a red wedge, LED segments.
+    PITWALL = {
+        font = "Titillium Web",
+        look = look({ 0.95, 0.95, 0.96 }, { 0.13, 0.77, 0.37 }, { 0.04, 0.05, 0.05 }, 40),
+        art = { back = "PitwallBack", wedge = "PitwallWedge", wedgeColor = { 0.88, 0.02, 0, 1 }, bar = "PitwallBar",
+            track = 4 },
+    },
 }
 
 -- Keys of ForeverDataBarDB that belong to no theme's set.
@@ -118,10 +140,14 @@ local META = { language = true, theme = true, themeSets = true, themeColors = tr
 -- The first is the theme as it is. Any other draws the backdrop from the
 -- theme's grey texture (<back>Grey), tinted so its mean lands on `back`
 -- (vertex colour = back / GREY_MEAN, at most 1), and brings its accent
--- (nil: the theme's own). The comic keeps its paper tint (COMIC_PAINT).
+-- (nil: the theme's own). Themes with one dark backdrop in every colour
+-- (SWISS, CONSOLE, PITWALL) change only the accent, the rim or the wedge.
+-- The comic keeps its paper tint (COMIC_PAINT).
 local GREY_MEAN = { WoodBack = 0.800, TechBack = 0.705, ParchmentBack = 0.799, StoneBack = 0.800,
     GlassBack = 0.777, FrostBack = 0.796, PixelBack = 0.800 }
-local function colour(id, back, accent) return { id = id, back = back, accent = accent } end
+local function colour(id, back, accent, rim, wedge)
+    return { id = id, back = back, accent = accent, rim = rim, wedge = wedge }
+end
 Themes.COLORS = {
     WOOD = {
         colour("OAK"),
@@ -179,6 +205,25 @@ Themes.COLORS = {
         colour("BLACK", { 0.03, 0.03, 0.04 }, { 0, 0.89, 0.21 }),
         colour("TEAL", { 0.02, 0.17, 0.22 }, { 0.16, 0.68, 1 }),
         colour("PURPLE", { 0.15, 0.1, 0.25 }, { 1, 0.47, 0.66 }),
+        colour("HANDHELD", { 0.06, 0.12, 0.06 }, { 0.78, 0.94, 0.44 }),
+    },
+    SWISS = {
+        colour("RED"),
+        colour("BLUE", nil, { 0.18, 0.42, 1 }),
+        colour("YELLOW", nil, { 1, 0.82, 0 }),
+        colour("WHITE", nil, { 0.95, 0.95, 0.95 }),
+    },
+    CONSOLE = {
+        colour("MINT"),
+        colour("AMBER", nil, { 1, 0.69, 0 }, { 1, 0.69, 0, 1 }),
+        colour("PHOSPHOR", nil, { 0.22, 1, 0.08 }, { 0.22, 1, 0.08, 1 }),
+        colour("VIOLET", nil, { 0.63, 0.47, 1 }, { 0.63, 0.47, 1, 1 }),
+    },
+    PITWALL = {
+        colour("RED"),
+        colour("ORANGE", nil, nil, nil, { 1, 0.54, 0, 1 }),
+        colour("TEAL", nil, nil, nil, { 0, 0.63, 0.61, 1 }),
+        colour("SILVER", nil, nil, nil, { 0.79, 0.81, 0.84, 1 }),
     },
     COMIC = { colour("GREY"), colour("DARKGREY"), colour("BLACK"), colour("WHITE"), colour("YELLOW"),
         colour("BLUE"), colour("RED"), colour("GREEN"), colour("PURPLE") },
@@ -252,13 +297,15 @@ end
 
 -- Any other theme's colour in use when it is not the theme's own look.
 local function themePaint()
-    local c = colourOf(Themes.Current(), Themes.Color())
-    return c and c.back and c or nil
+    local id = Themes.Current()
+    local c = colourOf(id, Themes.Color())
+    return c and c ~= Themes.COLORS[id][1] and c or nil
 end
 
--- The backdrop's texture: the grey one under a colour.
+-- The backdrop's texture: the grey one under a colour that tints it.
 function Themes.Back(art)
-    return themePaint() and art.back .. "Grey" or art.back
+    local c = themePaint()
+    return c and c.back and art.back .. "Grey" or art.back
 end
 
 -- The backdrop's tint: the comic's paper in its colour, or the grey texture
@@ -267,7 +314,7 @@ function Themes.Tint(art)
     local paint = comicPaint()
     if paint and art.tint then return { paint.paper[1], paint.paper[2], paint.paper[3], art.tint[4] } end
     local c = themePaint()
-    if c then
+    if c and c.back then
         local mean = GREY_MEAN[art.back]
         return { math.min(1, c.back[1] / mean), math.min(1, c.back[2] / mean), math.min(1, c.back[3] / mean),
             art.tint and art.tint[4] or 1 }
@@ -279,6 +326,23 @@ end
 function Themes.Accent()
     local paint = comicPaint() or themePaint()
     return paint and paint.accent or Settings.Get("dataBarAccent")
+end
+
+-- The rim's and the wedge's colours: the colour's, else the theme's.
+function Themes.Rim(art)
+    local c = themePaint()
+    return c and c.rim or art.rim
+end
+
+function Themes.WedgeColor(art)
+    local c = themePaint()
+    return c and c.wedge or art.wedgeColor
+end
+
+-- The icons' colour: the theme's own where it keeps the accent off them,
+-- else `fallback` (nil: the accent).
+function Themes.IconColor(fallback)
+    return Themes.Spec(Themes.Current()).iconColor or fallback or Themes.Accent()
 end
 
 -- The settings in use, without the keys of no theme.

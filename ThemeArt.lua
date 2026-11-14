@@ -20,6 +20,9 @@ local PATH = "Interface\\AddOns\\ForeverDataBar\\Media\\Themes\\"
 local ORNAMENT_MAX, ORNAMENT_INSET = 10, 1
 -- Texture coordinates of a top-left ornament for each corner: mirrored,
 -- never rotated.
+-- The wedge sits in that margin too; its band fills the left 17 of the
+-- texture's 32 columns.
+local WEDGE_WIDTH, WEDGE_RIGHT = 10, 17 / 32
 local MIRROR = { TOPLEFT = { 0, 1, 0, 1 }, TOPRIGHT = { 1, 0, 0, 1 }, BOTTOMLEFT = { 0, 1, 1, 0 },
     BOTTOMRIGHT = { 1, 0, 1, 0 } }
 
@@ -32,6 +35,8 @@ function ThemeArt.Build(frame)
     frame.themeShadow:Hide()
     frame.themeRim = frame:CreateTexture(nil, "BORDER", nil, 1)
     frame.themeRim:Hide()
+    frame.themeWedge = frame:CreateTexture(nil, "OVERLAY", nil, 6)
+    frame.themeWedge:Hide()
     frame.themeOrnaments = {}
     for i = 1, 4 do
         frame.themeOrnaments[i] = frame:CreateTexture(nil, "OVERLAY", nil, 7)
@@ -111,15 +116,31 @@ local function paintOrnaments(pieces, frame, art, inner, height)
     end
 end
 
+local function paintWedge(wedge, frame, art)
+    if art.wedge then
+        wedge:ClearAllPoints()
+        wedge:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
+        wedge:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
+        wedge:SetWidth(WEDGE_WIDTH)
+        wedge:SetTexture(PATH .. art.wedge)
+        wedge:SetTexCoord(0, WEDGE_RIGHT, 0, 1)
+        local c = ns.Themes.WedgeColor(art)
+        wedge:SetVertexColor(c[1], c[2], c[3], c[4])
+    end
+    wedge:SetShown(art.wedge ~= nil)
+end
+
 function ThemeArt.Style(frame, atTop, height)
     local art = ns.Themes.Spec(S("theme")).art or {}
     local inner = atTop and "BOTTOM" or "TOP"
     paintBack(frame.themeBack, art)
     if art.rim then
+        local rim = ns.Themes.Rim(art)
         alongEdge(frame.themeRim, frame, inner, false, art.rimSize)
-        frame.themeRim:SetColorTexture(art.rim[1], art.rim[2], art.rim[3], art.rim[4])
+        frame.themeRim:SetColorTexture(rim[1], rim[2], rim[3], rim[4])
     end
     frame.themeRim:SetShown(art.rim ~= nil)
     paintShadow(frame.themeShadow, frame, art, inner)
     paintOrnaments(frame.themeOrnaments, frame, art, inner, height)
+    paintWedge(frame.themeWedge, frame, art)
 end

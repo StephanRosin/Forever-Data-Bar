@@ -20,9 +20,12 @@ Media.OWN_FONTS = {
     { name = "Bangers",            path = FONTS .. "Bangers-Regular.ttf" },
     { name = "Cinzel",             path = FONTS .. "Cinzel-Bold.ttf" },
     { name = "Cormorant SC",       path = FONTS .. "CormorantSC-Bold.ttf" },
+    { name = "IBM Plex Mono",      path = FONTS .. "IBMPlexMono-Regular.ttf" },
     { name = "IM Fell English SC", path = FONTS .. "IMFeENsc28P.ttf" },
+    { name = "Inter Tight",        path = FONTS .. "InterTight-Regular.ttf" },
     { name = "Marcellus",          path = FONTS .. "Marcellus-Regular.ttf" },
     { name = "Space Grotesk",      path = FONTS .. "SpaceGrotesk-Bold.ttf" },
+    { name = "Titillium Web",      path = FONTS .. "TitilliumWeb-SemiBold.ttf" },
     { name = "VT323",              path = FONTS .. "VT323-Regular.ttf" },
 }
 

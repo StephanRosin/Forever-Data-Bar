@@ -764,7 +764,8 @@ local function ApplyFrame(design)
     frame.xp.main:SetHeight(xpHeight)
     frame.xp.talents:SetHeight(TextHeight("dataBarXp") + 4)
     frame.gear:SetShown(S("dataBarGear"))
-    frame.gear.icon:SetVertexColor(c[1], c[2], c[3], 1)
+    local ic = ns.Themes.IconColor(c)
+    frame.gear.icon:SetVertexColor(ic[1], ic[2], ic[3], 1)
     -- The clock with the micro menu around it: [icons] 12:34 [icons].
     -- The icons are secure and sit elsewhere (Micro.lua); here only the room.
     local clock, clockOn = frame.clock, S("dataBarClock")
@@ -867,7 +868,8 @@ local function FillEntry(b, design, x, colour, name, value, share, icon)
     b.icon:SetShown(icon ~= nil)
     if icon then
         b.icon:SetTexture(icon)
-        b.icon:SetVertexColor(colour[1], colour[2], colour[3], 1)
+        local ic = ns.Themes.IconColor(colour)
+        b.icon:SetVertexColor(ic[1], ic[2], ic[3], 1)
     end
     local lineWidth, width
     if design.iconsOnly and icon then
@@ -984,7 +986,8 @@ function DataBar.UpdateStats()
             if S(p.key) then text, colour = def.value() end
             local before = g.width
             if text then
-                g.icon:SetVertexColor(accent[1], accent[2], accent[3], 1)
+                local ic = ns.Themes.IconColor(accent)
+                g.icon:SetVertexColor(ic[1], ic[2], ic[3], 1)
                 g.text:SetText(text)
                 colour = colour or DataBar.TextColour(p.key)
                 g.text:SetTextColor(colour[1], colour[2], colour[3])

@@ -124,7 +124,7 @@ function Micro.Place(x, barHeight, atTop, left, gap)
     holder:ClearAllPoints()
     holder:SetPoint("LEFT", UIParent, atTop and "TOPLEFT" or "BOTTOMLEFT", x, atTop and -barHeight / 2 or barHeight / 2)
     holder:SetSize(math.max(1, left + gap + (#shown - nLeft) * step), cfg.ICON)
-    local accent = ns.Themes.Accent()
+    local colour = ns.Themes.IconColor()
     for _, button in ipairs(buttons) do button:Hide() end
     for i, b in ipairs(shown) do
         local button
@@ -134,7 +134,7 @@ function Micro.Place(x, barHeight, atTop, left, gap)
         button:ClearAllPoints()
         local offset = (i <= nLeft) and (i - 1) * step or (left + gap + cfg.ICON_GAP + (i - nLeft - 1) * step)
         button:SetPoint("LEFT", holder, "LEFT", offset, 0)
-        button.icon:SetVertexColor(accent[1], accent[2], accent[3], 1)
+        button.icon:SetVertexColor(colour[1], colour[2], colour[3], 1)
         button:Show()
     end
     RegisterStateDriver(holder, "visibility", Visibility())

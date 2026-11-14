@@ -16,7 +16,7 @@ return function(ns, M, check, ROOT)
         local spec = Themes.SPECS[id]
         check("theme " .. id .. ": spec", spec ~= nil, true)
         local art = spec.art or {}
-        for _, file in ipairs({ art.back, art.bar, art.ornament }) do
+        for _, file in ipairs({ art.back, art.bar, art.ornament, art.wedge }) do
             check("theme " .. id .. ": " .. file .. " shipped", exists("Media/Themes/" .. file .. ".tga"), true)
         end
         if spec.font then check("theme " .. id .. ": its font known", ns.Media.FontPath(spec.font) ~= ns.Media.DEFAULT_FONT, true) end
@@ -126,7 +126,8 @@ return function(ns, M, check, ROOT)
     -- Body text (all of the bar's): the theme font where it reads, else the
     -- standard font at the player's size.
     local BODY = { WOOD = "Friz Quadrata", TECH = "Space Grotesk", RUNESTONE = "Marcellus", PIXEL = "VT323",
-        PARCHMENT = "Friz Quadrata", FROST = "Friz Quadrata", GLASS = "Friz Quadrata", COMIC = "Bangers" }
+        PARCHMENT = "Friz Quadrata", FROST = "Friz Quadrata", GLASS = "Friz Quadrata", COMIC = "Bangers",
+        SWISS = "Inter Tight", CONSOLE = "IBM Plex Mono", PITWALL = "Titillium Web" }
     for id, font in pairs(BODY) do
         Themes.Switch(id)
         local add = font == "Friz Quadrata" and 0 or (Themes.SPECS[id].fontSizeAdd or 0)
@@ -150,7 +151,7 @@ return function(ns, M, check, ROOT)
     check("colours: none under classic", #registry.Colors(), 0)
     check("colours: classic has no colour", registry.Color(), nil)
     check("colours: comic list", table.concat(registry.Colors("COMIC"), ","), "GREY,DARKGREY,BLACK,WHITE,YELLOW,BLUE,RED,GREEN,PURPLE")
-    check("colours: pixel list", table.concat(registry.Colors("PIXEL"), ","), "NAVY,PLUM,FOREST,BROWN,GREY,BLACK,TEAL,PURPLE")
+    check("colours: pixel list", table.concat(registry.Colors("PIXEL"), ","), "NAVY,PLUM,FOREST,BROWN,GREY,BLACK,TEAL,PURPLE,HANDHELD")
     for _, id in ipairs(Themes.IDS) do
         if id ~= "CLASSIC" then
             local art = Themes.SPECS[id].art
@@ -160,9 +161,9 @@ return function(ns, M, check, ROOT)
             check(id .. ": default keeps its texture", f.themeBack._texture, PATH .. art.back)
             check(id .. ": default keeps its tint", back() .. "/" .. alpha(), art.tint and rgb(art.tint) .. "/" .. art.tint[4] or "1,1,1/1")
             check(id .. ": default keeps its accent", accent(), rgb(Themes.SPECS[id].look.dataBarAccent))
-            for _, colour in ipairs(registry.Colors()) do
+            for i, colour in ipairs(registry.Colors()) do
                 check(id .. " " .. colour .. ": named", ns.L["THEME_COLOR_" .. id .. "_" .. colour] ~= "THEME_COLOR_" .. id .. "_" .. colour, true)
-                if id ~= "COMIC" and colour ~= first then
+                if Themes.COLORS[id][i].back then
                     check(id .. " " .. colour .. ": grey texture shipped", exists("Media/Themes/" .. art.back .. "Grey.tga"), true)
                 end
             end
@@ -175,6 +176,10 @@ return function(ns, M, check, ROOT)
     check("pixel plum: grey texture", f.themeBack._texture, PATH .. "PixelBackGrey")
     check("pixel plum: tint target / mean", back(), rgb({ 0.23 / 0.8, 0.08 / 0.8, 0.16 / 0.8 }))
     check("pixel plum: accent", accent(), "1,0.93,0.15")
+    check("pixel handheld: listed last", registry.Colors()[9], "HANDHELD")
+    Themes.SetColor("HANDHELD")
+    check("pixel handheld: grey texture tinted", f.themeBack._texture .. back(), PATH .. "PixelBackGrey" .. rgb({ 0.06 / 0.8, 0.12 / 0.8, 0.06 / 0.8 }))
+    check("pixel handheld: accent", accent(), "0.78,0.94,0.44")
     check("pixel grey: no accent keeps the theme's", Themes.SetColor("GREY") and accent(), rgb(Themes.SPECS.PIXEL.look.dataBarAccent))
     check("colour: not in the set", Settings.Get("dataBarAccent")[1], Themes.SPECS.PIXEL.look.dataBarAccent[1])
     check("colour: unknown refused", select(2, Themes.SetColor("NOPE")), "UNKNOWN")
@@ -190,6 +195,33 @@ return function(ns, M, check, ROOT)
     Themes.SetColor("NAVY")
     check("colour back to default: nothing stored", ForeverDataBarDB.themeColors.PIXEL, nil)
     Themes.SetColor("ICE", "FROST")
+    -- The flat themes keep their backdrop in every colour.
+    Themes.Switch("SWISS")
+    local function rim() return rgb(f.themeRim._texColor) end
+    check("swiss: one white rule towards the game", f.themeRim:GetHeight() .. "/" .. rim(), "3/0.95,0.95,0.95")
+    check("swiss: red accent", accent(), "1,0.18,0.13")
+    check("swiss: icons stay white", f.parts.GOLD.icon._vertex[1] .. f.gear.icon._vertex[2], "0.950.95")
+    check("swiss blue: set", registry.SetColor("BLUE"), true)
+    check("swiss blue: backdrop kept", f.themeBack._texture .. back(), PATH .. "SwissBack1,1,1")
+    check("swiss blue: accent", accent(), "0.18,0.42,1")
+    Themes.SetColor("RED")
+    Themes.Switch("CONSOLE")
+    check("console: mint line", rim(), "0.31,0.93,0.69")
+    check("console: dashed lines", f.xp.line.fill._texture, PATH .. "ConsoleBar")
+    Themes.SetColor("AMBER")
+    check("console amber: the line follows the accent", rim() .. "/" .. accent(), "1,0.69,0/1,0.69,0")
+    check("console amber: backdrop kept", f.themeBack._texture, PATH .. "ConsoleBack")
+    Themes.SetColor("MINT")
+    Themes.Switch("PITWALL")
+    check("pitwall: no rim", f.themeRim:IsShown(), false)
+    check("pitwall: red wedge at the left end", f.themeWedge:IsShown() and rgb(f.themeWedge._vertex), "0.88,0.02,0")
+    check("pitwall: wedge in the margin", f.themeWedge:GetWidth() <= D.CFG.PAD, true)
+    Themes.SetColor("ORANGE")
+    check("pitwall orange: the wedge's colour", rgb(f.themeWedge._vertex), "1,0.54,0")
+    check("pitwall orange: accent kept", accent(), rgb(Themes.SPECS.PITWALL.look.dataBarAccent))
+    Themes.SetColor("RED")
+    Themes.Switch("CLASSIC")
+    check("classic: no wedge", f.themeWedge:IsShown(), false)
     -- The comic as built: paper tint and accent.
     Themes.Switch("COMIC")
     check("comic blue: set", registry.SetColor("BLUE"), true)

@@ -27,7 +27,7 @@ Five looks for the lines:
 - **Alchemy phial**: tiny glass tubes with brass caps and bubbles.
 
 ## Themes (beta)
-Eight looks for the whole strip besides Classic (your bar as it is): wooden plaque, technology / AI, parchment & seal, runestone, stained glass, comic, frost and pixel. Each brings its backdrop, rim, ornaments, shadow, line texture and font (shipped, SIL Open Font License). Every theme keeps all settings of its own: the first time it starts from your Classic settings, and Classic always comes back exactly as you left it. "Take positions from" copies the columns and shifts of another theme (with undo), "Reset theme" starts it anew from Classic.
+Eleven looks for the whole strip besides Classic (your bar as it is): wooden plaque, technology / AI, parchment & seal, runestone, stained glass, comic, frost, pixel, Swiss, console and pitwall. Each brings its backdrop, rim, ornaments, shadow, line texture and font (shipped, SIL Open Font License). Every theme keeps all settings of its own: the first time it starts from your Classic settings, and Classic always comes back exactly as you left it. "Take positions from" copies the columns and shifts of another theme (with undo), "Reset theme" starts it anew from Classic.
 
 ## Settings
 - Height, background colour and opacity.
