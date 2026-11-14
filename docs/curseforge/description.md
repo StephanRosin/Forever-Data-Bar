@@ -27,7 +27,9 @@ Five looks for the lines:
 - **Alchemy phial**: tiny glass tubes with brass caps and bubbles.
 
 ## Themes (beta)
-Eleven looks for the whole strip besides Classic (your bar as it is): wooden plaque, technology / AI, parchment & seal, runestone, stained glass, comic, frost, pixel, Swiss Clean, console and pitwall. Each brings its backdrop, rim, ornaments, shadow, line texture and font (shipped, SIL Open Font License). Every theme keeps all settings of its own: the first time it starts from your Classic settings, and Classic always comes back exactly as you left it. "Take positions from" copies the columns and shifts of another theme (with undo), "Reset theme" starts it anew from Classic. "Apply to all Forever addons" puts the other Forever addons on the same theme and colour.
+Forever addons can now wear a shared look: Wood, Parchment, Tech, Runestone, Stained Glass, Comic, Frost, Pixel, Swiss Clean, Console and Pitwall, each with its own colour choices. Pick one in the options under Theme. It works on its own, but looks best when your other Forever addons wear the same theme — "Apply to all Forever addons" switches them in one click. Classic stays the default, and switching back to Classic always restores your previous settings exactly.
+
+A theme gives the whole strip its backdrop, rim, ornaments, shadow, line texture and font; the five designs stay distinct under every theme. Each theme keeps all its settings of its own; the first time, it starts from your Classic settings. "Take positions from" copies the positions of another theme (with undo), "Reset theme" starts it anew from Classic. The theme fonts ship with the addon (SIL Open Font License).
 
 ## Settings
 - Height, background colour and opacity.
