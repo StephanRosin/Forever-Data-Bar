@@ -126,7 +126,7 @@ return function(ns, M, check, ROOT)
     -- Body text (all of the bar's): the theme font where it reads, else the
     -- standard font at the player's size.
     local BODY = { WOOD = "Cinzel", TECH = "Space Grotesk", RUNESTONE = "Marcellus", PIXEL = "VT323",
-        PARCHMENT = "Friz Quadrata", FROST = "Friz Quadrata", GLASS = "Friz Quadrata", COMIC = "Friz Quadrata" }
+        PARCHMENT = "Friz Quadrata", FROST = "Friz Quadrata", GLASS = "Friz Quadrata", COMIC = "Bangers" }
     for id, font in pairs(BODY) do
         Themes.Switch(id)
         local add = font == "Friz Quadrata" and 0 or (Themes.SPECS[id].fontSizeAdd or 0)
@@ -136,7 +136,7 @@ return function(ns, M, check, ROOT)
         check("outline " .. id, (id == "COMIC") == (outline == "") and outline:find("MONOCHROME") == nil, true)
         Themes.Switch("CLASSIC")
     end
-    check("revision raised for the new looks", Themes.REVISION, 3)
+    check("revision raised for the new looks", Themes.REVISION, 4)
     Themes.Switch("COMIC")
     check("comic: values at full strength", f.profs[1].value._textColor[4], 1)
     Themes.Switch("CLASSIC")

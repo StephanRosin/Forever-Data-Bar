@@ -89,7 +89,7 @@ Themes.SPECS = {
     -- ink lettering without an outline (an outline smears it into blobs),
     -- values as dark as the rest (valueAlpha), a solid shadow.
     COMIC = {
-        font = "Bangers", bodyFont = "Friz Quadrata", fontSizeAdd = 2, valueAlpha = 1,
+        font = "Bangers", fontSizeAdd = 2, valueAlpha = 1,   -- no headings: Bangers throughout, like the unit frames
         look = look({ 0.1, 0.08, 0.06 }, { 0.95, 0.2, 0.15 }, { 0, 0, 0 }, 0, ""),
         art = { back = "ComicBack", tint = { 0.7, 0.7, 0.7, 1 }, rim = { 0.07, 0.07, 0.07, 1 }, rimSize = 3,
             bar = "ComicBar", track = 4 },
@@ -116,7 +116,7 @@ local META = { language = true, theme = true, themeSets = true }
 -- Raised whenever SPECS change a look: theme sets made before are made
 -- anew from CLASSIC (Themes.Upgrade), so a changed theme shows as it is
 -- now. CLASSIC is never touched.
-Themes.REVISION = 3
+Themes.REVISION = 4
 
 local function copy(v)
     if type(v) ~= "table" then return v end
