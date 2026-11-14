@@ -223,13 +223,26 @@ local function widgetFor(page, opt)
     return row
 end
 
+-- A row with `visible` comes and goes: page.relayout stacks the page anew.
 local function buildRows(page, spec)
-    local stack = newStack(page)
-    for _, opt in ipairs(spec) do
+    local built = {}
+    for i, opt in ipairs(spec) do
         local row, height = widgetFor(page, opt)
-        stack.add(row, height)
+        built[i] = { row = row, height = height, visible = opt.visible }
     end
-    page.rows, page.height = stack.rows, stack.y + PAGE_BOTTOM
+    page.relayout = function()
+        local stack = newStack(page)
+        for _, b in ipairs(built) do
+            local shown = not b.visible or b.visible()
+            b.row:SetShown(shown)
+            if shown then
+                b.row:ClearAllPoints()
+                stack.add(b.row, b.height)
+            end
+        end
+        page.rows, page.height = stack.rows, stack.y + PAGE_BOTTOM
+    end
+    page.relayout()
 end
 
 -- The professions page: one checkbox per known skill, rebuilt on every
@@ -299,18 +312,21 @@ local function themeRow()
     }
 end
 
--- The comic's colour, kept apart from the theme sets; chosen under another
--- theme it waits for the comic.
-local function comicColorRow()
+-- The current theme's colours, kept apart from the theme sets; none under
+-- Classic.
+local function themeColorRow()
     return {
-        type = "select", label = "OPT_THEME_COMIC_COLOR",
+        type = "select", label = "OPT_THEME_COLOR",
+        visible = function() return #ns.Themes.Colors() > 0 end,
         choices = function()
-            local list = {}
-            for _, id in ipairs(ns.Themes.COMIC_COLORS) do list[#list + 1] = { label = L["COMIC_COLOR_" .. id], value = id } end
+            local theme, list = ns.Themes.Current(), {}
+            for _, id in ipairs(ns.Themes.Colors()) do
+                list[#list + 1] = { label = L["THEME_COLOR_" .. theme .. "_" .. id], value = id }
+            end
             return list
         end,
-        get = function() return ns.Themes.ComicColor() end,
-        set = function(v) themeRefused(ns.Themes.SetComicColor(v)) end,
+        get = function() return ns.Themes.Color() end,
+        set = function(v) themeRefused(ns.Themes.SetColor(v)) end,
     }
 end
 
@@ -352,8 +368,8 @@ local function dataBarRows()
     return {
         { type = "header", label = "OPT_THEME" },
         themeRow(),
-        comicColorRow(),
-        { type = "text", label = "OPT_THEME_HINT", height = 40 },
+        themeColorRow(),
+        { type = "text", label = "OPT_THEME_HINT", height = 66 },
         themeCopyRow(),
         { type = "buttons", buttons = {
             { label = "OPT_THEME_RESET", width = 200, onClick = function()
@@ -795,6 +811,12 @@ function Window.Refresh()
     layoutNav()
     local page = pages[current]
     if not page then return end
+    if page.relayout then
+        page.relayout()
+        page:SetHeight(page.height)
+        frame.scrollChild:SetHeight(page.height)
+        updateScrollbar()
+    end
     for _, row in ipairs(page.rows or {}) do row:Refresh() end
     if frame.languageRow then frame.languageRow:Refresh() end
 end

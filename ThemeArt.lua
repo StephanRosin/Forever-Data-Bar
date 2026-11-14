@@ -44,7 +44,7 @@ local function paintBack(back, art)
         back:Hide()
         return
     end
-    back:SetTexture(PATH .. art.back, "REPEAT", "REPEAT")
+    back:SetTexture(PATH .. ns.Themes.Back(art), "REPEAT", "REPEAT")
     if back.SetHorizTile then
         back:SetHorizTile(true)
         back:SetVertTile(true)

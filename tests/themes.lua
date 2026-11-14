@@ -141,41 +141,93 @@ return function(ns, M, check, ROOT)
     Themes.Switch("CLASSIC")
     check("classic: values fainter again", f.profs[1].value._textColor[4] < 1, true)
 
-    -- The comic's colours: paper and accent, kept apart from the theme sets.
-    check("comic colours: registry list", table.concat(registry.ComicColors, ","), "GREY,DARKGREY,BLACK,WHITE,YELLOW,BLUE,RED,GREEN,PURPLE")
-    check("comic colours: grey by default", registry.ComicColor(), "GREY")
-    Themes.Switch("COMIC")
+    -- Every theme's colours, kept apart from the theme sets.
     local function back() return table.concat({ f.themeBack._vertex[1], f.themeBack._vertex[2], f.themeBack._vertex[3] }, ",") end
+    local function alpha() return f.themeBack._vertex[4] end
     local function accent() local c = Themes.Accent(); return table.concat({ c[1], c[2], c[3] }, ",") end
-    check("comic grey: paper as today", back(), "0.7,0.7,0.7")
-    check("comic grey: the yellow accent", accent(), "1,0.9,0.1")
-    check("comic blue: set", registry.SetComicColor("BLUE"), true)
-    check("comic blue: paper", back(), "0.45,0.6,0.86")
-    check("comic blue: accent yellow", accent(), "1,0.9,0.1")
-    check("comic yellow: set", Themes.SetComicColor("YELLOW"), true)
-    check("comic yellow: accent blue", accent(), "0.15,0.45,0.95")
-    check("comic colour: not in the set", Settings.Get("dataBarAccent")[1], 1)
-    check("comic colour: unknown refused", select(2, Themes.SetComicColor("NOPE")), "UNKNOWN")
+    local function rgb(t) return table.concat({ t[1], t[2], t[3] }, ",") end
+    local PATH = D.CFG.MEDIA .. "Themes\\"
+    check("colours: none under classic", #registry.Colors(), 0)
+    check("colours: classic has no colour", registry.Color(), nil)
+    check("colours: comic list", table.concat(registry.Colors("COMIC"), ","), "GREY,DARKGREY,BLACK,WHITE,YELLOW,BLUE,RED,GREEN,PURPLE")
+    check("colours: pixel list", table.concat(registry.Colors("PIXEL"), ","), "NAVY,PLUM,FOREST,BROWN,GREY,BLACK,TEAL,PURPLE")
+    for _, id in ipairs(Themes.IDS) do
+        if id ~= "CLASSIC" then
+            local art = Themes.SPECS[id].art
+            Themes.Switch(id)
+            local first = registry.Colors()[1]
+            check(id .. ": the first colour by default", registry.Color(), first)
+            check(id .. ": default keeps its texture", f.themeBack._texture, PATH .. art.back)
+            check(id .. ": default keeps its tint", back() .. "/" .. alpha(), art.tint and rgb(art.tint) .. "/" .. art.tint[4] or "1,1,1/1")
+            check(id .. ": default keeps its accent", accent(), rgb(Themes.SPECS[id].look.dataBarAccent))
+            for _, colour in ipairs(registry.Colors()) do
+                check(id .. " " .. colour .. ": named", ns.L["THEME_COLOR_" .. id .. "_" .. colour] ~= "THEME_COLOR_" .. id .. "_" .. colour, true)
+                if id ~= "COMIC" and colour ~= first then
+                    check(id .. " " .. colour .. ": grey texture shipped", exists("Media/Themes/" .. art.back .. "Grey.tga"), true)
+                end
+            end
+            Themes.Switch("CLASSIC")
+        end
+    end
+    -- A non-default colour: the grey texture tinted to target / mean, its accent.
+    Themes.Switch("PIXEL")
+    check("pixel plum: set", registry.SetColor("PLUM"), true)
+    check("pixel plum: grey texture", f.themeBack._texture, PATH .. "PixelBackGrey")
+    check("pixel plum: tint target / mean", back(), rgb({ 0.23 / 0.8, 0.08 / 0.8, 0.16 / 0.8 }))
+    check("pixel plum: accent", accent(), "1,0.93,0.15")
+    check("pixel grey: no accent keeps the theme's", Themes.SetColor("GREY") and accent(), rgb(Themes.SPECS.PIXEL.look.dataBarAccent))
+    check("colour: not in the set", Settings.Get("dataBarAccent")[1], Themes.SPECS.PIXEL.look.dataBarAccent[1])
+    check("colour: unknown refused", select(2, Themes.SetColor("NOPE")), "UNKNOWN")
+    check("colour: another theme's id refused", select(2, Themes.SetColor("OAK")), "UNKNOWN")
     M.state.combat = true
-    check("comic colour: combat refused under the comic", select(2, Themes.SetComicColor("RED")), "COMBAT")
+    check("colour: combat refused for the theme in use", select(2, Themes.SetColor("NAVY")), "COMBAT")
+    check("colour: another theme's set in combat", Themes.SetColor("DEEP", "FROST"), true)
     M.state.combat = false
-    Themes.Switch("WOOD")
-    check("comic colour: nothing under wood", accent(), table.concat(Themes.SPECS.WOOD.look.dataBarAccent, ","))
-    check("comic colour: chosen under wood", Themes.SetComicColor("RED"), true)
+    Themes.Switch("FROST")
+    check("frost deep: tint clamps and keeps the alpha", back() .. "/" .. alpha(), rgb({ 0.1 / 0.796, 0.18 / 0.796, 0.32 / 0.796 }) .. "/0.75")
+    Themes.Switch("PIXEL")
+    check("colours: each theme keeps its own", registry.Color() .. "/" .. registry.Color("FROST"), "GREY/DEEP")
+    Themes.SetColor("NAVY")
+    check("colour back to default: nothing stored", ForeverDataBarDB.themeColors.PIXEL, nil)
+    Themes.SetColor("ICE", "FROST")
+    -- The comic as built: paper tint and accent.
     Themes.Switch("COMIC")
-    check("comic colour: survives the switch", registry.ComicColor() .. back(), "RED0.86,0.44,0.4")
-    check("comic black: set", Themes.SetComicColor("BLACK"), true)
-    check("comic black: paper", back(), "0.16,0.16,0.16")
-    check("comic black: accent yellow", accent(), "1,0.9,0.1")
+    check("comic blue: set", registry.SetColor("BLUE"), true)
+    check("comic blue: paper", f.themeBack._texture .. back(), PATH .. "ComicBack0.45,0.6,0.86")
+    check("comic blue: accent yellow", accent(), "1,0.9,0.1")
+    check("comic yellow: accent blue", Themes.SetColor("YELLOW") and accent(), "0.15,0.45,0.95")
+    check("comic black: paper", Themes.SetColor("BLACK") and back(), "0.16,0.16,0.16")
     check("comic black: text stays white", S("dataBarFontColor")[1], 1)
-    check("comic white: set", Themes.SetComicColor("WHITE"), true)
-    check("comic white: paper", back(), "1,1,1")
-    check("comic white: accent blue", accent(), "0.15,0.45,0.95")
-    ForeverDataBarDB.comicColor = "NOPE"
-    check("comic colour: unknown stored reads grey", Themes.ComicColor(), "GREY")
-    check("comic grey back: set", Themes.SetComicColor("GREY"), true)
-    check("comic grey back: paper", back(), "0.7,0.7,0.7")
-    check("comic grey back: nothing stored", ForeverDataBarDB.comicColor, nil)
+    ForeverDataBarDB.themeColors.COMIC = "NOPE"
+    check("colour: unknown stored reads the first", Themes.Color(), "GREY")
+    Themes.SetColor("GREY")
+    check("comic grey: paper as today", back(), "0.7,0.7,0.7")
+    -- The comic colour of before moves into themeColors once.
+    ForeverDataBarDB.comicColor = "RED"
+    Themes.MigrateComicColor()
+    check("migration: comic colour moved", registry.Color("COMIC") .. tostring(ForeverDataBarDB.comicColor), "REDnil")
+    ForeverDataBarDB.comicColor = "BLUE"
+    Themes.MigrateComicColor()
+    check("migration: a colour already set wins", registry.Color("COMIC"), "RED")
+    Themes.SetColor("GREY")
+    -- The options: one colour list, the current theme's; none under Classic.
+    local function colourRow()
+        for _, x in ipairs(M.frames) do
+            if x.opts and x.label and x.label._text == ns.L.OPT_THEME_COLOR and x:IsShown() ~= false then return x end
+        end
+    end
+    ns.Window.Open("databar")
+    local row = colourRow()
+    local items = row and row.opts.items() or {}
+    check("options: the comic's colours", #items .. items[1].text, "9" .. ns.L.THEME_COLOR_COMIC_GREY)
+    Themes.Switch("WOOD")
+    row = colourRow()
+    items = row and row.opts.items() or {}
+    check("options: wood's colours after the switch", #items .. items[1].text, "6" .. ns.L.THEME_COLOR_WOOD_OAK)
+    Themes.Switch("CLASSIC")
+    check("options: no colour under classic", colourRow(), nil)
+    ns.Window.Toggle()
+    ForeverDataBarDB.themeColors = nil
     Themes.Switch("CLASSIC")
 
     -- The designs stay apart under a theme: thicker, each with its traits.
