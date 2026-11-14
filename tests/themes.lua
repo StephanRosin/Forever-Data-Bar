@@ -171,6 +171,23 @@ return function(ns, M, check, ROOT)
     check("comic grey back: nothing stored", ForeverDataBarDB.comicColor, nil)
     Themes.Switch("CLASSIC")
 
+    -- The designs stay apart under a theme: thicker, each with its traits.
+    Themes.Switch("WOOD")
+    local tracks = {}
+    for _, id in ipairs({ "HAIR", "GLASS", "SEGMENTS", "ICONS" }) do
+        Settings.Set("dataBarDesign", id)
+        tracks[#tracks + 1] = D.Design().track
+    end
+    check("designs under a theme: tracks apart", table.concat(tracks, ","), "3,4,5,4")
+    Settings.Set("dataBarDesign", "SEGMENTS")
+    check("designs under a theme: segments split", f.xp.line.dividers[1]:IsShown(), true)
+    Settings.Set("dataBarDesign", "GLASS")
+    check("designs under a theme: glass glows", D.Design().glow, true)
+    Settings.Set("dataBarDesign", "HAIR")
+    check("designs under a theme: hair fades", D.Design().fade, true)
+    Settings.Set("dataBarDesign", nil)
+    Themes.Switch("CLASSIC")
+
     -- Nothing but a soft shadow outside the bar's Classic box.
     local classicHeight = f:GetHeight()
     for _, id in ipairs(Themes.IDS) do

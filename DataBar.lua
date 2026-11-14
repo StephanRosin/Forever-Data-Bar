@@ -89,8 +89,9 @@ function DataBar.XpText(level, cur, max)
     return L.DATABAR_XP:format(math.floor(cur / max * 100), (level or 0) + 1)
 end
 
--- Under a theme the lines take its texture and thickness (Themes.lua),
--- the phial keeps its own glass.
+-- Under a theme the lines take its texture, thicker by as much as the
+-- theme's track exceeds GLASS's (thick enough to show it), so the designs
+-- stay apart and keep their traits; the phial keeps its own glass.
 local themed = {}
 function DataBar.Design()
     local id = S("dataBarDesign")
@@ -101,7 +102,7 @@ function DataBar.Design()
     if not themed[key] then
         local d = {}
         for k, v in pairs(design) do d[k] = v end
-        d.bar, d.track = CFG.MEDIA .. "Themes\\" .. art.bar, math.max(design.track, art.track)
+        d.bar, d.track = CFG.MEDIA .. "Themes\\" .. art.bar, design.track + math.max(0, art.track - DataBar.DESIGNS.GLASS.track)
         themed[key] = d
     end
     return themed[key]
