@@ -214,7 +214,7 @@ return function(ns, M, check, ROOT)
     check("console amber: backdrop kept", f.themeBack._texture, PATH .. "ConsoleBack")
     Themes.SetColor("MINT")
     Themes.Switch("PITWALL")
-    check("pitwall: no rim", f.themeRim:IsShown(), false)
+    check("pitwall: a carbon line", f.themeRim:IsShown() and f.themeRim:GetHeight(), 1)
     check("pitwall: red wedge at the left end", f.themeWedge:IsShown() and rgb(f.themeWedge._vertex), "0.88,0.02,0")
     check("pitwall: wedge in the margin", f.themeWedge:GetWidth() <= D.CFG.PAD, true)
     Themes.SetColor("ORANGE")
@@ -223,6 +223,27 @@ return function(ns, M, check, ROOT)
     Themes.SetColor("RED")
     Themes.Switch("CLASSIC")
     check("classic: no wedge", f.themeWedge:IsShown(), false)
+    -- The rim is the same in every Forever addon, for every theme and
+    -- colour: the theme's own; only Console's colours and Pixel's Handheld
+    -- recolour it, never the accent.
+    local RINGS = { WOOD = "0.906,0.702,0.161,1", TECH = "0.25,0.88,0.94,0.9", PARCHMENT = "0.29,0.2,0.12,1",
+        RUNESTONE = "0.1,0.1,0.12,1", GLASS = "0.07,0.06,0.05,1", COMIC = "0.07,0.07,0.07,1",
+        FROST = "0.86,0.96,1,0.8", PIXEL = "1,0.95,0.91,1", SWISS = "0.95,0.95,0.95,1",
+        PITWALL = "0.043,0.047,0.055,1" }
+    local OWN_RING = { CONSOLE = { MINT = "0.31,0.93,0.69,1", AMBER = "1,0.69,0,1", PHOSPHOR = "0.22,1,0.08,1",
+        VIOLET = "0.63,0.47,1,1" }, PIXEL = { HANDHELD = "0.78,0.94,0.44,1" } }
+    for _, id in ipairs(Themes.IDS) do
+        if id ~= "CLASSIC" then
+            Themes.Switch(id)
+            local chosen = registry.Color()
+            for _, c in ipairs(registry.Colors()) do
+                Themes.SetColor(c)
+                check("rim " .. id .. " " .. c, f.themeRim:IsShown() and table.concat(f.themeRim._texColor, ","),
+                    (OWN_RING[id] or {})[c] or RINGS[id])
+            end
+            Themes.SetColor(chosen)
+        end
+    end
     -- The comic as built: paper tint and accent.
     Themes.Switch("COMIC")
     check("comic blue: set", registry.SetColor("BLUE"), true)

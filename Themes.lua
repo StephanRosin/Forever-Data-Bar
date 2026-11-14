@@ -124,11 +124,11 @@ Themes.SPECS = {
         look = look({ 0.9, 0.91, 0.93 }, { 0.31, 0.93, 0.69 }, { 0.06, 0.06, 0.07 }, 40),
         art = { back = "ConsoleBack", rim = { 0.31, 0.93, 0.69, 1 }, rimSize = 1, bar = "ConsoleBar", track = 3 },
     },
-    -- A timing screen: carbon, a red wedge, LED segments.
+    -- A timing screen: carbon, a carbon line, a red wedge, LED segments.
     PITWALL = {
         font = "Titillium Web",
         look = look({ 0.95, 0.95, 0.96 }, { 0.13, 0.77, 0.37 }, { 0.04, 0.05, 0.05 }, 40),
-        art = { back = "PitwallBack", wedge = "PitwallWedge", wedgeColor = { 0.88, 0.02, 0, 1 }, bar = "PitwallBar",
+        art = { back = "PitwallBack", rim = { 0.043, 0.047, 0.055, 1 }, rimSize = 1, wedge = "PitwallWedge", wedgeColor = { 0.88, 0.02, 0, 1 }, bar = "PitwallBar",
             track = 4 },
     },
 }
@@ -142,6 +142,8 @@ local META = { language = true, theme = true, themeSets = true, themeColors = tr
 -- (vertex colour = back / GREY_MEAN, at most 1), and brings its accent
 -- (nil: the theme's own). Themes with one dark backdrop in every colour
 -- (SWISS, CONSOLE, PITWALL) change only the accent, the rim or the wedge.
+-- `rim` recolours the rim: only CONSOLE's colours and Pixel's HANDHELD,
+-- the same in every Forever addon; the accent never tints it.
 -- The comic keeps its paper tint (COMIC_PAINT).
 local GREY_MEAN = { WoodBack = 0.800, TechBack = 0.705, ParchmentBack = 0.799, StoneBack = 0.800,
     GlassBack = 0.777, FrostBack = 0.796, PixelBack = 0.800 }
@@ -205,7 +207,7 @@ Themes.COLORS = {
         colour("BLACK", { 0.03, 0.03, 0.04 }, { 0, 0.89, 0.21 }),
         colour("TEAL", { 0.02, 0.17, 0.22 }, { 0.16, 0.68, 1 }),
         colour("PURPLE", { 0.15, 0.1, 0.25 }, { 1, 0.47, 0.66 }),
-        colour("HANDHELD", { 0.06, 0.12, 0.06 }, { 0.78, 0.94, 0.44 }),
+        colour("HANDHELD", { 0.06, 0.12, 0.06 }, { 0.78, 0.94, 0.44 }, { 0.78, 0.94, 0.44, 1 }),
     },
     SWISS = {
         colour("RED"),
