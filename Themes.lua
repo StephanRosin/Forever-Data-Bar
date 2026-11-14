@@ -91,7 +91,7 @@ Themes.SPECS = {
     COMIC = {
         font = "Bangers", bodyFont = "Friz Quadrata", fontSizeAdd = 2, valueAlpha = 1,
         look = look({ 0.1, 0.08, 0.06 }, { 0.95, 0.2, 0.15 }, { 0, 0, 0 }, 0, ""),
-        art = { back = "ComicBack", tint = { 0.7, 0.7, 0.7, 1 }, rim = { 0.07, 0.07, 0.07, 1 }, rimSize = 3, hardShadow = 4,
+        art = { back = "ComicBack", tint = { 0.7, 0.7, 0.7, 1 }, rim = { 0.07, 0.07, 0.07, 1 }, rimSize = 3,
             bar = "ComicBar", track = 4 },
     },
     -- Translucent ice with quieter cracks, a pale rim, a long soft shadow.
@@ -105,7 +105,7 @@ Themes.SPECS = {
     PIXEL = {
         font = "VT323", fontSizeAdd = 4,
         look = look({ 1, 0.95, 0.91 }, { 0.3, 1, 0.4 }, { 0, 0, 0 }, 0),
-        art = { back = "PixelBack", rim = { 1, 0.95, 0.91, 1 }, rimSize = 2, hardShadow = 3,
+        art = { back = "PixelBack", rim = { 1, 0.95, 0.91, 1 }, rimSize = 2,
             bar = "PixelBar", track = 4 },
     },
 }
