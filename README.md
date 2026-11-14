@@ -3,8 +3,8 @@
 One thin strip across the top or bottom of the screen for WoW: Forever:
 experience (with XP per hour, time to the next level and unspent talents),
 gold, durability, bags, the clock, up to four professions and four
-reputations. Five columns, five designs, your own accent colour. Options
-from the gear on the bar or `/fdb`; English, German, Spanish and French.
+reputations. Five columns, five designs, eight themes (beta), your own
+accent colour. Options from the gear on the bar or `/fdb`; English, German, Spanish and French.
 
 The full feature list is in [docs/curseforge/description.md](docs/curseforge/description.md).
 

@@ -183,7 +183,8 @@ local function widgetFor(page, opt)
     elseif kind == "edit" then
         return editRow(page, opt)
     end
-    local o = { label = labelText(opt.label), get = opt.get, set = opt.set }
+    local o = { label = labelText(opt.label), get = opt.get, set = opt.set,
+        placeholder = opt.placeholder and labelText(opt.placeholder) }
     local row
     if kind == "check" then
         row = Widgets.Checkbox(page, o)
@@ -277,9 +278,73 @@ end
 
 -- XP lines: one block per line, all alike (show, place, across, up/down).
 
+-- The theme (beta, Themes.lua): each one has every setting of its own, so
+-- it comes first. Names shown in the theme's font.
+local function themeRefused(ok, why)
+    if not ok and why then ns.Print(L["THEME_REFUSED_" .. why]) end
+end
+
+local function themeRow()
+    return {
+        type = "select", label = "OPT_THEME_CHOICE",
+        choices = function()
+            local list = {}
+            for _, id in ipairs(ns.Themes.IDS) do
+                list[#list + 1] = { label = L["THEME_" .. id], value = id, font = ns.Themes.SPECS[id].font }
+            end
+            return list
+        end,
+        get = function() return ns.Themes.Current() end,
+        set = function(v) themeRefused(ns.Themes.Switch(v)) end,
+    }
+end
+
+-- The positions another theme's set has, taken over into the current one.
+-- What it replaced comes back with "Undo" in the same list, until the theme
+-- changes or /reload.
+local themeUndo
+local UNDO_THEME, NONE_THEME = "__undo", "__none"
+local function themeCopyRow()
+    return {
+        type = "select", label = "OPT_THEME_COPY", placeholder = "OPT_THEME_COPY_PICK",
+        choices = function()
+            local list = {}
+            if themeUndo and themeUndo.theme == ns.Themes.Current() then
+                list[1] = { label = L.OPT_THEME_COPY_UNDO, value = UNDO_THEME }
+            end
+            for _, id in ipairs(ns.Themes.Stored()) do list[#list + 1] = { label = L["THEME_" .. id], value = id } end
+            if #list == 0 then list[1] = { label = L.OPT_THEME_COPY_NONE, value = NONE_THEME } end
+            return list
+        end,
+        get = function() return nil end,
+        set = function(id)
+            if id == NONE_THEME then return end
+            if id == UNDO_THEME then
+                local undo = themeUndo
+                themeUndo = nil
+                if undo then ns.Themes.Restore(undo.saved) end
+                return
+            end
+            local saved, why = ns.Themes.CopyPlacement(id)
+            if not saved then return themeRefused(nil, why) end
+            themeUndo = { theme = ns.Themes.Current(), saved = saved }
+        end,
+    }
+end
+
 -- The data bar theme: its look, its place, when it hides.
 local function dataBarRows()
     return {
+        { type = "header", label = "OPT_THEME" },
+        themeRow(),
+        { type = "text", label = "OPT_THEME_HINT", height = 40 },
+        themeCopyRow(),
+        { type = "buttons", buttons = {
+            { label = "OPT_THEME_RESET", width = 200, onClick = function()
+                themeRefused(ns.Themes.Reset())
+                Window.Refresh()
+            end },
+        } },
         { type = "header", label = "OPT_DATABAR_BAR" },
         choice("dataBarDesign", "OPT_DATABAR_DESIGN", ns.DataBar.DESIGN_ORDER, "DATABAR_DESIGN_"),
         choice("dataBarPos", "OPT_DATABAR_POS", { "TOP", "BOTTOM" }, "DATABAR_POS_"),

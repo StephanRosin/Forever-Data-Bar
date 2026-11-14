@@ -19,8 +19,10 @@ Locales\frFR.lua
 Settings.lua
 Locale.lua
 Media.lua
+Themes.lua
 Data.lua
 Xp.lua
+ThemeArt.lua
 DataBar.lua
 Micro.lua
 Options\Style.lua

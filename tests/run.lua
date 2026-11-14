@@ -481,6 +481,9 @@ SlashCmdList.FOREVERDATABAR("")
 check("/fdb opens the options", W.IsShown(), true)
 W.Toggle()
 
+section("Themes")
+dofile("themes.lua")(ns, M, check, ROOT)
+
 section("Languages")
 local base = ns.Locales.enUS
 for code, strings in pairs(ns.Locales) do

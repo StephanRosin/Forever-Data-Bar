@@ -15,7 +15,11 @@ grep -v '^\s*#' "$HERE/ForeverDataBar.toc" | grep -v '^\s*$' | tr -d '\r' | whil
     mkdir -p "$TARGET/$(dirname "$f")"
     cp "$HERE/$f" "$TARGET/$f"
 done
-# Textures the Lua code loads by path.
+# Textures and fonts the Lua code loads by path.
 mkdir -p "$TARGET/Media"
 cp "$HERE"/Media/*.tga "$TARGET/Media/"
+# The themes' textures and fonts (with their licence).
+mkdir -p "$TARGET/Media/Themes" "$TARGET/Media/Fonts"
+cp "$HERE"/Media/Themes/*.tga "$TARGET/Media/Themes/"
+cp "$HERE"/Media/Fonts/* "$TARGET/Media/Fonts/"
 echo "Installed to $TARGET"

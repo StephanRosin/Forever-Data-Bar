@@ -1,6 +1,6 @@
 local ADDON, ns = ...
 
--- Fonts for the level number: the game's own, plus every font another addon
+-- Fonts for the bar: the game's own, the themes', plus every font another addon
 -- registers with LibSharedMedia (the library itself is not shipped).
 local Media = {}
 ns.Media = Media
@@ -13,16 +13,40 @@ Media.BLIZZARD_FONTS = {
 }
 Media.DEFAULT_FONT = "Fonts\\FRIZQT__.TTF"
 
+-- The themes' fonts (Themes.lua), shipped in Media/Fonts (OFL, see
+-- FONTS.txt); Latin letters only.
+local FONTS = "Interface\\AddOns\\ForeverDataBar\\Media\\Fonts\\"
+Media.OWN_FONTS = {
+    { name = "Bangers",            path = FONTS .. "Bangers-Regular.ttf" },
+    { name = "Cinzel",             path = FONTS .. "Cinzel-Bold.ttf" },
+    { name = "Cormorant SC",       path = FONTS .. "CormorantSC-Bold.ttf" },
+    { name = "IM Fell English SC", path = FONTS .. "IMFeENsc28P.ttf" },
+    { name = "Marcellus",          path = FONTS .. "Marcellus-Regular.ttf" },
+    { name = "Space Grotesk",      path = FONTS .. "SpaceGrotesk-Bold.ttf" },
+    { name = "VT323",              path = FONTS .. "VT323-Regular.ttf" },
+}
+
+-- Loaded while the addon loads: a font file used the first time can be
+-- refused (DataBar.lua tries again), so the first restyle should not be its
+-- first use.
+do
+    local holder = CreateFrame("Frame")
+    holder:Hide()
+    for _, f in ipairs(Media.OWN_FONTS) do holder:CreateFontString():SetFont(f.path, 12, "") end
+end
+
 local function sharedMedia()
     return LibStub and LibStub("LibSharedMedia-3.0", true)
 end
 
--- Every font by name, sorted; Blizzard's first.
+-- Every font by name, sorted; Blizzard's first, then ours.
 function Media.FontNames()
     local names, seen = {}, {}
-    for _, f in ipairs(Media.BLIZZARD_FONTS) do
-        names[#names + 1] = f.name
-        seen[f.name] = true
+    for _, list in ipairs({ Media.BLIZZARD_FONTS, Media.OWN_FONTS }) do
+        for _, f in ipairs(list) do
+            names[#names + 1] = f.name
+            seen[f.name] = true
+        end
     end
     local lsm = sharedMedia()
     if lsm then
@@ -38,8 +62,10 @@ end
 
 -- The file for a font name; unknown names get Friz Quadrata.
 function Media.FontPath(name)
-    for _, f in ipairs(Media.BLIZZARD_FONTS) do
-        if f.name == name then return f.path end
+    for _, list in ipairs({ Media.BLIZZARD_FONTS, Media.OWN_FONTS }) do
+        for _, f in ipairs(list) do
+            if f.name == name then return f.path end
+        end
     end
     local lsm = sharedMedia()
     local path = lsm and lsm:Fetch("font", name, true)

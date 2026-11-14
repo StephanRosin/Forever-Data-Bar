@@ -9,6 +9,7 @@ local Settings = {}
 ns.Settings = Settings
 
 Settings.DEFAULTS = {
+    theme = "CLASSIC",          -- see Themes.lua; switched only through Themes.Switch
     dataBarDesign = "GLASS",    -- see DataBar.DESIGNS
     dataBarPos = "TOP",         -- TOP or BOTTOM edge of the screen
     dataBarHeight = 24,
@@ -104,14 +105,19 @@ function Settings.Get(key)
     return v
 end
 
--- Numbers are rounded and kept in their range.
-function Settings.Set(key, value)
+-- The value as stored: numbers rounded and kept in their range, the
+-- default as nil.
+function Settings.Stored(key, value)
     local range = Settings.RANGES[key]
     if range and type(value) == "number" then
         value = math.max(range[1], math.min(range[2], math.floor(value + 0.5)))
     end
     if value == Settings.DEFAULTS[key] then value = nil end
-    ns.DB()[key] = value
+    return value
+end
+
+function Settings.Set(key, value)
+    ns.DB()[key] = Settings.Stored(key, value)
     Settings.Changed(key)
 end
 
@@ -132,10 +138,13 @@ function Settings.SetRep(slot, factionID)
     Settings.Changed("reps")
 end
 
--- Look and parts back to their defaults; factions and hidden skills stay.
+-- Look and parts back to their defaults, under a theme with its look;
+-- factions, hidden skills, the language and the other themes' settings stay.
 function Settings.Reset()
-    local language = ns.DB().language
-    ForeverDataBarDB = { language = language }
+    local old = ns.DB()
+    local db = ns.Themes.Seed(old.theme, {})
+    db.language, db.theme, db.themeSets = old.language, old.theme, old.themeSets
+    ForeverDataBarDB = db
     Settings.Changed(nil)
 end
 

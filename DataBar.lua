@@ -89,8 +89,22 @@ function DataBar.XpText(level, cur, max)
     return L.DATABAR_XP:format(math.floor(cur / max * 100), (level or 0) + 1)
 end
 
+-- Under a theme the lines take its texture and thickness (Themes.lua),
+-- the phial keeps its own glass.
+local themed = {}
 function DataBar.Design()
-    return DataBar.DESIGNS[S("dataBarDesign")] or DataBar.DESIGNS.GLASS
+    local id = S("dataBarDesign")
+    local design = DataBar.DESIGNS[id] or DataBar.DESIGNS.GLASS
+    local art = ns.Themes.Spec(S("theme")).art
+    if not (art and art.bar) or design.phial then return design end
+    local key = tostring(id) .. art.bar
+    if not themed[key] then
+        local d = {}
+        for k, v in pairs(design) do d[k] = v end
+        d.bar, d.track = CFG.MEDIA .. "Themes\\" .. art.bar, math.max(design.track, art.track)
+        themed[key] = d
+    end
+    return themed[key]
 end
 
 local frame
@@ -127,12 +141,39 @@ local function Font(fs, key, role, plus)
     if fs.SetWordWrap then fs:SetWordWrap(false) end
 end
 
+-- Whether a text took the font asked for. A font file the client has not
+-- loaded yet (the themes' own, Media.lua) can be refused on first use and
+-- leave the text without a font.
+local function HasFont(fs, path)
+    local got = fs:GetFont()
+    if type(got) ~= "string" then return false end
+    local function plain(p) return (p:lower():gsub("/", "\\")) end
+    return plain(got) == plain(path)
+end
+-- How often, and how far apart, a refused font is tried again.
+local FONT_RETRIES, FONT_RETRY_DELAY = 8, 0.25
+
+-- Meanwhile the text has the default font.
+local function SetFont(fs, path, size, outline, retries)
+    local wanted = path .. "|" .. size .. "|" .. outline
+    fs.fontWanted = wanted
+    if fs:SetFont(path, size, outline) and HasFont(fs, path) then return end
+    fs:SetFont(ns.Media.DEFAULT_FONT, size, outline)
+    retries = retries or FONT_RETRIES
+    if retries <= 0 then
+        ns.Print(L.MSG_FONT_REFUSED:format(path))
+        return
+    end
+    C_Timer.After(FONT_RETRY_DELAY, function()
+        -- Restyled since: that call has its own tries.
+        if fs.fontWanted == wanted then SetFont(fs, path, size, outline, retries - 1) end
+    end)
+end
+
 local function ApplyFonts()
     for _, t in ipairs(texts) do
         local path, size, outline, c = DataBar.FontFor(t.key)
-        if not t.fs:SetFont(path, size + t.plus, outline) then
-            t.fs:SetFont(ns.Media.DEFAULT_FONT, size + t.plus, outline)
-        end
+        SetFont(t.fs, path, size + t.plus, outline)
         if t.role == "text" then t.fs:SetTextColor(c[1], c[2], c[3], 1)
         elseif t.role == "value" then t.fs:SetTextColor(c[1], c[2], c[3], VALUE_ALPHA) end
     end
@@ -207,6 +248,10 @@ local function PaintLine(line, design, colour, share, rested, segments)
     if design.phial then
         line.track:SetColorTexture(CFG.PHIAL_GLASS[1], CFG.PHIAL_GLASS[2], CFG.PHIAL_GLASS[3], 1)
         line.fill:SetTexture(CFG.MEDIA .. "FillShade.tga")
+        line.fill:SetVertexColor(colour[1], colour[2], colour[3], 1)
+    elseif design.bar then
+        line.track:SetColorTexture(1, 1, 1, CFG.TRACK[1])
+        line.fill:SetTexture(design.bar)
         line.fill:SetVertexColor(colour[1], colour[2], colour[3], 1)
     else
         line.track:SetColorTexture(1, 1, 1, CFG.TRACK[1])
@@ -452,6 +497,7 @@ local function Build()
     frame.bg:SetAllPoints(frame)
     frame.edge = frame:CreateTexture(nil, "BORDER")
     frame.edge:SetHeight(1)
+    ns.ThemeArt.Build(frame)
     -- Columns 2 to 5 hang on the width: a new screen size moves them.
     frame:SetScript("OnSizeChanged", function() DataBar.Layout() end)
 
@@ -681,6 +727,7 @@ local function ApplyFrame(design)
     local c = Accent()
     frame.edge:SetColorTexture(c[1], c[2], c[3], CFG.EDGE_ALPHA)
     frame.edge:SetShown(S("dataBarEdge"))
+    ns.ThemeArt.Style(frame, atTop, h)
 
     ApplyFonts()
     local xpWidth = S("dataBarXpWidth")
