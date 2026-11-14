@@ -53,11 +53,11 @@ local ALL = { "OUTERLEFT", "OUTERRIGHT", "INNERLEFT", "INNERRIGHT" }
 
 Themes.SPECS = {
     CLASSIC = {},
-    -- Oak boards, a bronze rim, brass rivets.
+    -- Oak boards, a rim in the family's gold (the GOLD ring elsewhere), brass rivets.
     WOOD = {
         font = "Cinzel", bodyFont = "Friz Quadrata",
         look = look({ 0.96, 0.88, 0.70 }, { 0.94, 0.78, 0.55 }, { 0.1, 0.06, 0.02 }, 30),
-        art = { back = "WoodBack", rim = { 0.76, 0.56, 0.33, 1 }, rimSize = 2, ornament = "Rivet", corners = ALL,
+        art = { back = "WoodBack", rim = { 0.906, 0.702, 0.161, 1 }, rimSize = 2, ornament = "Rivet", corners = ALL,
             shadow = 6, shadowAlpha = 0.6, bar = "WoodBar", track = 4 },
     },
     -- Dark navy with a faint grid, a thin cyan line.

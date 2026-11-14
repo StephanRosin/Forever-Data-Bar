@@ -45,6 +45,7 @@ return function(ns, M, check, ROOT)
     check("wood: the text in Friz", f.xp.text._font[1], ns.Media.FontPath("Friz Quadrata"))
     check("wood: backdrop", f.themeBack:IsShown() and f.themeBack._texture, D.CFG.MEDIA .. "Themes\\WoodBack")
     check("wood: rim instead of the accent line", f.themeRim:IsShown() and not f.edge:IsShown(), true)
+    check("wood: rim in the family's gold", table.concat(f.themeRim._texColor, ","), "0.906,0.702,0.161,1")
     check("wood: four rivets", (function()
         local n = 0
         for _, o in ipairs(f.themeOrnaments) do if o:IsShown() then n = n + 1 end end
