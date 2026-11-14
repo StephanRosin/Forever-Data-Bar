@@ -370,6 +370,11 @@ local function dataBarRows()
         themeRow(),
         themeColorRow(),
         { type = "text", label = "OPT_THEME_HINT", height = 66 },
+        { type = "buttons", visible = ns.Themes.HasOthers, buttons = {
+            { label = "OPT_THEME_ALL", width = 240, onClick = function()
+                ns.Print(L.MSG_THEME_ALL, ns.Themes.ApplyToAll())
+            end },
+        } },
         themeCopyRow(),
         { type = "buttons", buttons = {
             { label = "OPT_THEME_RESET", width = 200, onClick = function()
