@@ -121,8 +121,8 @@ Themes.SPECS = {
     -- A terminal: near black with faint scan lines, a mint line, dashed lines.
     CONSOLE = {
         font = "IBM Plex Mono",
-        look = look({ 0.9, 0.91, 0.93 }, { 0.31, 0.93, 0.69 }, { 0.06, 0.06, 0.07 }, 40),
-        art = { back = "ConsoleBack", rim = { 0.31, 0.93, 0.69, 1 }, rimSize = 1, bar = "ConsoleBar", track = 3 },
+        look = look({ 0.9, 0.91, 0.93 }, { 0.306, 0.929, 0.69 }, { 0.06, 0.06, 0.07 }, 40),
+        art = { back = "ConsoleBack", rim = { 0.306, 0.929, 0.69, 1 }, rimSize = 1, bar = "ConsoleBar", track = 3 },
     },
     -- A timing screen: carbon, a carbon line, a red wedge, LED segments.
     PITWALL = {
@@ -207,7 +207,7 @@ Themes.COLORS = {
         colour("BLACK", { 0.03, 0.03, 0.04 }, { 0, 0.89, 0.21 }),
         colour("TEAL", { 0.02, 0.17, 0.22 }, { 0.16, 0.68, 1 }),
         colour("PURPLE", { 0.15, 0.1, 0.25 }, { 1, 0.47, 0.66 }),
-        colour("HANDHELD", { 0.06, 0.12, 0.06 }, { 0.78, 0.94, 0.44 }, { 0.78, 0.94, 0.44, 1 }),
+        colour("HANDHELD", { 0.06, 0.12, 0.06 }, { 0.784, 0.941, 0.439 }, { 0.784, 0.941, 0.439, 1 }),
     },
     SWISS = {
         colour("RED"),
@@ -218,8 +218,8 @@ Themes.COLORS = {
     CONSOLE = {
         colour("MINT"),
         colour("AMBER", nil, { 1, 0.69, 0 }, { 1, 0.69, 0, 1 }),
-        colour("PHOSPHOR", nil, { 0.22, 1, 0.08 }, { 0.22, 1, 0.08, 1 }),
-        colour("VIOLET", nil, { 0.63, 0.47, 1 }, { 0.63, 0.47, 1, 1 }),
+        colour("PHOSPHOR", nil, { 0.224, 1, 0.078 }, { 0.224, 1, 0.078, 1 }),
+        colour("VIOLET", nil, { 0.627, 0.471, 1 }, { 0.627, 0.471, 1, 1 }),
     },
     PITWALL = {
         colour("RED"),

@@ -180,7 +180,7 @@ return function(ns, M, check, ROOT)
     check("pixel handheld: listed last", registry.Colors()[9], "HANDHELD")
     Themes.SetColor("HANDHELD")
     check("pixel handheld: grey texture tinted", f.themeBack._texture .. back(), PATH .. "PixelBackGrey" .. rgb({ 0.06 / 0.8, 0.12 / 0.8, 0.06 / 0.8 }))
-    check("pixel handheld: accent", accent(), "0.78,0.94,0.44")
+    check("pixel handheld: accent", accent(), "0.784,0.941,0.439")
     check("pixel grey: no accent keeps the theme's", Themes.SetColor("GREY") and accent(), rgb(Themes.SPECS.PIXEL.look.dataBarAccent))
     check("colour: not in the set", Settings.Get("dataBarAccent")[1], Themes.SPECS.PIXEL.look.dataBarAccent[1])
     check("colour: unknown refused", select(2, Themes.SetColor("NOPE")), "UNKNOWN")
@@ -207,7 +207,7 @@ return function(ns, M, check, ROOT)
     check("swiss blue: accent", accent(), "0.18,0.42,1")
     Themes.SetColor("RED")
     Themes.Switch("CONSOLE")
-    check("console: mint line", rim(), "0.31,0.93,0.69")
+    check("console: mint line", rim(), "0.306,0.929,0.69")
     check("console: dashed lines", f.xp.line.fill._texture, PATH .. "ConsoleBar")
     Themes.SetColor("AMBER")
     check("console amber: the line follows the accent", rim() .. "/" .. accent(), "1,0.69,0/1,0.69,0")
@@ -230,8 +230,8 @@ return function(ns, M, check, ROOT)
         RUNESTONE = "0.1,0.1,0.12,1", GLASS = "0.07,0.06,0.05,1", COMIC = "0.07,0.07,0.07,1",
         FROST = "0.86,0.96,1,0.8", PIXEL = "1,0.95,0.91,1", SWISS = "0.95,0.95,0.95,1",
         PITWALL = "0.043,0.047,0.055,1" }
-    local OWN_RING = { CONSOLE = { MINT = "0.31,0.93,0.69,1", AMBER = "1,0.69,0,1", PHOSPHOR = "0.22,1,0.08,1",
-        VIOLET = "0.63,0.47,1,1" }, PIXEL = { HANDHELD = "0.78,0.94,0.44,1" } }
+    local OWN_RING = { CONSOLE = { MINT = "0.306,0.929,0.69,1", AMBER = "1,0.69,0,1", PHOSPHOR = "0.224,1,0.078,1",
+        VIOLET = "0.627,0.471,1,1" }, PIXEL = { HANDHELD = "0.784,0.941,0.439,1" } }
     for _, id in ipairs(Themes.IDS) do
         if id ~= "CLASSIC" then
             Themes.Switch(id)
