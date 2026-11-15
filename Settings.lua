@@ -29,6 +29,7 @@ Settings.DEFAULTS = {
     dataBarDura = true, dataBarDuraColumn = 2, dataBarDuraX = 0,
     dataBarBags = true, dataBarBagsColumn = 2, dataBarBagsX = 0,
     dataBarClock = true, dataBarClockColumn = 3, dataBarClockX = 0,
+    dataBarClock12 = false,     -- 12-hour clock (1:05 PM) instead of 24-hour
     dataBarMicro = true,        -- Blizzard's micro menu around the clock (Micro.lua)
     dataBarMicroCollections = false,
     dataBarProfs = true, dataBarProfsColumn = 5, dataBarProfsX = 0, dataBarProfsWidth = 96,

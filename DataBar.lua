@@ -693,7 +693,7 @@ local function Build()
         since = since + (elapsed or 0)
         if since < CFG.CLOCK_INTERVAL then return end
         since = 0
-        if clock:IsShown() then clock.text:SetText(date("%H:%M")) end
+        if clock:IsShown() then clock.text:SetText(DataBar.ClockText()) end
         -- The rate and the time to the level run on with the clock.
         if S("dataBarXpPerHour") or S("dataBarXpToLevel") then DataBar.UpdateXp() end
         -- The hub tells no one when its theme changes: an addon with its own
@@ -837,9 +837,11 @@ local function ApplyFrame(design)
     -- The clock with the micro menu around it: [icons] 12:34 [icons].
     -- The icons are secure and sit elsewhere (Micro.lua); here only the room.
     local clock, clockOn = frame.clock, S("dataBarClock")
-    clock.text:SetText(date("%H:%M"))
+    -- Room for the widest time, so the micro menu does not move at 10 or 12 o'clock.
+    clock.text:SetText(S("dataBarClock12") and "12:00 PM" or "00:00")
     clock.text:SetShown(clockOn)
     clock.textWidth = clockOn and math.max(CFG.CLOCK_WIDTH, math.ceil(clock.text:GetStringWidth() or 0) + 4) or 0
+    clock.text:SetText(DataBar.ClockText())
     local left, right = ns.Micro.Count()
     local step = CFG.ICON + CFG.ICON_GAP
     clock.microLeft, clock.micro = left * step, left + right > 0
@@ -1071,6 +1073,13 @@ function DataBar.UpdateStats()
         end
     end
     if moved then DataBar.Layout() end
+end
+
+-- The time as the options ask: 13:05 or 1:05 PM.
+function DataBar.ClockText(t)
+    if not S("dataBarClock12") then return date("%H:%M", t) end
+    local h = tonumber(date("%H", t))
+    return string.format("%d:%s %s", (h + 11) % 12 + 1, date("%M", t), h < 12 and "AM" or "PM")
 end
 
 function DataBar.Update()

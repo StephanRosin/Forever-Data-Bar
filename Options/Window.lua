@@ -453,6 +453,9 @@ local function dataBarPartRows()
         rows[#rows + 1] = column
         rows[#rows + 1] = x
         if part.id == "CLOCK" then
+            local twelve = check("dataBarClock12", "OPT_DATABAR_CLOCK12")
+            twelve.enabled = on
+            rows[#rows + 1] = twelve
             rows[#rows + 1] = check("dataBarMicro", "OPT_DATABAR_MICRO")
             local collections = check("dataBarMicroCollections", "OPT_DATABAR_MICRO_COLLECTIONS")
             collections.enabled = function() return S("dataBarMicro") == true end
