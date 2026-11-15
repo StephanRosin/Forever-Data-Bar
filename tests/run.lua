@@ -483,6 +483,7 @@ W.Toggle()
 
 section("Gold")
 dofile("gold.lua")(ns, M, check)
+dofile("goldledger.lua")(ns, M, check)
 
 section("Themes")
 dofile("themes.lua")(ns, M, check, ROOT)

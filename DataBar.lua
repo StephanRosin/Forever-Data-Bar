@@ -197,6 +197,9 @@ local function SetFont(fs, path, size, outline, retries)
     end)
 end
 
+-- For the gold window: a font with the same retries and redraws.
+DataBar.SetFont = function(fs, path, size, outline) SetFont(fs, path, size, outline) end
+
 local function ApplyFonts()
     -- A theme may want values as strong as the rest (dark ink on paper).
     local valueAlpha = ns.Themes.Spec(S("theme")).valueAlpha or VALUE_ALPHA
@@ -453,6 +456,7 @@ DataBar.STATS = {
             ns.Gold.FillTooltip()
         end,
         leave = function(self) ns.Gold.HideTooltip(self) end,
+        click = function() ns.GoldWindow.Toggle() end,
     },
     DURA = {
         icon = "StatDurability",

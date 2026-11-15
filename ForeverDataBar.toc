@@ -23,8 +23,10 @@ Themes.lua
 Data.lua
 Xp.lua
 Gold.lua
+GoldLedger.lua
 ThemeArt.lua
 DataBar.lua
+GoldWindow.lua
 Micro.lua
 Options\Style.lua
 Options\Widgets.lua

@@ -154,3 +154,55 @@ function ThemeArt.Style(frame, atTop, height)
     paintOrnaments(frame.themeOrnaments, frame, art, inner, height)
     paintWedge(frame.themeWedge, frame, art, height)
 end
+
+-- -----------------------------------------------------------------------------
+-- A window (the gold window): under a theme the bar's backdrop with its
+-- background colour over it (one background per theme in every Forever
+-- addon), the rim on every side, the title bar's colour and the wedge in it;
+-- under Classic the options window's flat look.
+-- -----------------------------------------------------------------------------
+function ThemeArt.BuildWindow(frame, titleBar)
+    frame.themeBack = frame:CreateTexture(nil, "BACKGROUND", nil, -8)
+    frame.themeBack:SetAllPoints(frame)
+    frame.bodyFill = frame:CreateTexture(nil, "BACKGROUND", nil, -7)
+    frame.bodyFill:SetAllPoints(frame)
+    frame.rims = {}
+    for i = 1, 4 do frame.rims[i] = frame:CreateTexture(nil, "BORDER", nil, 1) end
+    titleBar.fill = titleBar:CreateTexture(nil, "BACKGROUND")
+    titleBar.fill:SetAllPoints(titleBar)
+    titleBar.wedge = titleBar:CreateTexture(nil, "OVERLAY", nil, 6)
+end
+
+local function paintRims(rims, frame, c, size)
+    local sides = { { "TOPLEFT", "TOPRIGHT", "SetHeight" }, { "BOTTOMLEFT", "BOTTOMRIGHT", "SetHeight" },
+        { "TOPLEFT", "BOTTOMLEFT", "SetWidth" }, { "TOPRIGHT", "BOTTOMRIGHT", "SetWidth" } }
+    for i, side in ipairs(sides) do
+        local t = rims[i]
+        t:ClearAllPoints()
+        t:SetPoint(side[1], frame, side[1], 0, 0)
+        t:SetPoint(side[2], frame, side[2], 0, 0)
+        t[side[3]](t, size)
+        t:SetColorTexture(c[1], c[2], c[3], c[4] or 1)
+    end
+end
+
+function ThemeArt.StyleWindow(frame, titleBar)
+    local art = ns.Themes.Spec(S("theme")).art
+    if not art then
+        local Style = ns.Style.COLORS
+        frame.themeBack:Hide()
+        frame.bodyFill:SetColorTexture(unpack(Style.bg))
+        paintRims(frame.rims, frame, Style.border, 1)
+        titleBar.fill:SetColorTexture(unpack(Style.panel))
+        titleBar.fill:Show()
+        titleBar.wedge:Hide()
+        return
+    end
+    paintBack(frame.themeBack, art)
+    local bg = S("dataBarBgColor")
+    frame.bodyFill:SetColorTexture(bg[1], bg[2], bg[3], S("dataBarAlpha") / 100)
+    paintRims(frame.rims, frame, ns.Themes.Rim(art) or { 0, 0, 0, 1 }, art.rimSize or 1)
+    if art.title then titleBar.fill:SetColorTexture(unpack(art.title)) end
+    titleBar.fill:SetShown(art.title ~= nil)
+    paintWedge(titleBar.wedge, titleBar, art, titleBar:GetHeight())
+end

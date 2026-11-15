@@ -43,7 +43,8 @@ local LATIN_CLIENTS = { enUS = true, enGB = true, deDE = true, frFR = true, esES
 -- (INNER = towards the game, OUTER = at the screen edge); wedge = a slanted
 -- band at the bar's left end in wedgeColor; shadow = a soft shadow over the
 -- game, hardShadow = a solid one; bar = the lines' texture, track = their
--- thickness (thick enough to show it). The icons take the colour's accent,
+-- thickness (thick enough to show it); title = a window's title bar colour
+-- (Swiss and Pitwall: #000 as in every Forever addon). The icons take the colour's accent,
 -- on Pitwall the wedge's (Themes.IconColor).
 local function look(text, accent, bg, alpha, outline)
     return { dataBarFontOutline = outline or "OUTLINE", dataBarFontColor = text, dataBarAccent = accent,
@@ -118,7 +119,8 @@ Themes.SPECS = {
     SWISS = {
         font = "Inter Tight",
         look = look({ 0.95, 0.95, 0.95 }, { 1, 0.18, 0.13 }, { 0.039, 0.039, 0.039 }, 100),
-        art = { back = "SwissBack", rim = { 0.95, 0.95, 0.95, 1 }, rimSize = 3, bar = "SwissBar", track = 3 },
+        art = { back = "SwissBack", rim = { 0.95, 0.95, 0.95, 1 }, rimSize = 3, bar = "SwissBar", track = 3,
+            title = { 0, 0, 0, 1 } },
     },
     -- A terminal: near black with faint scan lines, a mint line, dashed lines.
     CONSOLE = {
@@ -131,7 +133,7 @@ Themes.SPECS = {
         font = "Titillium Web",
         look = look({ 0.95, 0.95, 0.96 }, { 0.13, 0.77, 0.37 }, { 0.039, 0.039, 0.039 }, 100),
         art = { back = "SwissBack", rim = { 0.043, 0.047, 0.055, 1 }, rimSize = 1, wedge = "PitwallWedge", wedgeColor = { 0.88, 0.02, 0, 1 }, bar = "PitwallBar",
-            track = 4 },
+            track = 4, title = { 0, 0, 0, 1 } },
     },
 }
 
@@ -327,6 +329,12 @@ function Themes.Tint(art)
             art.tint and art.tint[4] or 1 }
     end
     return art.tint
+end
+
+-- The theme's display font for a window title, nil under Classic or on a
+-- client the theme fonts cannot write.
+function Themes.TitleFont()
+    return LATIN_CLIENTS[GetLocale()] and Themes.Spec(Themes.Current()).font or nil
 end
 
 -- The accent the bar shows: the colour's, else the setting.

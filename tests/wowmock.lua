@@ -79,7 +79,9 @@ local function newWidget(name, kind)
     function w:ClearAllPoints() self._points = {} end
     function w:SetScale(v) self._scale = v end
     function w:GetScale() return self._scale or 1 end
-    function w:GetPoint(p) local a = self._points and self._points[p]; if a then return p, a[1], a[2], a[3], a[4] end end
+    function w:GetPoint(p)
+        if type(p) == "number" then local a = M.placed[self]; if a then return a[1], a[2], a[3], a[4], a[5] end end
+        local a = self._points and self._points[p]; if a then return p, a[1], a[2], a[3], a[4] end end
     function w:SetColorTexture(r, g, b, a) self._texColor = { r, g, b, a } end
     function w:SetVertexColor(r, g, b, a) self._vertex = { r, g, b, a } end
     function w:SetGradient(dir, a, b) self._gradient = { dir, a, b } end
@@ -203,6 +205,14 @@ function GetRestState() return 1, M.state.restName, M.state.restMult end
 function IsResting() return false end
 function UnitFactionGroup() return M.state.faction end
 function UnitClass() return "Warlock", M.state.class end
+-- The inbox: M.state.mail = { { sender, subject, money, invoice = { type, item, bid, deposit, cut, count } } }.
+function GetInboxNumItems() return #(M.state.mail or {}) end
+function GetInboxHeaderInfo(i) local m = M.state.mail[i]; return nil, nil, m[1], m[2], m[3] end
+function GetInboxInvoiceInfo(i)
+    local v = M.state.mail[i].invoice
+    if v then return v[1], v[2], "Someone", v[3], v[3], v[4], v[5], 0, 0, 0, v[6] end
+end
+function GetRepairAllCost() return M.state.repairCost or 0, true end
 function UnitName() return M.state.name or "Testeria" end
 function GetRealmName() return M.state.realm or "Mockrealm" end
 function UnitSex() return M.state.sex end

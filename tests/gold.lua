@@ -42,10 +42,10 @@ return function(ns, M, check)
     check("across a month", G.DayKey(at(1), 1), "2026-10-31")
 
     -- Pruning: only the last KEEP_DAYS days stay.
-    local days = { ["2026-09-01"] = {}, ["2026-09-20"] = {}, ["2026-09-21"] = {}, ["2026-11-19"] = {} }
+    local days = { ["2026-07-01"] = {}, ["2026-08-21"] = {}, ["2026-08-22"] = {}, ["2026-11-19"] = {} }
     G.Prune(days, at(19))
-    check("prune: 60 days back stays", days["2026-09-21"] ~= nil, true)
-    check("prune: older goes", (days["2026-09-20"] or days["2026-09-01"]) == nil, true)
+    check("prune: 90 days back stays", days["2026-08-22"] ~= nil, true)
+    check("prune: older goes", (days["2026-08-21"] or days["2026-07-01"]) == nil, true)
     check("prune: today stays", days["2026-11-19"] ~= nil, true)
 
     -- The realm's characters, any faction, with a total.
@@ -67,15 +67,17 @@ return function(ns, M, check)
     check("graph: today is live", points[5].value, 25)
     check("graph: min/max", table.concat({ G.Range(points) }, "/"), "10/40")
     check("graph: older than its span ignored", #G.GraphPoints({ ["2026-09-01"] = { close = 5 } }, at(19), 1), 1)
-    check("graph: one point, hidden", G.DrawGraph({ { t = at(19), value = 1 } }), nil)
-    local g = G.DrawGraph(points)
-    check("graph: drawn", g ~= nil, true)
+    local g = G.NewGraph(UIParent, 150, 60)
+    check("graph: drawn", G.DrawGraph(g, points), true)
     check("graph: a line per step", g.lines[4]:IsShown() and #g.lines, 4)
     check("graph: max label", g.max:GetText(), D.GoldText(40))
     check("graph: first date", g.first:GetText(), os.date(ns.L.GOLD_DATE, at(15, 12)))
-    local flat = G.DrawGraph({ { t = at(18), value = 7 }, { t = at(19), value = 7 } })
-    check("graph: flat runs in the middle", flat.lines[1]._start[2] == flat.lines[1]._end[2], true)
-    check("graph: fewer points hide old lines", flat.lines[2]:IsShown(), false)
+    G.DrawGraph(g, { { t = at(18), value = 7 }, { t = at(19), value = 7 } })
+    check("graph: flat runs in the middle", g.lines[1]._start[2] == g.lines[1]._end[2], true)
+    check("graph: fewer points hide old lines", g.lines[2]:IsShown(), false)
+    check("graph: one point, nothing drawn", G.DrawGraph(g, { { t = at(19), value = 1 } }), false)
+    check("graph: one point, no line, no label", tostring(g.lines[1]:IsShown()) .. g.max:GetText(), "false")
+    check("graph: span chosen", #G.GraphPoints({ ["2026-08-25"] = { close = 5 } }, at(19), 1, 90), 87)
 
     -- Money text with a sign.
     check("signed: gain", (G.Signed(12 * GOLD + 300)), "+12g 3s")
