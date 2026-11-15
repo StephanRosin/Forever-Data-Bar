@@ -186,6 +186,21 @@ local function paintRims(rims, frame, c, size)
     end
 end
 
+-- The rim's size, by which a window's title strip sits inside it.
+function ThemeArt.WindowRim()
+    local art = ns.Themes.Spec(S("theme")).art
+    return art and art.rimSize or 1
+end
+
+-- Cards on a window: the options' panel under Classic; dark on Swiss and
+-- Pitwall's black as in every Forever addon; a light shade elsewhere.
+local CARD_SOLID, CARD_SHADE = { 0, 0, 0, 0.85 }, { 0, 0, 0, 0.3 }
+function ThemeArt.CardColour()
+    local art = ns.Themes.Spec(S("theme")).art
+    if not art then return ns.Style.COLORS.panel end
+    return art.title and CARD_SOLID or CARD_SHADE
+end
+
 function ThemeArt.StyleWindow(frame, titleBar)
     local art = ns.Themes.Spec(S("theme")).art
     if not art then
@@ -201,7 +216,7 @@ function ThemeArt.StyleWindow(frame, titleBar)
     paintBack(frame.themeBack, art)
     local bg = S("dataBarBgColor")
     frame.bodyFill:SetColorTexture(bg[1], bg[2], bg[3], S("dataBarAlpha") / 100)
-    paintRims(frame.rims, frame, ns.Themes.Rim(art) or { 0, 0, 0, 1 }, art.rimSize or 1)
+    paintRims(frame.rims, frame, ns.Themes.Rim(art) or { 0, 0, 0, 1 }, ThemeArt.WindowRim())
     if art.title then titleBar.fill:SetColorTexture(unpack(art.title)) end
     titleBar.fill:SetShown(art.title ~= nil)
     paintWedge(titleBar.wedge, titleBar, art, titleBar:GetHeight())

@@ -101,6 +101,29 @@ return function(ns, M, check)
     Ledger.Book(day, -60)
     fire("AUCTION_HOUSE_CLOSED")
     check("auction purchase and deposit", sides(day), "inc: out:AH_BUY=1000,AH_FEES=60")
+    -- A claim without an amount takes one change only.
+    day = fresh()
+    fire("AUCTION_HOUSE_SHOW")
+    Ledger.Book(day, -150)
+    fire("AUCTION_HOUSE_AUCTION_CREATED", 1)
+    wait(2)
+    Ledger.Book(day, -500000)
+    check("a deposit, then a buyout in its window", sides(day), "inc: out:AH_BUY=500000,AH_FEES=150")
+    day = fresh()
+    fire("AUCTION_HOUSE_SHOW")
+    fire("AUCTION_HOUSE_AUCTION_CREATED", 1)
+    Ledger.Book(day, -300)
+    fire("AUCTION_HOUSE_PURCHASE_COMPLETED", 2)
+    fire("AUCTION_HOUSE_CLOSED")
+    check("a purchase event takes it back from the deposits", sides(day), "inc: out:AH_BUY=300")
+    wait(5)
+    day = fresh()
+    fire("CHAT_MSG_MONEY", "You loot 2 Copper")
+    Ledger.Book(day, 2)
+    wait(1.5)
+    fire("QUEST_TURNED_IN", 1, 0, 5000)
+    Ledger.Book(day, 5000)
+    check("loot, then a quest reward in its window", sides(day), "inc:LOOT=2,QUEST=5000 out:")
 
     -- The mailbox: "open all" takes two sales, a letter and a purchase for one money change.
     local realm = GetRealmName()
@@ -111,7 +134,7 @@ return function(ns, M, check)
             { "Auction House", "Sold: Linen Cloth", 900, invoice = { "seller", "Linen Cloth", 1000, 50, 150, 10 } },
             { "Auction House", "Sold: Linen Cloth", 450, invoice = { "seller", "Linen Cloth", 500, 0, 50, 5 } },
             { "Brannoc", "Thanks", 100 },
-            { "Auction House", "Won: Linen Cloth", 0, invoice = { "buyer", "Linen Cloth", 600, 0, 0, 20 } },
+            { "Auction House", "Won: Linen Cloth", 0, items = 1, invoice = { "buyer", "Linen Cloth", 600, 0, 0, 20 } },
             { "Brannoc", "Just a note", 0 },
         }
     end
@@ -141,11 +164,40 @@ return function(ns, M, check)
     check("letter and second sale", sides(day), "inc:AH_SALE=1350,MAIL=100 out:")
     fire("MAIL_CLOSED")
     M.state.mail = nil
+    -- By hand: the money taken, the mail stays until the mailbox closes.
+    ForeverDataBarDB.goldItems = nil
+    day = fresh()
+    M.state.mail = { { "Auction House", "Sold: Ore", 9500, invoice = { "seller", "Ore", 10000, 0, 500, 5 } },
+        { "Auction House", "Won: Herb", 0, items = 1, invoice = { "buyer", "Herb", 2000, 0, 0, 1 } } }
+    fire("MAIL_SHOW")
+    M.state.mail[1][3] = 0
+    Ledger.Book(day, 9500)
+    fire("MAIL_INBOX_UPDATE")
+    M.state.mail[2].items = nil
+    fire("MAIL_INBOX_UPDATE")
+    fire("MAIL_CLOSED")
+    M.state.mail = {}
+    fire("MAIL_INBOX_UPDATE")
+    local hand = Ledger.ItemsOf(ForeverDataBarDB, realm)
+    check("by hand: a sale counted once", hand.Ore.sellQty .. "/" .. hand.Ore.sellNet, "5/9500")
+    check("by hand: its money a sale", sides(day), "inc:AH_SALE=9500 out:")
+    check("by hand: a purchase counted once", hand.Herb.buyQty .. "/" .. hand.Herb.buyCost, "1/2000")
+    -- Taken just as the mailbox closes.
+    wait(10)
+    M.state.mail = { { "Auction House", "Won: Herb", 0, items = 1, invoice = { "buyer", "Herb", 2000, 0, 0, 1 } } }
+    fire("MAIL_SHOW")
+    fire("MAIL_CLOSED")
+    M.state.mail = {}
+    fire("MAIL_INBOX_UPDATE")
+    check("taken at the close still counts", hand.Herb.buyQty, 2)
+    M.state.mail = nil
+    ForeverDataBarDB.goldItems = { [realm] = items }
     check("gone: alike mails counted", #Ledger.Gone({ { sig = "a" }, { sig = "a" }, { sig = "b" } }, { { sig = "a" } }), 2)
 
     -- Realized profit: sales after the cut less the sold ones at the average purchase price.
     check("profit", Ledger.Profit({ buyCost = 1000, buyQty = 10, sellNet = 600, sellQty = 4 }), 200)
     check("profit: never bought, the whole sale", Ledger.Profit({ buyCost = 0, buyQty = 0, sellNet = 600, sellQty = 4 }), 600)
+    check("profit: only the bought ones carry a cost", Ledger.Profit({ buyCost = 10000, buyQty = 1, sellNet = 100000, sellQty = 20 }), 90000)
     check("profit: a loss", Ledger.Profit({ buyCost = 1000, buyQty = 2, sellNet = 400, sellQty = 1 }), -100)
     local top = Ledger.TopItems({
         A = { buyCost = 0, buyQty = 0, sellNet = 50, sellQty = 1 },
@@ -168,7 +220,8 @@ return function(ns, M, check)
     inc = Ledger.Totals(days, G.LastKeys(now, 90))
     check("90 days: older sources too", inc[1].source, "AH_SALE")
     check("last keys: today first", G.LastKeys(now, 2)[2], "2026-11-18")
-    for _, source in ipairs(Ledger.SOURCES) do check("source label " .. source, ns.L["GOLD_SRC_" .. source] ~= nil, true) end
+    for _, source in ipairs({ "LOOT", "QUEST", "VENDOR_SALE", "VENDOR_BUY", "REPAIR", "AH_SALE", "AH_BUY", "AH_FEES",
+        "MAIL", "TRADE", "TRAINING", "FLIGHT", "OTHER" }) do check("source label " .. source, ns.L["GOLD_SRC_" .. source] ~= nil, true) end
 
     -- Through PLAYER_MONEY: Gold.lua books the change.
     Ledger.Forget()
@@ -190,17 +243,55 @@ return function(ns, M, check)
     check("window: Escape closes it", (function()
         for _, n in ipairs(UISpecialFrames) do if n == "ForeverDataBarGold" then return true end end
     end)(), true)
-    local sale
-    for _, row in ipairs(f.income) do if row.label:GetText() == ns.L.GOLD_SRC_VENDOR_SALE then sale = row end end
-    check("window: vendor sale listed", sale and sale.value:GetText(), "+0g 3s")
-    check("window: in green", sale.value._textColor[2] > sale.value._textColor[1], true)
+    check("window: opens on the overview", f.pages.OVERVIEW:IsShown() and not f.pages.ITEMS:IsShown(), true)
+    local o = f.pages.OVERVIEW
+    check("overview: the money", o.money:GetText(), G.Money(1300))
+    check("overview: today in green", o.today._textColor[2] > o.today._textColor[1], true)
+    check("overview: biggest income today", o.tiles[4].value:GetText():find(ns.L.GOLD_SRC_OTHER, 1, true) ~= nil, true)
+    check("overview: no auction item yet, a dash", o.tiles[3].value:GetText() == G.NONE or o.tiles[3].value:GetText() ~= "", true)
+    check("overview: one day, the curve explains itself", o.graph.empty:IsShown(), true)
+    check("tabs: the chosen one underlined", f.tabs[1].underline:IsShown() and not f.tabs[2].underline:IsShown(), true)
+    check("tabs: the underline in the accent", f.tabs[1].underline._texColor[1], ns.Themes.Accent()[1])
+    check("tabs: the label in the text colour", f.tabs[1].text._textColor[1], select(4, ns.DataBar.FontFor("dataBar"))[1])
+    f.tabs[3]:GetScript("OnClick")(f.tabs[3])
+    check("tabs: switched", f.pages.FLOW:IsShown() and not f.pages.OVERVIEW:IsShown(), true)
+    check("tabs: remembered", ForeverDataBarDB.goldWindow.tab, "FLOW")
+    local flow, sale = f.pages.FLOW, nil
+    for _, row in ipairs(flow.income) do if row.label:GetText() == ns.L.GOLD_SRC_VENDOR_SALE then sale = row end end
+    check("flow: vendor sale listed", sale and sale.value:GetText(), "+0g 3s")
+    check("flow: in green", sale.value._textColor[2] > sale.value._textColor[1], true)
+    flow.ranges[1]:GetScript("OnClick")(flow.ranges[1])
+    check("range: stored", ForeverDataBarDB.goldWindow.range, 7)
+    check("range: underlined", flow.ranges[1].underline:IsShown() and not flow.ranges[2].underline:IsShown(), true)
+    check("range: scope named", flow.scope:GetText(), ns.L.GOLD_SCOPE_CHAR:format(7))
+    check("range: history follows", f.pages.HISTORY.scope:GetText(), ns.L.GOLD_SCOPE_CHAR:format(7))
+    flow.ranges[1]:GetScript("OnEnter")(flow.ranges[2])
+    check("range: hover brightens", flow.ranges[2].text._textColor[4], 1)
+    flow.ranges[1]:GetScript("OnLeave")(flow.ranges[2])
+    check("range: and dims again", flow.ranges[2].text._textColor[4] < 1, true)
+    f.tabs[4]:GetScript("OnClick")(f.tabs[4])
+    local it = f.pages.ITEMS
+    ForeverDataBarDB.goldItems[realm] = {}
+    W.Fill()
+    check("items: nothing yet explained", it.empty:IsShown(), true)
     ForeverDataBarDB.goldItems[realm]["Linen Cloth"] = cloth
-    f.ranges[1]:GetScript("OnClick")(f.ranges[1])
-    check("window: range stored", ForeverDataBarDB.goldWindow.range, 7)
-    check("window: range button in the accent", f.ranges[1].text._textColor[1], ns.Themes.Accent()[1])
-    check("window: best item", f.items[1].label:GetText(), "Linen Cloth")
-    check("window: its profit", f.items[1].value:GetText(), (G.Signed(Ledger.Profit(cloth))))
-    check("window: one day, no curve", f.noGraph:IsShown(), true)
+    W.Fill()
+    check("items: scope is the realm, all time", it.scope:GetText(), ns.L.GOLD_SCOPE_ITEMS:format(realm))
+    check("items: best item", it.rows[1].name:GetText(), "Linen Cloth")
+    check("items: its counts", it.rows[1].SOLD:GetText() .. "/" .. it.rows[1].BOUGHT:GetText(), cloth.sellQty .. "/" .. cloth.buyQty)
+    check("items: its profit", it.rows[1].PROFIT:GetText(), (G.Signed(Ledger.Profit(cloth))))
+    check("items: the value column fixed", it.rows[1].PROFIT:GetWidth(), it.rows[2].PROFIT:GetWidth())
+    check("items: explanation gone", it.empty:IsShown(), false)
+    check("overview: best item tile", o.tiles[3].value:GetText():find("Linen Cloth", 1, true) ~= nil, true)
+    -- Rows follow the font size.
+    local before = select(5, flow.income[2].label:GetPoint("TOPLEFT"))
+    ns.Settings.Set("dataBarFontSize", 20)
+    check("larger font: taller rows", select(5, flow.income[2].label:GetPoint("TOPLEFT")) < before, true)
+    ns.Settings.Set("dataBarFontSize", nil)
+    check("graph labels in the window's font", select(2, f.pages.HISTORY.graph.max:GetFont()), select(2, ns.DataBar.FontFor("dataBar")))
+    f.close:GetScript("OnEnter")()
+    check("close: hover", f.close.lines[1]._texColor[4], 1)
+    f.close:GetScript("OnLeave")()
     f:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 40, -50)
     f.titleBar:GetScript("OnDragStop")()
     check("window: place kept", table.concat(ForeverDataBarDB.goldWindow.place, ","), "TOPLEFT,TOPLEFT,40,-50")
@@ -220,6 +311,7 @@ return function(ns, M, check)
             check(id .. ": the bar's background over it", table.concat(f.bodyFill._texColor, ","),
                 table.concat({ bg[1], bg[2], bg[3], ns.Settings.Get("dataBarAlpha") / 100 }, ","))
             check(id .. ": rim", f.rims[3]._w, art.rimSize or 1)
+            check(id .. ": the title strip inside the rim", select(4, f.titleBar:GetPoint("TOPLEFT")), art.rimSize or 1)
             check(id .. ": wedge only with one", f.titleBar.wedge:IsShown(), art.wedge ~= nil)
             check(id .. ": black title bar on Swiss and Pitwall", f.titleBar.fill:IsShown(), id == "SWISS" or id == "PITWALL")
         end

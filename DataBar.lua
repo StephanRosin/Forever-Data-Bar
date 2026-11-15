@@ -455,7 +455,6 @@ DataBar.STATS = {
             TipOwner(self)
             ns.Gold.FillTooltip()
         end,
-        leave = function(self) ns.Gold.HideTooltip(self) end,
         click = function() ns.GoldWindow.Toggle() end,
     },
     DURA = {
@@ -505,7 +504,7 @@ local function BuildStat(id)
     g:RegisterForClicks("LeftButtonUp")
     if def.click then g:SetScript("OnClick", def.click) end
     g:SetScript("OnEnter", def.tip)
-    g:SetScript("OnLeave", def.leave or HideTooltip)
+    g:SetScript("OnLeave", HideTooltip)
     g.icon = g:CreateTexture(nil, "ARTWORK")
     g.icon:SetSize(CFG.ICON, CFG.ICON)
     g.icon:SetPoint("LEFT", g, "LEFT", 0, 0)

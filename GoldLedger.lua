@@ -13,11 +13,19 @@ their amount from a merchant purchase to REPAIR, a new auction moves the
 deposit to AH_FEES, and an auction sale's mail moves its money from MAIL to
 AH_SALE. Either side may come first; both wait a few seconds for the other.
 
-Forever sends no event for an auction purchase. Purchases and sales per
-item come from the mailbox invoices instead (GetInboxInvoiceInfo): the
-inbox is read whenever it changes, and an invoice mail that is gone has
-been taken. "Open all" takes several mails for one money change; the gone
-mails' money is matched against the mail money booked until it is used up.
+The API knows AUCTION_HOUSE_PURCHASE_COMPLETED and COMMODITY_PURCHASE_SUCCEEDED,
+but Forever was seen not to send them; should they come, they move a change
+just booked as a deposit back to AH_BUY. Purchases and sales per item come
+from the mailbox invoices (GetInboxInvoiceInfo): the inbox is read whenever
+it changes. A sale's invoice is followed while it still holds money, a
+purchase's while it still holds the item; once that is gone it has been
+taken, whether by hand (the mail stays until closed) or by "Open all", which
+takes several mails for one money change: the taken sales' money is matched
+against the mail money booked until it is used up.
+
+Known gaps: a bid that is outbid books as an auction purchase, and its
+refund arrives as plain mail income. Plain mail money (letters, refunds)
+stays MAIL.
 
 Stored per day in ForeverDataBarChar.goldDays[day]: inc[source] and
 out[source] in copper. Items per realm, account wide:
@@ -28,21 +36,18 @@ deposit refund counts as part of the sale's money).
 local Ledger = {}
 ns.GoldLedger = Ledger
 
-Ledger.SOURCES = { "LOOT", "QUEST", "VENDOR_SALE", "VENDOR_BUY", "REPAIR", "AH_SALE", "AH_BUY", "AH_FEES",
-    "MAIL", "TRADE", "TRAINING", "FLIGHT", "OTHER" }
-
 -- Seconds (GetTime) a change and the event explaining it may lie apart.
-local WINDOW = { LOOT = 2, QUEST = 5, REPAIR = 5, AH_FEES = 3, AH_SALE = 30 }
+local WINDOW = { LOOT = 2, QUEST = 5, REPAIR = 5, AH_FEES = 3, AH_BUY = 3, AH_SALE = 30 }
 -- A frame counts as open this long after it closed: the taxi map closes
 -- before the fare is taken, the loot window before the coins arrive.
 local CLOSE_GRACE = 1.5
-local ANY = math.huge   -- a claim without an amount: whatever comes in its window
+-- A claim without an amount: the first change in its window, whatever its size.
+local ANY = math.huge
 
 -- -----------------------------------------------------------------------------
 -- Booking and claims
 -- -----------------------------------------------------------------------------
 local open, recent, claims = {}, {}, {}
-Ledger.open = open
 
 local function Now() return GetTime() end
 
@@ -97,7 +102,9 @@ function Ledger.Reconcile(now)
                 local take = math.min(c.amount, math.abs(r.amount))
                 Move(r.day, c.sign > 0 and "inc" or "out", c.from, c.to, take)
                 r.amount = r.amount - take * c.sign
-                if c.amount ~= ANY then c.amount = c.amount - take end
+                -- The moved part stays open to a later claim (a purchase event after a deposit's).
+                recent[#recent + 1] = { day = r.day, source = c.to, amount = take * c.sign, time = r.time }
+                c.amount = c.amount == ANY and 0 or c.amount - take
             end
         end
     end
@@ -172,9 +179,10 @@ local function Item(items, name)
 end
 
 -- Sales after the cut less what the sold ones cost at the average purchase
--- price; never bought here: no cost known, the whole sale counts.
+-- price; only as many as were bought here carry a cost, the rest (farmed,
+-- crafted) count in full.
 function Ledger.Profit(it)
-    local cost = it.buyQty > 0 and it.sellQty * it.buyCost / it.buyQty or 0
+    local cost = it.buyQty > 0 and math.min(it.sellQty, it.buyQty) * it.buyCost / it.buyQty or 0
     return math.floor(it.sellNet - cost + 0.5)
 end
 
@@ -192,20 +200,21 @@ function Ledger.TopItems(items, limit)
     return list
 end
 
--- One inbox mail worth remembering: money in it or an auction invoice.
+-- An auction invoice still to be taken: a sale while it holds its money,
+-- a purchase while it holds the item; nil for any other mail.
 -- GetInboxHeaderInfo: icon, stationery, sender, subject, money, COD, daysLeft, itemCount, ...
 -- GetInboxInvoiceInfo: type, itemName, playerName, bid, buyout, deposit, consignment,
 -- moneyDelay, etaHour, etaMin, count.
 local function ReadMail(i)
-    local _, _, sender, subject, money = GetInboxHeaderInfo(i)
+    local _, _, _, _, money, _, _, itemCount = GetInboxHeaderInfo(i)
     local kind, item, _, bid, _, deposit, consignment, _, _, _, count = GetInboxInvoiceInfo(i)
-    if kind ~= "buyer" and kind ~= "seller" then kind = nil end
-    if (money or 0) <= 0 and not kind then return nil end
+    local pending = (kind == "seller" and (money or 0) > 0) or (kind == "buyer" and (itemCount or 0) > 0)
+    if not pending then return nil end
+    count = (count and count > 0) and count or 1
     return {
-        sig = table.concat({ tostring(sender), tostring(subject), money or 0, tostring(kind), tostring(item),
-            bid or 0 }, "|"),
+        sig = table.concat({ kind, tostring(item), bid or 0, deposit or 0, consignment or 0, count }, "|"),
         money = money or 0, kind = kind, item = item, bid = bid or 0, deposit = deposit or 0,
-        cut = consignment or 0, count = (count and count > 0) and count or 1,
+        cut = consignment or 0, count = count,
     }
 end
 
@@ -266,7 +275,6 @@ end
 local handlers = {
     MAIL_SHOW = function(now) inbox = nil; OnInbox(now) end,
     MAIL_INBOX_UPDATE = function(now) if IsOpen("MAIL", now) then OnInbox(now) end end,
-    MAIL_CLOSED = function() inbox = nil end,
     MERCHANT_SHOW = function() repairCost = RepairCost() end,
     UPDATE_INVENTORY_DURABILITY = function(now)
         if not (IsOpen("MERCHANT", now) and repairCost) then return end
@@ -279,12 +287,14 @@ local handlers = {
         if (money or 0) > 0 then Ledger.Claim("QUEST", "OTHER", 1, money, now) end
     end,
     AUCTION_HOUSE_AUCTION_CREATED = function(now) Ledger.Claim("AH_FEES", "AH_BUY", -1, ANY, now) end,
+    AUCTION_HOUSE_PURCHASE_COMPLETED = function(now) Ledger.Claim("AH_BUY", "AH_FEES", -1, ANY, now) end,
+    COMMODITY_PURCHASE_SUCCEEDED = function(now) Ledger.Claim("AH_BUY", "AH_FEES", -1, ANY, now) end,
 }
 
-Ledger.events = CreateFrame("Frame")
-for e in pairs(CONTEXTS) do pcall(Ledger.events.RegisterEvent, Ledger.events, e) end
-for e in pairs(handlers) do pcall(Ledger.events.RegisterEvent, Ledger.events, e) end
-Ledger.events:SetScript("OnEvent", function(_, event, ...)
+local events = CreateFrame("Frame")
+for e in pairs(CONTEXTS) do pcall(events.RegisterEvent, events, e) end
+for e in pairs(handlers) do pcall(events.RegisterEvent, events, e) end
+events:SetScript("OnEvent", function(_, event, ...)
     local now = Now()
     local ctx = CONTEXTS[event]
     if ctx then open[ctx[1]] = ctx[2] or now end

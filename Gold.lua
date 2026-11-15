@@ -26,14 +26,17 @@ Gold.GRAPH_DAYS = 30    -- the tooltip curve's span, today included
 local NOON = 12         -- days are counted at noon: summer time never skips or repeats one
 local DAYS_SINCE_MONDAY_SHIFT = 5   -- date's wday counts from Sunday = 1
 local SECONDS_PER_HOUR = 3600
+Gold.MIN_RATE_SECONDS = 300
 local COPPER_PER_GOLD, COPPER_PER_SILVER = 10000, 100
 
 local GREY, WHITE = { 0.8, 0.8, 0.8 }, { 1, 1, 1 }
 local COLOUR_GAIN, COLOUR_LOSS = { 0.3, 1, 0.3 }, { 1, 0.25, 0.2 }
 
 -- The curve: plot area (the tooltip's), the min/max column right of it, the date row below.
-local PLOT_W, PLOT_H, LABEL_W, DATE_ROW = 150, 60, 70, 14
-local LINE_THICKNESS = 2
+local PLOT_W, PLOT_H, LABEL_W, LABEL_GAP, DATE_ROW = 150, 60, 70, 4, 14
+local LINE_THICKNESS, AXIS_ALPHA = 2, 0.35
+-- Blank tooltip lines for the curve: the line's font size plus Blizzard's spacing.
+local TIP_LINE_FALLBACK, TIP_LINE_SPACING = 12, 2
 
 function Gold.Now() return time() end
 
@@ -102,8 +105,9 @@ function Gold.Update(char, money, now)
     if delta ~= 0 then ns.GoldLedger.Book(day, delta) end
 end
 
+-- nil before MIN_RATE_SECONDS: a few minutes say nothing about an hour.
 function Gold.PerHour(net, seconds)
-    if not seconds or seconds <= 0 then return nil end
+    if not seconds or seconds < Gold.MIN_RATE_SECONDS then return nil end
     return net / seconds * SECONDS_PER_HOUR
 end
 
@@ -139,14 +143,20 @@ end
 -- One point per day over `span` days (GRAPH_DAYS) from the first recorded
 -- day on: the closing balance, a day without a record keeps the day
 -- before's, today is the money now.
+-- A balance from before the span carries into it. back: days before today.
 function Gold.GraphPoints(days, now, money, span)
-    local points, last = {}, nil
-    for back = (span or Gold.GRAPH_DAYS) - 1, 1, -1 do
+    span = span or Gold.GRAPH_DAYS
+    local first, seedKey, last = Gold.DayKey(now, span - 1), nil, nil
+    for k, d in pairs(days) do
+        if k < first and d.close and (not seedKey or k > seedKey) then seedKey, last = k, d.close end
+    end
+    local points = {}
+    for back = span - 1, 1, -1 do
         local d = days[Gold.DayKey(now, back)]
         last = d and d.close or last
-        if last then points[#points + 1] = { t = DayTime(now, back), value = last } end
+        if last then points[#points + 1] = { t = DayTime(now, back), back = back, value = last } end
     end
-    points[#points + 1] = { t = DayTime(now, 0), value = money }
+    points[#points + 1] = { t = DayTime(now, 0), back = 0, value = money }
     return points
 end
 
@@ -159,9 +169,15 @@ end
 -- -----------------------------------------------------------------------------
 -- The tooltip
 -- -----------------------------------------------------------------------------
--- "+12g 3s" / "-4g 0s" / "0g 0s" and its colour.
+-- Copper as the bar writes it ("12g 3s"); below a silver the copper ("50c").
+function Gold.Money(copper)
+    if copper > 0 and copper < COPPER_PER_SILVER then return L.GOLD_COPPER:format(copper) end
+    return ns.DataBar.GoldText(copper)
+end
+
+-- "+12g 3s" / "-4g 0s" / "+50c" / "0g 0s" and its colour.
 function Gold.Signed(copper)
-    local text = ns.DataBar.GoldText(math.abs(copper))
+    local text = Gold.Money(math.abs(copper))
     if copper > 0 then return "+" .. text, COLOUR_GAIN end
     if copper < 0 then return "-" .. text, COLOUR_LOSS end
     return text, WHITE
@@ -181,17 +197,28 @@ local function SignedRow(label, copper)
     Row(label, text, c)
 end
 
--- "+8g 0s (+12g 0s / -4g 0s)": net, then gained and spent.
+-- "+8g 0s (+12g 0s / -4g 0s)": net, then gained and spent; a dash for a day without any.
+Gold.NONE = "–"
 function Gold.DayText(gained, spent)
+    if gained == 0 and spent == 0 then return Paint(Gold.NONE, GREY) end
     return Paint(Gold.Signed(gained - spent)) .. " " .. Paint("(", GREY) .. Paint(Gold.Signed(gained))
         .. Paint(" / ", GREY) .. Paint(Gold.Signed(-spent)) .. Paint(")", GREY)
 end
 
--- A curve plotW x plotH with min/max right of it and the dates below.
+-- A curve plotW x plotH with min/max right of it and the dates below, a
+-- baseline and a left edge; g.labels for a window's fonts.
 function Gold.NewGraph(parent, plotW, plotH)
     local g = CreateFrame("Frame", nil, parent)
     g:SetSize(plotW + LABEL_W, plotH + DATE_ROW)
     g.plotW, g.plotH, g.lines = plotW, plotH, {}
+    g.axes = {}
+    for i, size in ipairs({ { plotW, 1 }, { 1, plotH } }) do
+        local t = g:CreateTexture(nil, "BORDER")
+        t:SetSize(size[1], size[2])
+        t:SetPoint("BOTTOMLEFT", g, "BOTTOMLEFT", 0, DATE_ROW)
+        t:SetColorTexture(GREY[1], GREY[2], GREY[3], AXIS_ALPHA)
+        g.axes[i] = t
+    end
     local function Label(point, x, y, justify)
         local fs = g:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         fs:SetPoint(point, g, "BOTTOMLEFT", x, y)
@@ -199,23 +226,26 @@ function Gold.NewGraph(parent, plotW, plotH)
         fs:SetTextColor(GREY[1], GREY[2], GREY[3])
         return fs
     end
-    g.max = Label("TOPLEFT", plotW + 4, DATE_ROW + plotH, "LEFT")
-    g.min = Label("BOTTOMLEFT", plotW + 4, DATE_ROW, "LEFT")
+    g.max = Label("TOPLEFT", plotW + LABEL_GAP, DATE_ROW + plotH, "LEFT")
+    g.min = Label("BOTTOMLEFT", plotW + LABEL_GAP, DATE_ROW, "LEFT")
     g.first = Label("BOTTOMLEFT", 0, 0, "LEFT")
     g.last = Label("BOTTOMRIGHT", plotW, 0, "RIGHT")
+    g.labels = { g.max, g.min, g.first, g.last }
     return g
 end
 
--- The curve in the theme's accent; false below two points (nothing drawn).
-function Gold.DrawGraph(g, points)
+-- The curve in the theme's accent over `span` days, each point at its day
+-- (a short history stays at the right end); false below two points.
+function Gold.DrawGraph(g, points, span)
+    span = span or Gold.GRAPH_DAYS
     for _, line in ipairs(g.lines) do line:Hide() end
-    for _, fs in ipairs({ g.max, g.min, g.first, g.last }) do fs:SetText("") end
+    for _, fs in ipairs(g.labels) do fs:SetText("") end
     if #points < 2 then return false end
     local lo, hi = Gold.Range(points)
     local c = ns.Themes.Accent()
     local function XY(i)
         local share = hi > lo and (points[i].value - lo) / (hi - lo) or 0.5
-        return (i - 1) / (#points - 1) * g.plotW, DATE_ROW + share * g.plotH
+        return (span - 1 - points[i].back) / (span - 1) * g.plotW, DATE_ROW + share * g.plotH
     end
     for i = 2, #points do
         local line = g.lines[i - 1] or g:CreateLine(nil, "ARTWORK")
@@ -228,20 +258,39 @@ function Gold.DrawGraph(g, points)
         line:SetEndPoint("BOTTOMLEFT", g, x2, y2)
         line:Show()
     end
-    g.max:SetText(ns.DataBar.GoldText(hi))
-    g.min:SetText(ns.DataBar.GoldText(lo))
+    g.max:SetText(Gold.Money(hi))
+    g.min:SetText(Gold.Money(lo))
+    g.first:ClearAllPoints()
+    g.first:SetPoint("BOTTOMLEFT", g, "BOTTOMLEFT", (XY(1)), 0)
     g.first:SetText(date(L.GOLD_DATE, points[1].t))
     g.last:SetText(date(L.GOLD_DATE, points[#points].t))
     return true
 end
 
+-- The tooltip's curve: parented and anchored here over blank lines, not
+-- through GameTooltip_InsertFrame (addon code writing the tooltip's
+-- insertedFrames would taint Blizzard's callers). It hides with the
+-- tooltip or when the tooltip is cleared for someone else, and then gives
+-- the tooltip its normal width back.
 local tipGraph
 function Gold.TooltipGraph()
-    if not tipGraph then
-        tipGraph = Gold.NewGraph(UIParent, PLOT_W, PLOT_H)
-        tipGraph:Hide()
-    end
+    if tipGraph then return tipGraph end
+    tipGraph = Gold.NewGraph(GameTooltip, PLOT_W, PLOT_H)
+    tipGraph:Hide()
+    tipGraph:SetScript("OnHide", function() GameTooltip:SetMinimumWidth(0) end)
+    GameTooltip:HookScript("OnTooltipCleared", function() tipGraph:Hide() end)
     return tipGraph
+end
+
+local function EmbedGraph(g)
+    local first = GameTooltip:NumLines() + 1
+    local line = GameTooltip:GetLeftLine(first > 1 and first - 1 or 1)
+    local _, size = line:GetFont()
+    for _ = 1, math.ceil(g:GetHeight() / ((size or TIP_LINE_FALLBACK) + TIP_LINE_SPACING)) do GameTooltip:AddLine(" ") end
+    g:ClearAllPoints()
+    g:SetPoint("TOPLEFT", GameTooltip:GetLeftLine(first), "TOPLEFT", 0, 0)
+    GameTooltip:SetMinimumWidth(g:GetWidth())
+    g:Show()
 end
 
 function Gold.FillTooltip()
@@ -260,7 +309,7 @@ function Gold.FillTooltip()
         SignedRow(L.GOLD_SPENT, -s.spent)
         SignedRow(L.GOLD_NET, s.gained - s.spent)
         local rate = Gold.PerHour(s.gained - s.spent, seconds)
-        if rate then SignedRow(L.GOLD_PER_HOUR, math.floor(rate + 0.5)) end
+        if rate then SignedRow(L.GOLD_PER_HOUR, math.floor(rate + 0.5)) else Row(L.GOLD_PER_HOUR, Gold.NONE) end
     end
 
     local days = char.goldDays or {}
@@ -276,27 +325,18 @@ function Gold.FillTooltip()
     GameTooltip:AddLine(L.GOLD_REALM:format(realm), 1, 1, 1)
     for _, c in ipairs(list) do
         local cc = RAID_CLASS_COLORS and RAID_CLASS_COLORS[c.class]
-        Row(c.name, ns.DataBar.GoldText(c.money), WHITE, cc and { cc.r, cc.g, cc.b })
+        Row(c.name, Gold.Money(c.money), WHITE, cc and { cc.r, cc.g, cc.b })
     end
-    Row(L.GOLD_TOTAL, ns.DataBar.GoldText(total), WHITE, WHITE)
+    Row(L.GOLD_TOTAL, Gold.Money(total), WHITE, WHITE)
 
     local g = Gold.TooltipGraph()
     if Gold.DrawGraph(g, Gold.GraphPoints(days, now, money)) then
         GameTooltip:AddLine(" ")
         GameTooltip:AddLine(L.GOLD_GRAPH:format(Gold.GRAPH_DAYS), 1, 1, 1)
-        -- Blizzard's own embedding: blank lines make the room, and clearing
-        -- the tooltip hides the frame again.
-        GameTooltip_InsertFrame(GameTooltip, g)
+        EmbedGraph(g)
     end
     GameTooltip:AddLine(L.GOLD_CLICK, 0.4, 0.8, 1)
     GameTooltip:Show()
-end
-
--- InsertFrame widens the tooltip for the curve; the next tooltip must not keep that.
-function Gold.HideTooltip(owner)
-    if not GameTooltip:IsOwned(owner) then return end
-    GameTooltip:SetMinimumWidth(0)
-    GameTooltip:Hide()
 end
 
 local function Record(isLogin)
@@ -310,9 +350,13 @@ local function Record(isLogin)
     ns.GoldWindow.Update()
 end
 
+-- Money changes count only after this UI's first PLAYER_ENTERING_WORLD:
+-- one before it would compare against last login's reading.
+local entered = false
 local events = CreateFrame("Frame")
 for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "PLAYER_MONEY" }) do events:RegisterEvent(e) end
 events:SetScript("OnEvent", function(_, event, isLogin)
+    if event == "PLAYER_ENTERING_WORLD" then entered = true elseif not entered then return end
     -- A fresh login starts a session; /reload and loading screens keep it.
     Record(event == "PLAYER_ENTERING_WORLD" and isLogin)
 end)

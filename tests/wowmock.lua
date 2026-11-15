@@ -52,7 +52,11 @@ local function newWidget(name, kind)
     function w:SetHeight(v) self._h = v end
     function w:GetWidth() return self._w end
     function w:GetHeight() return self._h end
-    function w:Hide() self._shown = false end
+    function w:Hide()
+        local was = self._shown
+        self._shown = false
+        if was and self._scripts.OnHide then self._scripts.OnHide(self) end
+    end
     function w:Show() self._shown = true end
     function w:SetShown(v) if v then self:Show() else self:Hide() end end
     function w:IsShown() return self._shown end
@@ -153,10 +157,19 @@ function Minimap:GetCenter() return 1800, 950 end
 GameTooltip = newWidget("GameTooltip")
 function GameTooltip:AddLine(t) self._lines = self._lines or {}; self._lines[#self._lines + 1] = t end
 function GameTooltip:AddDoubleLine(a, b) self._lines = self._lines or {}; self._lines[#self._lines + 1] = a .. "|" .. b end
-function GameTooltip:SetOwner() self._lines = {} end
+function GameTooltip:SetOwner()
+    self._lines = {}
+    local cleared = self:GetScript("OnTooltipCleared")
+    if cleared then cleared(self) end
+end
+function GameTooltip:NumLines() return #(self._lines or {}) end
+GameTooltip._left = {}
+function GameTooltip:GetLeftLine(i)
+    self._left[i] = self._left[i] or self:CreateFontString()
+    return self._left[i]
+end
 function GameTooltip:IsOwned() return true end
 function GameTooltip:SetMinimumWidth(v) self._minWidth = v end
-function GameTooltip_InsertFrame(tip, frame) tip._inserted = frame; frame:Show() end
 DEFAULT_CHAT_FRAME = { AddMessage = function(_, m) M.chat[#M.chat + 1] = m end }
 SlashCmdList = {}
 UISpecialFrames = {}
@@ -205,9 +218,9 @@ function GetRestState() return 1, M.state.restName, M.state.restMult end
 function IsResting() return false end
 function UnitFactionGroup() return M.state.faction end
 function UnitClass() return "Warlock", M.state.class end
--- The inbox: M.state.mail = { { sender, subject, money, invoice = { type, item, bid, deposit, cut, count } } }.
+-- The inbox: M.state.mail = { { sender, subject, money, items = n, invoice = { type, item, bid, deposit, cut, count } } }.
 function GetInboxNumItems() return #(M.state.mail or {}) end
-function GetInboxHeaderInfo(i) local m = M.state.mail[i]; return nil, nil, m[1], m[2], m[3] end
+function GetInboxHeaderInfo(i) local m = M.state.mail[i]; return nil, nil, m[1], m[2], m[3], 0, 30, m.items end
 function GetInboxInvoiceInfo(i)
     local v = M.state.mail[i].invoice
     if v then return v[1], v[2], "Someone", v[3], v[3], v[4], v[5], 0, 0, 0, v[6] end
