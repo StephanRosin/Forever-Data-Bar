@@ -117,6 +117,13 @@ function Gold.Remember(account, name, realm, class, money)
     account.goldChars[name .. "-" .. realm] = { name = name, realm = realm, class = class, money = money }
 end
 
+-- The realm as the realm list shows it: Forever's internal "CAMWOW EU4 Realm 7 PvE"
+-- is "EU PvE" there; any other name stays as it is. Data stays under the internal name.
+function Gold.RealmLabel(realm)
+    local region, kind = realm:match("^CAMWOW%s*(%a+)%d*%s*Realm%s*%d+%s*(.+)$")
+    return region and (region .. " " .. kind) or realm
+end
+
 -- The realm's characters, richest first, and their total.
 function Gold.RealmChars(account, realm)
     local list, total = {}, 0
@@ -322,7 +329,7 @@ function Gold.FillTooltip()
     local realm = GetRealmName()
     local list, total = Gold.RealmChars(ns.AccountDB(), realm)
     GameTooltip:AddLine(" ")
-    GameTooltip:AddLine(L.GOLD_REALM:format(realm), 1, 1, 1)
+    GameTooltip:AddLine(L.GOLD_REALM:format(Gold.RealmLabel(realm)), 1, 1, 1)
     for _, c in ipairs(list) do
         local cc = RAID_CLASS_COLORS and RAID_CLASS_COLORS[c.class]
         Row(c.name, Gold.Money(c.money), WHITE, cc and { cc.r, cc.g, cc.b })

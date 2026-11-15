@@ -491,7 +491,7 @@ end
 
 local function FillItems(page)
     local realm = GetRealmName()
-    page.scope:SetText(L.GOLD_SCOPE_ITEMS:format(realm))
+    page.scope:SetText(L.GOLD_SCOPE_ITEMS:format(ns.Gold.RealmLabel(realm)))
     local list = ns.GoldLedger.TopItems(ns.GoldLedger.ItemsOf(ns.AccountDB(), realm), ITEM_ROWS)
     for i, row in ipairs(page.rows) do
         local e = list[i]

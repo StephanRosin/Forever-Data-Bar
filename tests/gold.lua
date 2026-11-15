@@ -4,6 +4,10 @@ return function(ns, M, check)
     local function at(day, hour) return os.time({ year = 2026, month = 11, day = day, hour = hour or 15 }) end
     local GOLD = 10000
 
+    -- The realm as the realm list names it.
+    check("realm label: Forever's internal name", G.RealmLabel("CAMWOW EU4 Realm 7 PvE"), "EU PvE")
+    check("realm label: any other name as it is", G.RealmLabel("Mockrealm"), "Mockrealm")
+
     -- Session and day bookkeeping: the login reading is the baseline.
     local char = {}
     G.StartSession(char, 100 * GOLD, at(18, 9))
