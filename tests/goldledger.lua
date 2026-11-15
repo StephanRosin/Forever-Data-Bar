@@ -302,7 +302,7 @@ return function(ns, M, check)
     local bar = ns.DataBar.frame
     check("classic: the options window's look", f.themeBack:IsShown() and "back" or f.bodyFill._texColor[4],
         ns.Style.COLORS.bg[4])
-    for _, id in ipairs(ns.Themes.IDS) do
+    for _, id in ipairs(LibForeverThemes.SpecIds(ns.Themes.SPECS)) do
         if id ~= "CLASSIC" then
             ns.Themes.Switch(id)
             local art, bg = ns.Themes.Spec(id).art, ns.Settings.Get("dataBarBgColor")

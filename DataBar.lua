@@ -533,12 +533,13 @@ function DataBar.ThemeLabel(theme, color)
     return L.DATABAR_THEME_AND_COLOR:format(name, L["THEME_COLOR_" .. tostring(theme) .. "_" .. tostring(color)])
 end
 
--- The addons in the cross-addon registry (not the hub itself), by title.
-local HUB_FOLDER = "ForeverThemes"
+-- The addons in the cross-addon registry that can switch, this one too, by
+-- title; the same filter as Lib.Others, which returns no folders (Follows
+-- needs them).
 function DataBar.ThemedAddons()
     local list = {}
     for folder, entry in pairs(_G.ForeverThemes or {}) do
-        if folder ~= HUB_FOLDER and type(entry) == "table" then
+        if type(entry) == "table" and type(entry.Current) == "function" and type(entry.Switch) == "function" then
             list[#list + 1] = { folder = folder, title = tostring(entry.title or folder) }
         end
     end
@@ -687,6 +688,7 @@ local function Build()
     frame.gear = gear
 
     local since = CFG.CLOCK_INTERVAL
+    local seenHub, seenTheme, seenColor
     frame:SetScript("OnUpdate", function(_, elapsed)
         since = since + (elapsed or 0)
         if since < CFG.CLOCK_INTERVAL then return end
@@ -695,9 +697,14 @@ local function Build()
         -- The rate and the time to the level run on with the clock.
         if S("dataBarXpPerHour") or S("dataBarXpToLevel") then DataBar.UpdateXp() end
         -- The hub tells no one when its theme changes: an addon with its own
-        -- theme hears nothing, so the label is checked with the clock.
-        local theme = S("dataBarTheme") and DataBar.STATS.THEME.value() or nil
-        if theme ~= frame.parts.THEME.value then DataBar.UpdateStats() end
+        -- theme hears nothing, so the hub's ids are checked with the clock
+        -- (compared, not formatted: nothing allocated per tick).
+        local hub = S("dataBarTheme") and LibForeverThemes.Hub() or nil
+        local theme, color = hub and hub.Theme(), hub and hub.Color()
+        if hub ~= seenHub or theme ~= seenTheme or color ~= seenColor then
+            seenHub, seenTheme, seenColor = hub, theme, color
+            DataBar.UpdateStats()
+        end
     end)
     DataBar.frame = frame
 end

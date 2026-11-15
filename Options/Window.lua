@@ -300,19 +300,19 @@ end
 -- While Forever Themes (the hub) sets this addon's theme, the pickers are
 -- its: dimmed here, with a way there. Asked anew on every refresh: the
 -- player may switch "own theme" in the hub at any time.
-local function hubFollowed()
-    local hub = LibForeverThemes.Hub()
-    return hub ~= nil and hub.Follows(ADDON) == true
-end
+local function hubFollowed() return LibForeverThemes.Follows(ADDON) end
 local function notHubFollowed() return not hubFollowed() end
 local function noHub() return LibForeverThemes.Hub() == nil end
+-- The hub's texts are the library's, in the client's language.
+local function hubText(key) return function() return LibForeverThemes.Text(key) end end
+local function showHubLink() LibForeverThemes.ShowHubLink() end
 
 local function themeRow()
     return {
         type = "select", label = "OPT_THEME_CHOICE",
         choices = function()
             local list = {}
-            for _, id in ipairs(ns.Themes.IDS) do
+            for _, id in ipairs(LibForeverThemes.SpecIds(ns.Themes.SPECS)) do
                 list[#list + 1] = { label = L["THEME_" .. id], value = id, font = ns.Themes.SPECS[id].font }
             end
             return list
@@ -382,13 +382,13 @@ local function dataBarRows()
         themeRow(),
         themeColorRow(),
         -- Without the hub: the one way to theme every Forever addon at once.
-        { type = "text", label = "OPT_HUB_HINT", visible = noHub },
+        { type = "text", label = hubText("HUB_MISSING"), visible = noHub },
         { type = "buttons", visible = noHub, buttons = {
-            { label = "OPT_HUB_LINK", width = 200, onClick = function() ns.ShowHubLink() end },
+            { label = hubText("HUB_LINK"), width = 200, onClick = showHubLink },
         } },
-        { type = "text", label = "OPT_HUB_FOLLOWS", visible = hubFollowed },
+        { type = "text", label = hubText("HUB_FOLLOWS"), visible = hubFollowed },
         { type = "buttons", visible = hubFollowed, buttons = {
-            { label = "OPT_HUB_OPEN", width = 200, onClick = function() LibForeverThemes.Hub().OpenOptions() end },
+            { label = hubText("HUB_OPEN"), width = 200, onClick = function() LibForeverThemes.Hub().OpenOptions() end },
         } },
         { type = "text", label = "OPT_THEME_HINT", height = 66 },
         { type = "buttons", visible = function() return ns.Themes.HasOthers() and not hubFollowed() end, buttons = {
@@ -447,7 +447,7 @@ local function dataBarPartRows()
             x.enabled = column.enabled
             rows[#rows + 1] = { type = "text", label = "OPT_HUB_NEEDED", visible = noHub }
             rows[#rows + 1] = { type = "buttons", visible = noHub, buttons = {
-                { label = "OPT_HUB_LINK", width = 200, onClick = function() ns.ShowHubLink() end },
+                { label = hubText("HUB_LINK"), width = 200, onClick = showHubLink },
             } }
         end
         rows[#rows + 1] = column
@@ -898,23 +898,3 @@ ns.Locale.OnChange(function()
     frame, pages = nil, {}
     if wasOpen then Window.Open(page) end
 end)
--- WoW opens no browser: the hub's download link in Blizzard's text popup,
--- selected for copying.
-local HUB_URL = "https://www.curseforge.com/wow/addons/forever-themes"
-if StaticPopupDialogs then
-    StaticPopupDialogs.FOREVERDATABAR_HUB_LINK = {
-        text = "", button1 = OKAY or "OK", hasEditBox = 1, editBoxWidth = 350,
-        maxLetters = 0,   -- the edit box is shared; another dialog may leave its limit behind
-        OnShow = function(dialog)
-            local box = dialog.GetEditBox and dialog:GetEditBox()
-            if box then box:SetText(HUB_URL); box:HighlightText(); box:SetFocus() end
-        end,
-        EditBoxOnEnterPressed = function(box) box:GetParent():Hide() end,
-        EditBoxOnEscapePressed = function(box) box:GetParent():Hide() end,
-        timeout = 0, whileDead = true, hideOnEscape = true,
-    }
-end
-function ns.ShowHubLink()
-    StaticPopupDialogs.FOREVERDATABAR_HUB_LINK.text = L.POPUP_HUB_LINK
-    StaticPopup_Show("FOREVERDATABAR_HUB_LINK")
-end

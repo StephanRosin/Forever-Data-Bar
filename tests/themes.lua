@@ -11,7 +11,7 @@ return function(ns, M, check, ROOT)
 
     -- Shipped with the addon.
     for _, font in ipairs(LibForeverThemes.FONTS) do check("font shipped: " .. font.name, exists(font.path), true) end
-    for _, id in ipairs(Themes.IDS) do
+    for _, id in ipairs(LibForeverThemes.SpecIds(Themes.SPECS)) do
         check("theme " .. id .. ": label", ns.L["THEME_" .. id] ~= "THEME_" .. id, true)
         local spec = Themes.SPECS[id]
         check("theme " .. id .. ": spec", spec ~= nil, true)
@@ -115,13 +115,13 @@ return function(ns, M, check, ROOT)
     Themes.Switch("TECH")
     Settings.Set("dataBarClockX", 70)
     Themes.Switch("WOOD")
-    ForeverDataBarDB.themeSets.revision = Themes.REVISION - 1
+    ForeverDataBarDB.themeSets.revision = 9
     Settings.Set("dataBarFont", "Skurri")
     Themes.Upgrade()
     check("upgrade: the theme in use from classic", S("dataBarClockX") .. S("dataBarFont"), "15Friz Quadrata")
     check("upgrade: other themes dropped", ForeverDataBarDB.themeSets.TECH, nil)
     check("upgrade: classic kept", ForeverDataBarDB.themeSets.CLASSIC.dataBarHeight, 30)
-    check("upgrade: revision stored", ForeverDataBarDB.themeSets.revision, Themes.REVISION)
+    check("upgrade: revision stored", ForeverDataBarDB.themeSets.revision, 10)
     Themes.Switch("CLASSIC")
 
     -- Body text (all of the bar's): the theme font where it reads, else the
@@ -142,7 +142,6 @@ return function(ns, M, check, ROOT)
         end
         Themes.Switch("CLASSIC")
     end
-    check("revision raised for the family's backgrounds", Themes.REVISION, 10)
     Themes.Switch("COMIC")
     check("comic: values at full strength", f.profs[1].value._textColor[4], 1)
     Themes.Switch("CLASSIC")
@@ -158,7 +157,7 @@ return function(ns, M, check, ROOT)
     check("colours: classic has no colour", registry.Color(), nil)
     check("colours: comic list", table.concat(registry.Colors("COMIC"), ","), "GREY,DARKGREY,BLACK,WHITE,YELLOW,BLUE,RED,GREEN,PURPLE")
     check("colours: pixel list", table.concat(registry.Colors("PIXEL"), ","), "NAVY,PLUM,FOREST,BROWN,GREY,BLACK,TEAL,PURPLE,HANDHELD")
-    for _, id in ipairs(Themes.IDS) do
+    for _, id in ipairs(LibForeverThemes.SpecIds(Themes.SPECS)) do
         if id ~= "CLASSIC" then
             local art = Themes.SPECS[id].art
             Themes.Switch(id)
@@ -169,7 +168,7 @@ return function(ns, M, check, ROOT)
             check(id .. ": default keeps its accent", accent(), rgb(Themes.SPECS[id].look.dataBarAccent))
             for i, colour in ipairs(registry.Colors()) do
                 check(id .. " " .. colour .. ": named", ns.L["THEME_COLOR_" .. id .. "_" .. colour] ~= "THEME_COLOR_" .. id .. "_" .. colour, true)
-                if Themes.COLORS[id][i].back then
+                if LibForeverThemes.COLORS[id][i].back then
                     check(id .. " " .. colour .. ": grey texture shipped", exists("Libs/LibForeverThemes/Media/Themes/" .. art.back .. "Grey.tga"), true)
                 end
             end
@@ -254,7 +253,7 @@ return function(ns, M, check, ROOT)
         local function lin(v) return v <= 0.03928 and v / 12.92 or ((v + 0.055) / 1.055) ^ 2.4 end
         return 0.2126 * lin(c[1]) + 0.7152 * lin(c[2]) + 0.0722 * lin(c[3])
     end
-    for id, colours in pairs(Themes.COLORS) do
+    for id, colours in pairs(LibForeverThemes.COLORS) do
         for _, c in ipairs(id ~= "COMIC" and colours or {}) do
             local a = c.accent or c.wedge
             if a then
@@ -281,7 +280,7 @@ return function(ns, M, check, ROOT)
         PITWALL = "0.043,0.047,0.055,1" }
     local OWN_RING = { CONSOLE = { MINT = "0.306,0.929,0.69,1", AMBER = "1,0.69,0,1", PHOSPHOR = "0.224,1,0.078,1",
         VIOLET = "0.627,0.471,1,1" }, PIXEL = { HANDHELD = "0.784,0.941,0.439,1" } }
-    for _, id in ipairs(Themes.IDS) do
+    for _, id in ipairs(LibForeverThemes.SpecIds(Themes.SPECS)) do
         if id ~= "CLASSIC" then
             Themes.Switch(id)
             local chosen = registry.Color()
@@ -352,7 +351,7 @@ return function(ns, M, check, ROOT)
 
     -- Nothing but a soft shadow outside the bar's Classic box.
     local classicHeight = f:GetHeight()
-    for _, id in ipairs(Themes.IDS) do
+    for _, id in ipairs(LibForeverThemes.SpecIds(Themes.SPECS)) do
         Themes.Switch(id)
         local art = Themes.SPECS[id].art or {}
         local inside = f:GetHeight() == classicHeight
@@ -453,9 +452,25 @@ return function(ns, M, check, ROOT)
             table.concat({ want.text, want.accent, want.bg, want.alpha, "OUTLINE", "false" }, " "))
     end
 
-    -- A set stored under this REVISION stays as it is at load.
-    ForeverDataBarDB.themeSets = { revision = Themes.REVISION, CLASSIC = {}, WOOD = { dataBarAlpha = 35 } }
+    -- A set stored by the current release (revision 10, no seedRevision) stays as it is at load.
+    ForeverDataBarDB.themeSets = { revision = 10, CLASSIC = {}, WOOD = { dataBarAlpha = 35 } }
     Themes.Upgrade()
     check("load: a stored set untouched", ForeverDataBarDB.themeSets.WOOD and ForeverDataBarDB.themeSets.WOOD.dataBarAlpha, 35)
+    check("load: still marked current", ForeverDataBarDB.themeSets.revision, 10)
+
+    -- The Theme part's switch belongs to no theme: hidden in one, hidden in all.
+    ForeverDataBarDB.themeSets = { revision = 10, CLASSIC = {}, WOOD = { dataBarTheme = false } }
+    Themes.MigrateThemePart()
+    check("theme part: hidden in a stored set stays hidden", S("dataBarTheme"), false)
+    check("theme part: gone from the sets", ForeverDataBarDB.themeSets.WOOD.dataBarTheme, nil)
+    Settings.Set("dataBarTheme", true)
+    Themes.MigrateThemePart()
+    check("theme part: shown again stays shown", S("dataBarTheme"), true)
+    Settings.Set("dataBarTheme", false)
+    Themes.Switch("TECH")
+    check("theme part: a switch keeps it hidden", S("dataBarTheme"), false)
+    check("theme part: not in the stored set", ForeverDataBarDB.themeSets.CLASSIC.dataBarTheme, nil)
+    Themes.Switch("CLASSIC")
+    Settings.Set("dataBarTheme", true)
     ForeverDataBarDB.themeSets = nil
 end

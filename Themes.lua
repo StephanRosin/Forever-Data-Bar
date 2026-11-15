@@ -23,8 +23,6 @@ ns.Themes = Themes
 
 local Lib = LibForeverThemes
 Themes.CLASSIC = Lib.CLASSIC
--- The options' order (the family's, LibForeverThemes). Stored by id.
-Themes.IDS = Lib.IDS
 
 -- Each theme's identity (backdrop, tint, ornament, wedge, rim colour,
 -- fonts) is LibForeverThemes'; here only the bar's part on top.
@@ -50,7 +48,6 @@ local function look(text, accent, bg, alpha, outline)
 end
 local ALL = { "OUTERLEFT", "OUTERRIGHT", "INNERLEFT", "INNERRIGHT" }
 
-local T = Lib.THEMES
 Themes.SPECS = Lib.Specs({
     -- Oak boards, a rim in the family's gold (the GOLD ring elsewhere), brass rivets.
     WOOD = {
@@ -105,7 +102,7 @@ Themes.SPECS = Lib.Specs({
     SWISS = {
         font = "Inter Tight", bodyFont = false,
         look = look({ 0.95, 0.95, 0.95 }, { 1, 0.176, 0.125 }, { 0.039, 0.039, 0.039 }, 100),
-        art = { rim = T.SWISS.rule, rimSize = 3, bar = "SwissBar", track = 3, strip = { 0, 0, 0, 1 } },
+        art = { rim = Lib.THEMES.SWISS.rule, rimSize = 3, bar = "SwissBar", track = 3, strip = { 0, 0, 0, 1 } },
     },
     -- A terminal: near black with faint scan lines, a mint line, dashed
     -- lines; the mono face everywhere, the window title too.
@@ -125,22 +122,21 @@ Themes.SPECS = Lib.Specs({
 
 -- Keys of ForeverDataBarDB that belong to no theme's set (and survive a reset):
 -- the gold records are data, not settings.
+-- The Theme part's switch too: hiding it under one theme hides it under all.
 local META = { language = true, theme = true, themeSets = true, themeColors = true,
-    goldChars = true, goldItems = true, goldWindow = true }
+    goldChars = true, goldItems = true, goldWindow = true, dataBarTheme = true }
 Themes.META = META
 
--- The theme colours are the library's (Lib.COLORS), the same in every
--- Forever addon; which one is chosen is stored account wide, outside the
--- theme sets (themeColors). The bar has no dark ink (white outlined text):
--- the comic's dark papers need nothing more.
-Themes.COLORS = Lib.COLORS
+-- The theme colours are the library's (Lib.COLORS, read at use), the same in
+-- every Forever addon; which one is chosen is stored account wide, outside
+-- the theme sets (themeColors). The bar has no dark ink (white outlined
+-- text): the comic's dark papers need nothing more.
 
 -- Raised whenever SPECS change a look: theme sets made before are made
 -- anew from CLASSIC (Themes.Upgrade), so a changed theme shows as it is
 -- now. CLASSIC is never touched. The library's part counts too: a change
--- there to what seeding copies (fonts, sizes) raises it.
+-- there to what seeding copies (fonts, sizes) raises it (Lib.NeedsReseed).
 local OWN_REVISION = 10
-Themes.REVISION = OWN_REVISION + Lib.SEED_REVISION * Lib.SEED_STEP
 
 local function copy(v)
     if type(v) ~= "table" then return v end
@@ -219,16 +215,16 @@ local function liveSet()
     return set
 end
 
--- The stored sets; stale ones (an older REVISION) dropped.
+-- The stored sets; stale ones (an older revision) dropped.
 local function storedSets()
     local db = ns.DB()
     local sets = db.themeSets or {}
     db.themeSets = sets
-    if sets.revision ~= Themes.REVISION then
-        for _, id in ipairs(Themes.IDS) do
+    if Lib.NeedsReseed(sets, OWN_REVISION) then
+        for _, id in ipairs(Lib.SpecIds(Themes.SPECS)) do
             if id ~= Themes.CLASSIC then sets[id] = nil end
         end
-        sets.revision = Themes.REVISION
+        Lib.MarkSeeded(sets, OWN_REVISION)
     end
     return sets
 end
@@ -339,10 +335,10 @@ function Themes.Reset()
     return true
 end
 
--- The themes with stored settings to copy from, in IDS order.
+-- The themes with stored settings to copy from, in the themes' order.
 function Themes.Stored()
     local sets, list = storedSets(), {}
-    for _, id in ipairs(Themes.IDS) do
+    for _, id in ipairs(Lib.SpecIds(Themes.SPECS)) do
         if sets[id] and id ~= Themes.Current() then list[#list + 1] = id end
     end
     return list
@@ -385,10 +381,10 @@ function Themes.Restore(undo)
 end
 
 -- At load, before the bar exists: a theme in use made under an older
--- REVISION is made anew from CLASSIC, quietly (the bar is built later).
+-- revision is made anew from CLASSIC, quietly (the bar is built later).
 function Themes.Upgrade()
     local db = ns.DB()
-    if not db.themeSets or db.themeSets.revision == Themes.REVISION then return end
+    if not db.themeSets or not Lib.NeedsReseed(db.themeSets, OWN_REVISION) then return end
     local base = db.themeSets[Themes.CLASSIC]
     storedSets()
     local current = Themes.Current()
@@ -398,6 +394,19 @@ function Themes.Upgrade()
         if not META[k] then db[k] = nil end
     end
     for k, v in pairs(fresh) do db[k] = v end
+end
+
+-- The Theme part's switch was a theme setting before it joined META: hidden
+-- under any theme, it stays hidden; the sets' copies go (META keys there
+-- are never read).
+function Themes.MigrateThemePart()
+    local db = ns.DB()
+    for _, set in pairs(db.themeSets or {}) do
+        if type(set) == "table" then
+            if set.dataBarTheme == false then db.dataBarTheme = false end
+            set.dataBarTheme = nil
+        end
+    end
 end
 
 -- A central theme picker in another addon switches through this, as the
@@ -427,5 +436,6 @@ events:SetScript("OnEvent", function(self, _, name)
     if name ~= ADDON then return end
     self:UnregisterEvent("ADDON_LOADED")
     Themes.MigrateComicColor()
+    Themes.MigrateThemePart()
     Themes.Upgrade()
 end)

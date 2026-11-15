@@ -44,9 +44,9 @@ function Media.FontNames()
 end
 
 -- The file for a font name; unknown names get Friz Quadrata. A font stored
--- under an older name (LibForeverThemes' aliases) finds its file.
+-- under an older name (LibForeverThemes' aliases) finds its file, after the
+-- own fonts and LibSharedMedia's (someone's font of that name wins).
 function Media.FontPath(name)
-    name = Lib.FontName(name)
     for _, list in ipairs({ Media.BLIZZARD_FONTS, Lib.FONTS }) do
         for _, f in ipairs(list) do
             if f.name == name then return f.path end
@@ -54,5 +54,5 @@ function Media.FontPath(name)
     end
     local lsm = sharedMedia()
     local path = lsm and lsm:Fetch("font", name, true)
-    return path or Media.DEFAULT_FONT
+    return path or Lib.FontPath(name) or Media.DEFAULT_FONT
 end

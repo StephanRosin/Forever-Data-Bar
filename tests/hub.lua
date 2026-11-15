@@ -50,20 +50,20 @@ return function(ns, M, check)
     end
     check("no hub: the theme part's switch dimmed", show and show.box:IsEnabled(), false)
     M.popups = {}
-    check("no hub: link button", clickButton(ns.L.OPT_HUB_LINK), true)
+    check("no hub: link button", clickButton(Lib.Text("HUB_LINK")), true)
     local popup = M.popups[1]
-    check("link: Blizzard's text popup", popup and popup.which, "FOREVERDATABAR_HUB_LINK")
+    check("link: Blizzard's text popup", popup and popup.which, "LIBFOREVERTHEMES_HUB_LINK")
     local box = { SetText = function(self, t) self.text = t end, HighlightText = function() end, SetFocus = function() end }
-    StaticPopupDialogs.FOREVERDATABAR_HUB_LINK.OnShow({ GetEditBox = function() return box end })
+    StaticPopupDialogs.LIBFOREVERTHEMES_HUB_LINK.OnShow({ GetEditBox = function() return box end })
     check("link: the hub's CurseForge page", box.text, "https://www.curseforge.com/wow/addons/forever-themes")
     W.Open("databar")
     check("no hub: theme picker usable", row(ns.L.OPT_THEME_CHOICE, "button").button:IsEnabled(), true)
-    check("no hub: no 'Follows'", visibleText(ns.L.OPT_HUB_FOLLOWS), nil)
+    check("no hub: no 'Follows'", visibleText(Lib.Text("HUB_FOLLOWS")), nil)
     check("no hub: 'Apply to all' offered", visibleText(ns.L.OPT_THEME_ALL) ~= nil, true)
-    check("no hub: theme section points to Forever Themes", visibleText(ns.L.OPT_HUB_HINT) ~= nil, true)
+    check("no hub: theme section points to Forever Themes", visibleText(Lib.Text("HUB_MISSING")) ~= nil, true)
     M.popups = {}
-    check("no hub: theme section's link button", clickButton(ns.L.OPT_HUB_LINK), true)
-    check("theme section link: the same popup", M.popups[1] and M.popups[1].which, "FOREVERDATABAR_HUB_LINK")
+    check("no hub: theme section's link button", clickButton(Lib.Text("HUB_LINK")), true)
+    check("theme section link: the same popup", M.popups[1] and M.popups[1].which, "LIBFOREVERTHEMES_HUB_LINK")
 
     -- The hub, this addon following it.
     local follows, calls = { ForeverOther = false }, {}
@@ -96,10 +96,10 @@ return function(ns, M, check)
     W.Open("databar")
     check("follows: theme picker dimmed", row(ns.L.OPT_THEME_CHOICE, "button").button:IsEnabled(), false)
     check("follows: picker still shows the theme", ns.Themes.Current() ~= nil, true)
-    check("follows: 'Follows Forever Themes'", visibleText(ns.L.OPT_HUB_FOLLOWS) ~= nil, true)
-    check("hub: no hint to get it", visibleText(ns.L.OPT_HUB_HINT), nil)
+    check("follows: 'Follows Forever Themes'", visibleText(Lib.Text("HUB_FOLLOWS")) ~= nil, true)
+    check("hub: no hint to get it", visibleText(Lib.Text("HUB_MISSING")), nil)
     check("follows: no 'Apply to all'", visibleText(ns.L.OPT_THEME_ALL), nil)
-    check("follows: 'Open Forever Themes'", clickButton(ns.L.OPT_HUB_OPEN), true)
+    check("follows: 'Open Forever Themes'", clickButton(Lib.Text("HUB_OPEN")), true)
     check("follows: opens the hub's options", calls[3] and calls[3][1], "options")
     W.Open("parts")
     check("hub: no 'Requires Forever Themes'", visibleText(ns.L.OPT_HUB_NEEDED), nil)
@@ -108,7 +108,7 @@ return function(ns, M, check)
     follows.ForeverDataBar = false
     W.Open("databar")
     check("own theme: theme picker usable", row(ns.L.OPT_THEME_CHOICE, "button").button:IsEnabled(), true)
-    check("own theme: no 'Follows'", visibleText(ns.L.OPT_HUB_FOLLOWS), nil)
+    check("own theme: no 'Follows'", visibleText(Lib.Text("HUB_FOLLOWS")), nil)
     check("own theme: 'Apply to all' offered", visibleText(ns.L.OPT_THEME_ALL) ~= nil, true)
     W.Toggle()
 
