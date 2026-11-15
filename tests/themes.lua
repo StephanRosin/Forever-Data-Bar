@@ -127,7 +127,7 @@ return function(ns, M, check, ROOT)
     -- Body text (all of the bar's): the theme font where it reads, else the
     -- standard font at the player's size.
     local BODY = { WOOD = "Friz Quadrata", TECH = "Space Grotesk", RUNESTONE = "Marcellus", PIXEL = "VT323",
-        PARCHMENT = "Friz Quadrata", FROST = "Friz Quadrata", GLASS = "Friz Quadrata", COMIC = "Bangers",
+        PARCHMENT = "Friz Quadrata", FROST = "Julius Sans One", GLASS = "Friz Quadrata", COMIC = "Bangers",
         SWISS = "Inter Tight", CONSOLE = "IBM Plex Mono", PITWALL = "Titillium Web" }
     for id, font in pairs(BODY) do
         Themes.Switch(id)
@@ -142,7 +142,7 @@ return function(ns, M, check, ROOT)
         end
         Themes.Switch("CLASSIC")
     end
-    check("revision raised for Frost's shadowed text", Themes.REVISION, 9)
+    check("revision raised for the family's backgrounds", Themes.REVISION, 10)
     Themes.Switch("COMIC")
     check("comic: values at full strength", f.profs[1].value._textColor[4], 1)
     Themes.Switch("CLASSIC")
@@ -184,7 +184,7 @@ return function(ns, M, check, ROOT)
     check("pixel plum: accent", accent(), "1,0.93,0.15")
     check("pixel handheld: listed last", registry.Colors()[9], "HANDHELD")
     Themes.SetColor("HANDHELD")
-    check("pixel handheld: grey texture tinted", f.themeBack._texture .. back(), PATH .. "PixelBackGrey" .. rgb({ 0.06 / 0.8, 0.12 / 0.8, 0.06 / 0.8 }))
+    check("pixel handheld: grey texture tinted", f.themeBack._texture .. back(), PATH .. "PixelBackGrey" .. rgb({ 0.059 / 0.8, 0.122 / 0.8, 0.059 / 0.8 }))
     check("pixel handheld: accent", accent(), "0.784,0.941,0.439")
     check("pixel grey: no accent keeps the theme's", Themes.SetColor("GREY") and accent(), rgb(Themes.SPECS.PIXEL.look.dataBarAccent))
     check("colour: not in the set", Settings.Get("dataBarAccent")[1], Themes.SPECS.PIXEL.look.dataBarAccent[1])
@@ -195,7 +195,7 @@ return function(ns, M, check, ROOT)
     check("colour: another theme's set in combat", Themes.SetColor("DEEP", "FROST"), true)
     M.state.combat = false
     Themes.Switch("FROST")
-    check("frost deep: tint clamps and keeps the alpha", back() .. "/" .. alpha(), rgb({ 0.1 / 0.796, 0.18 / 0.796, 0.32 / 0.796 }) .. "/0.75")
+    check("frost deep: tint clamps and keeps the alpha", back() .. "/" .. alpha(), rgb({ 0.1 / 0.796, 0.18 / 0.796, 0.32 / 0.796 }) .. "/0.85")
     Themes.Switch("PIXEL")
     check("colours: each theme keeps its own", registry.Color() .. "/" .. registry.Color("FROST"), "GREY/DEEP")
     Themes.SetColor("NAVY")

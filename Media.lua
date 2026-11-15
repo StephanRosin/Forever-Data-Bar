@@ -21,6 +21,7 @@ Media.OWN_FONTS = {
     { name = "Cinzel",             path = FONTS .. "Cinzel-Bold.ttf" },
     { name = "IBM Plex Mono",      path = FONTS .. "IBMPlexMono-Regular.ttf" },
     { name = "IM Fell English SC", path = FONTS .. "IMFeENsc28P.ttf" },
+    { name = "Julius Sans One",    path = FONTS .. "JuliusSansOne-Regular.ttf" },
     { name = "Inter Tight",        path = FONTS .. "InterTight-Regular.ttf" },
     { name = "Marcellus",          path = FONTS .. "Marcellus-Regular.ttf" },
     { name = "Space Grotesk",      path = FONTS .. "SpaceGrotesk-Bold.ttf" },

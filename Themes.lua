@@ -56,35 +56,35 @@ Themes.SPECS = {
     -- Oak boards, a rim in the family's gold (the GOLD ring elsewhere), brass rivets.
     WOOD = {
         font = "Cinzel", bodyFont = "Friz Quadrata",
-        look = look({ 0.96, 0.88, 0.70 }, { 0.94, 0.78, 0.55 }, { 0.1, 0.06, 0.02 }, 30),
-        art = { back = "WoodBack", rim = { 0.906, 0.702, 0.161, 1 }, rimSize = 2, ornament = "Rivet", corners = ALL,
+        look = look({ 0.96, 0.88, 0.70 }, { 0.94, 0.78, 0.55 }, { 0.1, 0.06, 0.02 }, 0),
+        art = { back = "WoodBack", tint = { 0.5, 0.5, 0.5, 1 }, rim = { 0.906, 0.702, 0.161, 1 }, rimSize = 2, ornament = "Rivet", corners = ALL,
             shadow = 6, shadowAlpha = 0.6, bar = "WoodBar", track = 4 },
     },
     -- Dark navy with a faint grid, a thin cyan line.
     TECH = {
         font = "Space Grotesk",
-        look = look({ 0.80, 0.97, 1 }, { 0.25, 0.88, 0.94 }, { 0.02, 0.05, 0.08 }, 40),
+        look = look({ 0.80, 0.97, 1 }, { 0.25, 0.88, 0.94 }, { 0.02, 0.05, 0.08 }, 0),
         art = { back = "TechBack", rim = { 0.25, 0.88, 0.94, 0.9 }, rimSize = 1, bar = "TechBar", track = 3 },
     },
     -- Parchment, a brown ink line, a wax seal.
     PARCHMENT = {
         font = "IM Fell English SC", bodyFont = "Friz Quadrata", fontSizeAdd = 1,
-        look = look({ 1, 0.95, 0.82 }, { 0.85, 0.62, 0.30 }, { 0.22, 0.15, 0.07 }, 65),
-        art = { back = "ParchmentBack", rim = { 0.29, 0.2, 0.12, 1 }, rimSize = 2, ornament = "Seal",
+        look = look({ 1, 0.95, 0.82 }, { 0.85, 0.62, 0.30 }, { 0.22, 0.15, 0.07 }, 0),
+        art = { back = "ParchmentBack", tint = { 0.45, 0.45, 0.45, 1 }, rim = { 0.29, 0.2, 0.12, 1 }, rimSize = 2, ornament = "Seal",
             corners = { "INNERLEFT" }, shadow = 5, shadowAlpha = 0.45, bar = "ParchmentBar", track = 4 },
     },
     -- Grey granite, a dark chiselled edge, glowing runes.
     RUNESTONE = {
         font = "Marcellus", fontSizeAdd = 1,
-        look = look({ 0.86, 0.95, 0.93 }, { 0.35, 0.95, 0.85 }, { 0.04, 0.05, 0.06 }, 45),
-        art = { back = "StoneBack", rim = { 0.1, 0.1, 0.12, 1 }, rimSize = 2, ornament = "Rune",
+        look = look({ 0.86, 0.95, 0.93 }, { 0.35, 0.95, 0.85 }, { 0.04, 0.05, 0.06 }, 0),
+        art = { back = "StoneBack", tint = { 0.55, 0.55, 0.55, 1 }, rim = { 0.1, 0.1, 0.12, 1 }, rimSize = 2, ornament = "Rune",
             corners = { "INNERLEFT", "INNERRIGHT" }, ornamentColor = { 0.35, 0.95, 0.85, 1 },
             shadow = 6, shadowAlpha = 0.7, bar = "StoneBar", track = 4 },
     },
     -- A mosaic of coloured glass, dark lead.
     GLASS = {
         font = "Morpheus", bodyFont = "Friz Quadrata", fontSizeAdd = 1,
-        look = look({ 1, 0.93, 0.75 }, { 1, 0.75, 0.3 }, { 0.05, 0.04, 0.06 }, 35),
+        look = look({ 1, 0.93, 0.75 }, { 1, 0.75, 0.3 }, { 0.05, 0.04, 0.06 }, 90),
         art = { back = "GlassBack", rim = { 0.07, 0.06, 0.05, 1 }, rimSize = 3, shadow = 6, shadowAlpha = 0.55,
             bar = "GlassBar", track = 4 },
     },
@@ -100,11 +100,11 @@ Themes.SPECS = {
     },
     -- Translucent ice with quieter cracks, a pale rim, a long soft shadow.
     FROST = {
-        font = "Cinzel", bodyFont = "Friz Quadrata",
+        font = "Julius Sans One", bodyFont = "Julius Sans One",
         -- No outline: the texts keep their font object's 1 px drop shadow
         -- (GameFontHighlight*).
-        look = look({ 0.92, 0.98, 1 }, { 0.6, 0.88, 1 }, { 0.04, 0.12, 0.22 }, 50, ""),
-        art = { back = "FrostBack", tint = { 0.6, 0.6, 0.6, 0.75 }, rim = { 0.86, 0.96, 1, 0.8 }, rimSize = 1,
+        look = look({ 0.92, 0.98, 1 }, { 0.6, 0.88, 1 }, { 0.02, 0.07, 0.15 }, 45, ""),
+        art = { back = "FrostBack", tint = { 0.55, 0.55, 0.55, 0.85 }, rim = { 0.86, 0.96, 1, 0.8 }, rimSize = 1,
             shadow = 8, shadowAlpha = 0.55, bar = "FrostBar", track = 3 },
     },
     -- Scan lines, a light pixel rim, a solid shadow.
@@ -123,7 +123,7 @@ Themes.SPECS = {
     -- A terminal: near black with faint scan lines, a mint line, dashed lines.
     CONSOLE = {
         font = "IBM Plex Mono",
-        look = look({ 0.9, 0.91, 0.93 }, { 0.306, 0.929, 0.69 }, { 0.06, 0.06, 0.07 }, 40),
+        look = look({ 0.9, 0.91, 0.93 }, { 0.306, 0.929, 0.69 }, { 0.06, 0.06, 0.07 }, 0),
         art = { back = "ConsoleBack", rim = { 0.306, 0.929, 0.69, 1 }, rimSize = 1, bar = "ConsoleBar", track = 3 },
     },
     -- A timing screen: flat black, a carbon line, a red wedge, LED segments.
@@ -209,7 +209,7 @@ Themes.COLORS = {
         colour("BLACK", { 0.03, 0.03, 0.04 }, { 0, 0.89, 0.21 }),
         colour("TEAL", { 0.02, 0.17, 0.22 }, { 0.16, 0.68, 1 }),
         colour("PURPLE", { 0.15, 0.1, 0.25 }, { 1, 0.47, 0.66 }),
-        colour("HANDHELD", { 0.06, 0.12, 0.06 }, { 0.784, 0.941, 0.439 }, { 0.784, 0.941, 0.439, 1 }),
+        colour("HANDHELD", { 0.059, 0.122, 0.059 }, { 0.784, 0.941, 0.439 }, { 0.784, 0.941, 0.439, 1 }),
     },
     SWISS = {
         colour("RED"),
@@ -252,7 +252,7 @@ local COMIC_PAINT = {
 -- Raised whenever SPECS change a look: theme sets made before are made
 -- anew from CLASSIC (Themes.Upgrade), so a changed theme shows as it is
 -- now. CLASSIC is never touched.
-Themes.REVISION = 9
+Themes.REVISION = 10
 
 local function copy(v)
     if type(v) ~= "table" then return v end
