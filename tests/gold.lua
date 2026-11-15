@@ -100,5 +100,11 @@ return function(ns, M, check)
     check("tooltip: realm total", text:find(ns.L.GOLD_TOTAL .. "|75g 0s", 1, true) ~= nil, true)
     part:GetScript("OnLeave")(part)
     check("leaving resets the tooltip width", GameTooltip._minWidth, 0)
+    -- Data, not settings: no theme set takes it, a reset keeps it.
+    check("gold records outside the theme sets", ns.Themes.META.goldChars and ns.Themes.META.goldItems, true)
+    local height = ForeverDataBarDB.dataBarHeight
+    ns.Settings.Reset()
+    check("reset keeps the characters", ForeverDataBarDB.goldChars["Testeria-Mockrealm"] ~= nil, true)
+    ForeverDataBarDB.dataBarHeight = height
     ForeverDataBarDB.goldChars, M.state.money = savedChars, nil
 end

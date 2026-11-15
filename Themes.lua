@@ -135,8 +135,11 @@ Themes.SPECS = {
     },
 }
 
--- Keys of ForeverDataBarDB that belong to no theme's set.
-local META = { language = true, theme = true, themeSets = true, themeColors = true }
+-- Keys of ForeverDataBarDB that belong to no theme's set (and survive a reset):
+-- the gold records are data, not settings.
+local META = { language = true, theme = true, themeSets = true, themeColors = true,
+    goldChars = true, goldItems = true, goldWindow = true }
+Themes.META = META
 
 -- Each theme's colours, the same in every Forever addon (none for CLASSIC).
 -- The first is the theme as it is. Any other draws the backdrop from the

@@ -139,11 +139,12 @@ function Settings.SetRep(slot, factionID)
 end
 
 -- Look and parts back to their defaults, under a theme with its look;
--- factions, hidden skills, the language, the theme colours and the other themes' settings stay.
+-- factions, hidden skills, the language, the theme colours, the other themes' settings and the
+-- gold records (Themes.META) stay.
 function Settings.Reset()
     local old = ns.DB()
     local db = ns.Themes.Seed(old.theme, {})
-    db.language, db.theme, db.themeSets, db.themeColors = old.language, old.theme, old.themeSets, old.themeColors
+    for key in pairs(ns.Themes.META) do db[key] = old[key] end
     ForeverDataBarDB = db
     Settings.Changed(nil)
 end
