@@ -305,6 +305,7 @@ local function hubFollowed()
     return hub ~= nil and hub.Follows(ADDON) == true
 end
 local function notHubFollowed() return not hubFollowed() end
+local function noHub() return LibForeverThemes.Hub() == nil end
 
 local function themeRow()
     return {
@@ -380,6 +381,11 @@ local function dataBarRows()
         { type = "header", label = "OPT_THEME" },
         themeRow(),
         themeColorRow(),
+        -- Without the hub: the one way to theme every Forever addon at once.
+        { type = "text", label = "OPT_HUB_HINT", visible = noHub },
+        { type = "buttons", visible = noHub, buttons = {
+            { label = "OPT_HUB_LINK", width = 200, onClick = function() ns.ShowHubLink() end },
+        } },
         { type = "text", label = "OPT_HUB_FOLLOWS", visible = hubFollowed },
         { type = "buttons", visible = hubFollowed, buttons = {
             { label = "OPT_HUB_OPEN", width = 200, onClick = function() LibForeverThemes.Hub().OpenOptions() end },
@@ -436,7 +442,6 @@ local function dataBarPartRows()
         if part.id == "THEME" then
             -- Only Forever Themes has a central theme to show.
             local function hub() return LibForeverThemes.Hub() ~= nil end
-            local function noHub() return not hub() end
             rows[#rows].enabled = hub
             column.enabled = function() return hub() and on() end
             x.enabled = column.enabled

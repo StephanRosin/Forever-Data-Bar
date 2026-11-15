@@ -435,4 +435,27 @@ return function(ns, M, check, ROOT)
     Themes.Switch("CLASSIC")
     Settings.Reset()
     ForeverDataBarDB.themeSets = nil
+
+    -- The shipped look is Stephan's: his stored Wood and Pitwall sets, less
+    -- what comes from his Classic (columns, widths, font size). Fonts by the
+    -- file they stand for (his Pitwall stores the older "Titillium Web").
+    local function rgb(c) return c and table.concat(c, ",") end
+    local STEPHAN = {
+        WOOD = { font = "Friz Quadrata", text = "0.96,0.88,0.7", accent = "0.94,0.78,0.55", bg = "0.1,0.06,0.02", alpha = 0 },
+        PITWALL = { font = "Titillium Web", text = "0.95,0.95,0.96", accent = "0.13,0.77,0.37", bg = "0.039,0.039,0.039", alpha = 100 },
+    }
+    for id, want in pairs(STEPHAN) do
+        local seed = Themes.Seed(id, {})
+        local function get(key) if seed[key] == nil then return Settings.DEFAULTS[key] end return seed[key] end
+        check("stephan's " .. id .. ": font", LibForeverThemes.FontName(get("dataBarFont")), LibForeverThemes.FontName(want.font))
+        check("stephan's " .. id .. ": look", table.concat({ rgb(get("dataBarFontColor")), rgb(get("dataBarAccent")),
+            rgb(get("dataBarBgColor")), get("dataBarAlpha"), get("dataBarFontOutline"), tostring(get("dataBarEdge")) }, " "),
+            table.concat({ want.text, want.accent, want.bg, want.alpha, "OUTLINE", "false" }, " "))
+    end
+
+    -- A set stored under this REVISION stays as it is at load.
+    ForeverDataBarDB.themeSets = { revision = Themes.REVISION, CLASSIC = {}, WOOD = { dataBarAlpha = 35 } }
+    Themes.Upgrade()
+    check("load: a stored set untouched", ForeverDataBarDB.themeSets.WOOD and ForeverDataBarDB.themeSets.WOOD.dataBarAlpha, 35)
+    ForeverDataBarDB.themeSets = nil
 end
