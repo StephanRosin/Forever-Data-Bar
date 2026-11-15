@@ -304,8 +304,8 @@ local function hubFollowed() return LibForeverThemes.Follows(ADDON) end
 local function notHubFollowed() return not hubFollowed() end
 local function noHub() return LibForeverThemes.Hub() == nil end
 -- The hub's texts are the library's, in the client's language.
-local function hubText(key) return function() return LibForeverThemes.Text(key) end end
-local function showHubLink() LibForeverThemes.ShowHubLink() end
+local function hubText(key) return function() return LibForeverThemes.Text(key, ns.Locale.Current()) end end
+local function showHubLink() LibForeverThemes.ShowHubLink(nil, ns.Locale.Current()) end
 
 local function themeRow()
     return {
