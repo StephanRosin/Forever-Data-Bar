@@ -43,8 +43,8 @@ local LATIN_CLIENTS = { enUS = true, enGB = true, deDE = true, frFR = true, esES
 -- (INNER = towards the game, OUTER = at the screen edge); wedge = a slanted
 -- band at the bar's left end in wedgeColor; shadow = a soft shadow over the
 -- game, hardShadow = a solid one; bar = the lines' texture, track = their
--- thickness (thick enough to show it). iconColor: the icons' colour where
--- the accent must not reach them (nil: the accent).
+-- thickness (thick enough to show it). The icons take the colour's accent,
+-- on Pitwall the wedge's (Themes.IconColor).
 local function look(text, accent, bg, alpha, outline)
     return { dataBarFontOutline = outline or "OUTLINE", dataBarFontColor = text, dataBarAccent = accent,
         dataBarBgColor = bg, dataBarAlpha = alpha, dataBarEdge = false, dataBarDesign = "GLASS" }
@@ -114,9 +114,9 @@ Themes.SPECS = {
         art = { back = "PixelBack", rim = { 1, 0.95, 0.91, 1 }, rimSize = 2,
             bar = "PixelBar", track = 4 },
     },
-    -- Swiss style: flat black, one white rule, one red accent (never on the icons).
+    -- Swiss style: flat black, one white rule, one red accent.
     SWISS = {
-        font = "Inter Tight", iconColor = { 0.95, 0.95, 0.95 },
+        font = "Inter Tight",
         look = look({ 0.95, 0.95, 0.95 }, { 1, 0.18, 0.13 }, { 0.039, 0.039, 0.039 }, 100),
         art = { back = "SwissBack", rim = { 0.95, 0.95, 0.95, 1 }, rimSize = 3, bar = "SwissBar", track = 3 },
     },
@@ -343,10 +343,13 @@ function Themes.WedgeColor(art)
     return c and c.wedge or art.wedgeColor
 end
 
--- The icons' colour: the theme's own where it keeps the accent off them,
--- else `fallback` (nil: the accent).
-function Themes.IconColor(fallback)
-    return Themes.Spec(Themes.Current()).iconColor or fallback or Themes.Accent()
+-- The icons' colour: own (an element's own colour: a profession's, a
+-- standing's, a maxed one) where it has one, else the colour's accent; on a
+-- theme with a wedge (Pitwall) the wedge's, as the colour changes it there.
+function Themes.IconColor(own)
+    if own then return own end
+    local art = Themes.Spec(Themes.Current()).art
+    return art and art.wedge and Themes.WedgeColor(art) or Themes.Accent()
 end
 
 -- The settings in use, without the keys of no theme.

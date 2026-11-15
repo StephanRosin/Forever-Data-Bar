@@ -206,10 +206,13 @@ return function(ns, M, check, ROOT)
     local function rim() return rgb(f.themeRim._texColor) end
     check("swiss: one white rule towards the game", f.themeRim:GetHeight() .. "/" .. rim(), "3/0.95,0.95,0.95")
     check("swiss: red accent", accent(), "1,0.18,0.13")
-    check("swiss: icons stay white", f.parts.GOLD.icon._vertex[1] .. f.gear.icon._vertex[2], "0.950.95")
+    check("swiss: icons in the red accent", rgb(f.parts.GOLD.icon._vertex) .. " " .. rgb(f.gear.icon._vertex),
+        "1,0.18,0.13 1,0.18,0.13")
     check("swiss blue: set", registry.SetColor("BLUE"), true)
     check("swiss blue: backdrop kept", f.themeBack._texture .. back(), PATH .. "SwissBack1,1,1")
     check("swiss blue: accent", accent(), "0.18,0.42,1")
+    check("swiss blue: icons follow", rgb(f.parts.GOLD.icon._vertex) .. " " .. rgb(f.gear.icon._vertex),
+        "0.18,0.42,1 0.18,0.42,1")
     Themes.SetColor("RED")
     Themes.Switch("CONSOLE")
     check("console: mint line", rim(), "0.306,0.929,0.69")
@@ -236,7 +239,30 @@ return function(ns, M, check, ROOT)
     Themes.SetColor("ORANGE")
     check("pitwall orange: the wedge's colour", rgb(f.themeWedge._vertex), "1,0.54,0")
     check("pitwall orange: accent kept", accent(), rgb(Themes.SPECS.PITWALL.look.dataBarAccent))
+    check("pitwall orange: icons follow the wedge", rgb(f.parts.GOLD.icon._vertex) .. " " .. rgb(f.gear.icon._vertex)
+        .. " " .. rgb(f.profs[1].icon._vertex), "1,0.54,0 1,0.54,0 1,0.54,0")
+    check("pitwall orange: the lines keep the accent", rgb(f.profs[1].line.glow._texColor),
+        rgb(Themes.SPECS.PITWALL.look.dataBarAccent))
+    Settings.Set("dataBarProfColours", true)
+    check("pitwall orange: a profession's own colour kept", rgb(f.profs[1].icon._vertex) ~= "1,0.54,0", true)
+    Settings.Set("dataBarProfColours", false)
     Themes.SetColor("RED")
+    check("pitwall red: icons in the wedge's red", rgb(f.gear.icon._vertex), "0.88,0.02,0")
+    -- Every icon accent readable on its backdrop (back, else the black
+    -- bar): at least 3:1, the contrast WCAG asks of icons.
+    local function luminance(c)
+        local function lin(v) return v <= 0.03928 and v / 12.92 or ((v + 0.055) / 1.055) ^ 2.4 end
+        return 0.2126 * lin(c[1]) + 0.7152 * lin(c[2]) + 0.0722 * lin(c[3])
+    end
+    for id, colours in pairs(Themes.COLORS) do
+        for _, c in ipairs(id ~= "COMIC" and colours or {}) do
+            local a = c.accent or c.wedge
+            if a then
+                local ratio = (luminance(a) + 0.05) / (luminance(c.back or { 0, 0, 0 }) + 0.05)
+                check(id .. " " .. c.id .. ": icon accent readable", ratio >= 3, true)
+            end
+        end
+    end
     -- Swiss and Pitwall share one black with every Forever addon: the flat
     -- backdrop untinted, the background #0a0a0a, opaque.
     for _, id in ipairs({ "SWISS", "PITWALL" }) do

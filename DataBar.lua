@@ -714,15 +714,16 @@ local function Accent()
     return { c[1], c[2], c[3] }
 end
 
+-- An entry's own colour, nil: the accent's (FillEntry).
 local function ProfColour(d)
     if d.rank >= d.maxRank then return CFG.CAP_COLOR end
     if S("dataBarProfColours") then return ns.CFG.COLORS[d.key] or ns.CFG.COLORS.UNKNOWN end
-    return Accent()
+    return nil
 end
 
 local function RepColour(d)
     if S("dataBarProfColours") then return d.colour end
-    return Accent()
+    return nil
 end
 
 local function ApplyFrame(design)
@@ -768,7 +769,7 @@ local function ApplyFrame(design)
     frame.xp.main:SetHeight(xpHeight)
     frame.xp.talents:SetHeight(TextHeight("dataBarXp") + 4)
     frame.gear:SetShown(S("dataBarGear"))
-    local ic = ns.Themes.IconColor(c)
+    local ic = ns.Themes.IconColor()
     frame.gear.icon:SetVertexColor(ic[1], ic[2], ic[3], 1)
     -- The clock with the micro menu around it: [icons] 12:34 [icons].
     -- The icons are secure and sit elsewhere (Micro.lua); here only the room.
@@ -862,7 +863,8 @@ function DataBar.UpdateXp()
     if before ~= xp.width or not shown then DataBar.Layout() end
 end
 
--- One entry at x in its part: icon (professions), name, value, line.
+-- One entry at x in its part: icon (professions), name, value, line;
+-- colour its own, nil the accent.
 -- Returns its width. Icons only: the icon over its line, no texts.
 local function FillEntry(b, design, x, colour, name, value, share, icon)
     b.icon:ClearAllPoints()
@@ -900,7 +902,7 @@ local function FillEntry(b, design, x, colour, name, value, share, icon)
     b.line:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", 0, 0)
     b.line:SetWidth(lineWidth)
     b.line.width = lineWidth
-    PaintLine(b.line, design, colour, share, 0, design.segments and design.segments[2])
+    PaintLine(b.line, design, colour or Accent(), share, 0, design.segments and design.segments[2])
     b:ClearAllPoints()
     b:SetPoint("LEFT", b:GetParent(), "LEFT", x, 0)
     b:Show()
@@ -982,7 +984,7 @@ end
 -- parts beside it.
 function DataBar.UpdateStats()
     if not frame then return end
-    local accent, moved = Accent(), false
+    local moved = false
     for _, p in ipairs(DataBar.PARTS) do
         local def, g = DataBar.STATS[p.id], frame.parts[p.id]
         if def then
@@ -990,7 +992,7 @@ function DataBar.UpdateStats()
             if S(p.key) then text, colour = def.value() end
             local before = g.width
             if text then
-                local ic = ns.Themes.IconColor(accent)
+                local ic = ns.Themes.IconColor()
                 g.icon:SetVertexColor(ic[1], ic[2], ic[3], 1)
                 g.text:SetText(text)
                 colour = colour or DataBar.TextColour(p.key)
