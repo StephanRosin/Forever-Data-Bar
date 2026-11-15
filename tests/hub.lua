@@ -107,6 +107,7 @@ return function(ns, M, check)
     check("own theme: 'Apply to all' offered", visibleText(ns.L.OPT_THEME_ALL) ~= nil, true)
     W.Toggle()
 
+    check("hub's Classic: plain name, not 'your bar'", D.ThemeLabel("CLASSIC"), ns.L.HUB_THEME_CLASSIC)
     Lib.SetHub(nil)
     _G.ForeverThemes.ForeverOther = nil
     tick()

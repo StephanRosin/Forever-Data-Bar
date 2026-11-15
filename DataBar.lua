@@ -527,7 +527,8 @@ DataBar.STATS = {
 
 -- "Pitwall · Red" (the colour left out where the theme has none).
 function DataBar.ThemeLabel(theme, color)
-    local name = L["THEME_" .. tostring(theme)]
+    -- The hub's Classic is every addon's own look, not "your bar".
+    local name = theme == LibForeverThemes.CLASSIC and L.HUB_THEME_CLASSIC or L["THEME_" .. tostring(theme)]
     if not color then return name end
     return L.DATABAR_THEME_AND_COLOR:format(name, L["THEME_COLOR_" .. tostring(theme) .. "_" .. tostring(color)])
 end
