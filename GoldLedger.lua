@@ -16,12 +16,13 @@ AH_SALE. Either side may come first; both wait a few seconds for the other.
 The API knows AUCTION_HOUSE_PURCHASE_COMPLETED and COMMODITY_PURCHASE_SUCCEEDED,
 but Forever was seen not to send them; should they come, they move a change
 just booked as a deposit back to AH_BUY. Purchases and sales per item come
-from the mailbox invoices (GetInboxInvoiceInfo): the inbox is read whenever
-it changes. A sale's invoice is followed while it still holds money, a
-purchase's while it still holds the item; once that is gone it has been
-taken, whether by hand (the mail stays until closed) or by "Open all", which
-takes several mails for one money change: the taken sales' money is matched
-against the mail money booked until it is used up.
+from the mailbox invoices (GetInboxInvoiceInfo), read as a mail is taken:
+TakeInboxMoney, TakeInboxItem and AutoLootMailItem are hooked, the paths of
+taking by hand and of "Open all". Comparing the inbox before and after missed
+sales: with more than 50 mails the inbox refills while it is emptied, and a
+mail like the one just taken takes its place. "Open all" takes several mails
+for one money change: the taken sales' money is matched against the mail
+money booked until it is used up.
 
 Known gaps: a bid that is outbid books as an auction purchase, and its
 refund arrives as plain mail income. Plain mail money (letters, refunds)
@@ -50,6 +51,18 @@ local ANY = math.huge
 local open, recent, claims = {}, {}, {}
 
 local function Now() return GetTime() end
+
+-- Debug trace of mailbox and booking (/fdb maildebug), kept in
+-- ForeverDataBarDB.mailLog so it can be read from the SavedVariables file.
+local LOG_MAX = 1000
+function Ledger.Log(fmt, ...)
+    local db = ns.AccountDB()
+    if not db.mailDebug then return end
+    db.mailLog = db.mailLog or {}
+    local log = db.mailLog
+    log[#log + 1] = string.format("%s %.1f ", date("%H:%M:%S"), GetTime()) .. string.format(fmt, ...)
+    while #log > LOG_MAX do table.remove(log, 1) end
+end
 
 local function IsOpen(context, now)
     local v = open[context]
@@ -84,7 +97,11 @@ end
 
 local function Expire(list, now, span)
     for i = #list, 1, -1 do
-        if now - list[i].time > span(list[i]) then table.remove(list, i) end
+        local x = list[i]
+        if now - x.time > span(x) then
+            if x.to and x.amount ~= ANY then Ledger.Log("claim expired %s<-%s left %d", x.to, x.from, x.amount) end
+            table.remove(list, i)
+        end
     end
 end
 
@@ -100,6 +117,7 @@ function Ledger.Reconcile(now)
             if c.amount <= 0 then break end
             if r.source == c.from and r.amount * c.sign > 0 and math.abs(r.time - c.time) <= WINDOW[c.to] then
                 local take = math.min(c.amount, math.abs(r.amount))
+                Ledger.Log("move %d %s->%s", take, c.from, c.to)
                 Move(r.day, c.sign > 0 and "inc" or "out", c.from, c.to, take)
                 r.amount = r.amount - take * c.sign
                 -- The moved part stays open to a later claim (a purchase event after a deposit's).
@@ -117,6 +135,7 @@ function Ledger.Book(day, delta, now)
     now = now or Now()
     local source = Ledger.Classify(delta, now)
     Add(day, source, delta)
+    Ledger.Log("book %d %s", delta, source)
     recent[#recent + 1] = { day = day, source = source, amount = delta, time = now }
     Ledger.Reconcile(now)
     return source
@@ -126,6 +145,7 @@ end
 -- sign +1 for money in, -1 for money out.
 function Ledger.Claim(to, from, sign, amount, now)
     now = now or Now()
+    Ledger.Log("claim %s<-%s %s", to, from, amount == ANY and "any" or tostring(amount))
     claims[#claims + 1] = { to = to, from = from, sign = sign, amount = amount or ANY, time = now }
     Ledger.Reconcile(now)
 end
@@ -206,33 +226,19 @@ end
 -- GetInboxInvoiceInfo: type, itemName, playerName, bid, buyout, deposit, consignment,
 -- moneyDelay, etaHour, etaMin, count.
 local function ReadMail(i)
-    local _, _, _, _, money, _, _, itemCount = GetInboxHeaderInfo(i)
+    local _, _, sender, subject, money, _, _, itemCount = GetInboxHeaderInfo(i)
     local kind, item, _, bid, _, deposit, consignment, _, _, _, count = GetInboxInvoiceInfo(i)
+    Ledger.Log("  mail %d %s | %s | money %s items %s | invoice %s %s bid %s dep %s cut %s",
+        i, tostring(sender), tostring(subject), tostring(money), tostring(itemCount),
+        tostring(kind), tostring(item), tostring(bid), tostring(deposit), tostring(consignment))
     local pending = (kind == "seller" and (money or 0) > 0) or (kind == "buyer" and (itemCount or 0) > 0)
     if not pending then return nil end
     count = (count and count > 0) and count or 1
     return {
-        sig = table.concat({ kind, tostring(item), bid or 0, deposit or 0, consignment or 0, count }, "|"),
+        sig = table.concat({ i, kind, tostring(item), bid or 0, deposit or 0, consignment or 0, count }, "|"),
         money = money or 0, kind = kind, item = item, bid = bid or 0, deposit = deposit or 0,
         cut = consignment or 0, count = count,
     }
-end
-
-function Ledger.ScanInbox()
-    local list = {}
-    for i = 1, GetInboxNumItems() do list[#list + 1] = ReadMail(i) end
-    return list
-end
-
--- The mails of `before` no longer in `after` (alike mails counted).
-function Ledger.Gone(before, after)
-    local left = {}
-    for _, m in ipairs(after) do left[m.sig] = (left[m.sig] or 0) + 1 end
-    local gone = {}
-    for _, m in ipairs(before) do
-        if (left[m.sig] or 0) > 0 then left[m.sig] = left[m.sig] - 1 else gone[#gone + 1] = m end
-    end
-    return gone
 end
 
 -- A mail taken: the invoice into the item's sums, a sale's money from MAIL to AH_SALE.
@@ -250,7 +256,7 @@ end
 -- -----------------------------------------------------------------------------
 -- Events
 -- -----------------------------------------------------------------------------
-local inbox, repairCost
+local repairCost
 local CONTEXTS = {
     MERCHANT_SHOW = { "MERCHANT", true }, MERCHANT_CLOSED = { "MERCHANT", false },
     MAIL_SHOW = { "MAIL", true }, MAIL_CLOSED = { "MAIL", false },
@@ -263,18 +269,34 @@ local CONTEXTS = {
 
 local function RepairCost() return (GetRepairAllCost and GetRepairAllCost()) or 0 end
 
-local function OnInbox(now)
-    local after = Ledger.ScanInbox()
-    if inbox then
-        local items = Ledger.ItemsOf(ns.AccountDB(), GetRealmName())
-        for _, mail in ipairs(Ledger.Gone(inbox, after)) do Ledger.Taken(items, mail, now) end
-    end
-    inbox = after
+-- A take as the mail functions are called, before the server removes the
+-- money or the item. A second click on the same money while the server still
+-- works on the first must not count twice: the take is remembered until an
+-- inbox update after the server is done, or one that shows that mail gone.
+local lastTake
+local function OnTake(i, kinds)
+    local mail = i and ReadMail(i)
+    Ledger.Log("take %s %s", tostring(i), mail and mail.kind or "-")
+    if not (mail and kinds[mail.kind]) then return end
+    if lastTake and lastTake.sig == mail.sig then return end
+    lastTake = { i = i, sig = mail.sig, n = GetInboxNumItems() }
+    Ledger.Taken(Ledger.ItemsOf(ns.AccountDB(), GetRealmName()), mail, Now())
+end
+local MONEY, ITEM, BOTH = { seller = true }, { buyer = true }, { seller = true, buyer = true }
+for name, kinds in pairs({ TakeInboxMoney = MONEY, TakeInboxItem = ITEM, AutoLootMailItem = BOTH }) do
+    if _G[name] then hooksecurefunc(name, function(i) OnTake(i, kinds) end) end
+end
+
+local function OnInbox()
+    if not lastTake then return end
+    if not (C_Mail and C_Mail.IsCommandPending and C_Mail.IsCommandPending()) then lastTake = nil; return end
+    local now = lastTake.i <= GetInboxNumItems() and ReadMail(lastTake.i)
+    if GetInboxNumItems() ~= lastTake.n or not now or now.sig ~= lastTake.sig then lastTake = nil end
 end
 
 local handlers = {
-    MAIL_SHOW = function(now) inbox = nil; OnInbox(now) end,
-    MAIL_INBOX_UPDATE = function(now) if IsOpen("MAIL", now) then OnInbox(now) end end,
+    MAIL_SHOW = function() lastTake = nil end,
+    MAIL_INBOX_UPDATE = OnInbox,
     MERCHANT_SHOW = function() repairCost = RepairCost() end,
     UPDATE_INVENTORY_DURABILITY = function(now)
         if not (IsOpen("MERCHANT", now) and repairCost) then return end
@@ -298,5 +320,6 @@ events:SetScript("OnEvent", function(_, event, ...)
     local now = Now()
     local ctx = CONTEXTS[event]
     if ctx then open[ctx[1]] = ctx[2] or now end
+    if event:find("^MAIL") then Ledger.Log("%s mailOpen=%s", event, tostring(IsOpen("MAIL", now))) end
     if handlers[event] then handlers[event](now, ...) end
 end)

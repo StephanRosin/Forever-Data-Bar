@@ -225,6 +225,14 @@ function GetInboxInvoiceInfo(i)
     local v = M.state.mail[i].invoice
     if v then return v[1], v[2], "Someone", v[3], v[3], v[4], v[5], 0, 0, 0, v[6] end
 end
+-- Taking mail: the tests change M.state.mail themselves, as the server would.
+function TakeInboxMoney(i) end
+function TakeInboxItem(i, attachment) end
+function AutoLootMailItem(i) end
+function hooksecurefunc(name, fn)
+    local orig = _G[name]
+    _G[name] = function(...) orig(...); fn(...) end
+end
 function GetRepairAllCost() return M.state.repairCost or 0, true end
 function UnitName() return M.state.name or "Testeria" end
 function GetRealmName() return M.state.realm or "Mockrealm" end

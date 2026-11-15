@@ -138,61 +138,86 @@ return function(ns, M, check)
             { "Brannoc", "Just a note", 0 },
         }
     end
+    -- As "open all" does: take mail 1, the server removes it, the next is mail 1.
+    local function openAll(keep)
+        while M.state.mail[1] and M.state.mail[1] ~= keep do
+            local m = M.state.mail[1]
+            if m[3] > 0 then TakeInboxMoney(1) else TakeInboxItem(1, 1) end
+            table.remove(M.state.mail, 1)
+            fire("MAIL_INBOX_UPDATE")
+        end
+    end
     day = fresh()
     M.state.mail = mails()
     fire("MAIL_SHOW")
-    M.state.mail = { M.state.mail[5] }
-    Ledger.Book(day, 1450)
     fire("MAIL_INBOX_UPDATE")
+    local note = M.state.mail[5]
+    openAll(note)
+    Ledger.Book(day, 1450)
     check("open all: sales and a letter", sides(day), "inc:AH_SALE=1350,MAIL=100 out:")
     local items = Ledger.ItemsOf(ForeverDataBarDB, realm)
     local cloth = items["Linen Cloth"]
     check("invoices: sold after the cut", cloth.sellNet .. "/" .. cloth.sellQty, "1300/15")
     check("invoices: bought", cloth.buyCost .. "/" .. cloth.buyQty, "600/20")
-    -- The mails leave the inbox before the money arrives.
-    day = fresh()
-    M.state.mail = mails()
-    fire("MAIL_SHOW")
-    M.state.mail = { M.state.mail[2], M.state.mail[3], M.state.mail[4], M.state.mail[5] }
-    fire("MAIL_INBOX_UPDATE")
-    Ledger.Book(day, 900)
-    check("sale mail first, money after", sides(day), "inc:AH_SALE=900 out:")
-    -- Alike mails count each.
-    M.state.mail = { M.state.mail[3], M.state.mail[4] }
-    fire("MAIL_INBOX_UPDATE")
-    Ledger.Book(day, 550)
-    check("letter and second sale", sides(day), "inc:AH_SALE=1350,MAIL=100 out:")
     fire("MAIL_CLOSED")
     M.state.mail = nil
-    -- By hand: the money taken, the mail stays until the mailbox closes.
+    -- By hand: the money taken, the mail stays; a second click while the server works counts once.
     ForeverDataBarDB.goldItems = nil
     day = fresh()
     M.state.mail = { { "Auction House", "Sold: Ore", 9500, invoice = { "seller", "Ore", 10000, 0, 500, 5 } },
         { "Auction House", "Won: Herb", 0, items = 1, invoice = { "buyer", "Herb", 2000, 0, 0, 1 } } }
     fire("MAIL_SHOW")
+    TakeInboxMoney(1)
+    TakeInboxMoney(1)
     M.state.mail[1][3] = 0
     Ledger.Book(day, 9500)
     fire("MAIL_INBOX_UPDATE")
+    TakeInboxMoney(1)
+    TakeInboxItem(2, 1)
     M.state.mail[2].items = nil
     fire("MAIL_INBOX_UPDATE")
     fire("MAIL_CLOSED")
-    M.state.mail = {}
-    fire("MAIL_INBOX_UPDATE")
     local hand = Ledger.ItemsOf(ForeverDataBarDB, realm)
     check("by hand: a sale counted once", hand.Ore.sellQty .. "/" .. hand.Ore.sellNet, "5/9500")
     check("by hand: its money a sale", sides(day), "inc:AH_SALE=9500 out:")
     check("by hand: a purchase counted once", hand.Herb.buyQty .. "/" .. hand.Herb.buyCost, "1/2000")
-    -- Taken just as the mailbox closes.
+    -- Shift-click takes all of a mail; a letter's money stays mail.
     wait(10)
-    M.state.mail = { { "Auction House", "Won: Herb", 0, items = 1, invoice = { "buyer", "Herb", 2000, 0, 0, 1 } } }
+    day = fresh()
+    M.state.mail = { { "Auction House", "Won: Herb", 0, items = 1, invoice = { "buyer", "Herb", 2000, 0, 0, 1 } },
+        { "Brannoc", "Thanks", 100 } }
     fire("MAIL_SHOW")
+    AutoLootMailItem(1)
+    AutoLootMailItem(2)
+    Ledger.Book(day, 100)
+    check("auto loot: a purchase", hand.Herb.buyQty, 2)
+    check("auto loot: a letter stays mail", sides(day), "inc:MAIL=100 out:")
     fire("MAIL_CLOSED")
-    M.state.mail = {}
+    -- Many alike sales: the inbox shows 50 of 60 and refills as it empties, an
+    -- alike mail taking the place of the one taken; the money comes in batches.
+    ForeverDataBarDB.goldItems = nil
+    day = fresh()
+    local server = {}
+    for i = 1, 60 do server[i] = { "Auction House", "Sold: Ore", 95, invoice = { "seller", "Ore", 100, 0, 5, 1 } } end
+    local function show() M.state.mail = { unpack(server, 1, math.min(50, #server)) } end
+    show()
+    fire("MAIL_SHOW")
     fire("MAIL_INBOX_UPDATE")
-    check("taken at the close still counts", hand.Herb.buyQty, 2)
+    local pending = 0
+    for n = 1, 60 do
+        TakeInboxMoney(1)
+        table.remove(server, 1)
+        pending = pending + 95
+        show()
+        fire("MAIL_INBOX_UPDATE")
+        if n % 3 == 0 then Ledger.Book(day, pending); pending = 0 end
+        wait(1)
+    end
+    fire("MAIL_CLOSED")
+    check("many alike sales: all of them a sale", sides(day), "inc:AH_SALE=5700 out:")
+    check("many alike sales: all counted", Ledger.ItemsOf(ForeverDataBarDB, realm).Ore.sellQty, 60)
     M.state.mail = nil
     ForeverDataBarDB.goldItems = { [realm] = items }
-    check("gone: alike mails counted", #Ledger.Gone({ { sig = "a" }, { sig = "a" }, { sig = "b" } }, { { sig = "a" } }), 2)
 
     -- Realized profit: sales after the cut less the sold ones at the average purchase price.
     check("profit", Ledger.Profit({ buyCost = 1000, buyQty = 10, sellNet = 600, sellQty = 4 }), 200)
