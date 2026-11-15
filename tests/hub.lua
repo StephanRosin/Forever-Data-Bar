@@ -87,7 +87,7 @@ return function(ns, M, check)
     check("right-click: the hub's options", calls[2] and calls[2][1], "options")
     central.theme, central.color = "CLASSIC", nil
     tick()
-    check("central theme changed: the label follows", part.text:GetText(), ns.L.THEME_CLASSIC)
+    check("central theme changed: the label follows", part.text:GetText(), ns.L.HUB_THEME_CLASSIC)
 
     W.Open("databar")
     check("follows: theme picker dimmed", row(ns.L.OPT_THEME_CHOICE, "button").button:IsEnabled(), false)
