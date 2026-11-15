@@ -449,12 +449,10 @@ DataBar.STATS = {
         icon = "StatGold",
         value = function() return GetMoney and DataBar.GoldText(GetMoney()) end,
         tip = function(self)
-            local c = GetMoney() or 0
             TipOwner(self)
-            GameTooltip:AddLine(L.DATABAR_PART_GOLD, 1, 1, 1)
-            GameTooltip:AddLine(("%dg %ds %dc"):format(math.floor(c / 10000), math.floor(c % 10000 / 100), c % 100), 1, 1, 1)
-            GameTooltip:Show()
+            ns.Gold.FillTooltip()
         end,
+        leave = function(self) ns.Gold.HideTooltip(self) end,
     },
     DURA = {
         icon = "StatDurability",
@@ -503,7 +501,7 @@ local function BuildStat(id)
     g:RegisterForClicks("LeftButtonUp")
     if def.click then g:SetScript("OnClick", def.click) end
     g:SetScript("OnEnter", def.tip)
-    g:SetScript("OnLeave", HideTooltip)
+    g:SetScript("OnLeave", def.leave or HideTooltip)
     g.icon = g:CreateTexture(nil, "ARTWORK")
     g.icon:SetSize(CFG.ICON, CFG.ICON)
     g.icon:SetPoint("LEFT", g, "LEFT", 0, 0)

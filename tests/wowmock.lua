@@ -91,6 +91,13 @@ local function newWidget(name, kind)
         t._owner = self
         return t
     end
+    function w:CreateLine()
+        local l = newWidget(nil, "Line")
+        function l:SetStartPoint(p, rel, x, y) self._start = { x, y } end
+        function l:SetEndPoint(p, rel, x, y) self._end = { x, y } end
+        function l:SetThickness(v) self._thickness = v end
+        return l
+    end
     function w:CreateMaskTexture() return newWidget(nil, "MaskTexture") end
     function w:CreateFontString(_, _, template)
         local fs = newWidget(nil, "FontString")
@@ -146,6 +153,8 @@ function GameTooltip:AddLine(t) self._lines = self._lines or {}; self._lines[#se
 function GameTooltip:AddDoubleLine(a, b) self._lines = self._lines or {}; self._lines[#self._lines + 1] = a .. "|" .. b end
 function GameTooltip:SetOwner() self._lines = {} end
 function GameTooltip:IsOwned() return true end
+function GameTooltip:SetMinimumWidth(v) self._minWidth = v end
+function GameTooltip_InsertFrame(tip, frame) tip._inserted = frame; frame:Show() end
 DEFAULT_CHAT_FRAME = { AddMessage = function(_, m) M.chat[#M.chat + 1] = m end }
 SlashCmdList = {}
 UISpecialFrames = {}
@@ -172,6 +181,7 @@ end
 function UnregisterStateDriver(f) f._driver = nil end
 function GetTime() return M.state.time end
 date = os.date
+time = os.time
 function GetMoney() return M.state.money or 0 end
 function GetInventoryItemDurability(slot) local d = M.state.durability and M.state.durability[slot]; if d then return d[1], d[2] end end
 function GetInventoryItemLink(_, slot) return "[Item " .. slot .. "]" end
@@ -193,6 +203,8 @@ function GetRestState() return 1, M.state.restName, M.state.restMult end
 function IsResting() return false end
 function UnitFactionGroup() return M.state.faction end
 function UnitClass() return "Warlock", M.state.class end
+function UnitName() return M.state.name or "Testeria" end
+function GetRealmName() return M.state.realm or "Mockrealm" end
 function UnitSex() return M.state.sex end
 RAID_CLASS_COLORS = { WARLOCK = { r = 0.53, g = 0.53, b = 0.93 } }
 function GetCursorPosition() return 0, 0 end

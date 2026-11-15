@@ -481,6 +481,9 @@ SlashCmdList.FOREVERDATABAR("")
 check("/fdb opens the options", W.IsShown(), true)
 W.Toggle()
 
+section("Gold")
+dofile("gold.lua")(ns, M, check)
+
 section("Themes")
 dofile("themes.lua")(ns, M, check, ROOT)
 
