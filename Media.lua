@@ -13,30 +13,10 @@ Media.BLIZZARD_FONTS = {
 }
 Media.DEFAULT_FONT = "Fonts\\FRIZQT__.TTF"
 
--- The themes' fonts (Themes.lua), shipped in Media/Fonts (OFL, see
--- FONTS.txt); Latin letters only.
-local FONTS = "Interface\\AddOns\\ForeverDataBar\\Media\\Fonts\\"
-Media.OWN_FONTS = {
-    { name = "Bangers",            path = FONTS .. "Bangers-Regular.ttf" },
-    { name = "Cinzel",             path = FONTS .. "Cinzel-Bold.ttf" },
-    { name = "IBM Plex Mono",      path = FONTS .. "IBMPlexMono-Regular.ttf" },
-    { name = "IM Fell English SC", path = FONTS .. "IMFeENsc28P.ttf" },
-    { name = "Julius Sans One",    path = FONTS .. "JuliusSansOne-Regular.ttf" },
-    { name = "Inter Tight",        path = FONTS .. "InterTight-Regular.ttf" },
-    { name = "Marcellus",          path = FONTS .. "Marcellus-Regular.ttf" },
-    { name = "Space Grotesk",      path = FONTS .. "SpaceGrotesk-Bold.ttf" },
-    { name = "Titillium Web",      path = FONTS .. "TitilliumWeb-SemiBold.ttf" },
-    { name = "VT323",              path = FONTS .. "VT323-Regular.ttf" },
-}
-
--- Loaded while the addon loads: a font file used the first time can be
--- refused (DataBar.lua tries again), so the first restyle should not be its
--- first use.
-do
-    local holder = CreateFrame("Frame")
-    holder:Hide()
-    for _, f in ipairs(Media.OWN_FONTS) do holder:CreateFontString():SetFont(f.path, 12, "") end
-end
+-- The themes' fonts come with the embedded LibForeverThemes (OFL, see its
+-- Media/Fonts), which also loads them early. Read at use (Lib.FONTS): a
+-- newer copy of the library loading after us replaces the list.
+local Lib = LibForeverThemes
 
 local function sharedMedia()
     return LibStub and LibStub("LibSharedMedia-3.0", true)
@@ -45,7 +25,7 @@ end
 -- Every font by name, sorted; Blizzard's first, then ours.
 function Media.FontNames()
     local names, seen = {}, {}
-    for _, list in ipairs({ Media.BLIZZARD_FONTS, Media.OWN_FONTS }) do
+    for _, list in ipairs({ Media.BLIZZARD_FONTS, Lib.FONTS }) do
         for _, f in ipairs(list) do
             names[#names + 1] = f.name
             seen[f.name] = true
@@ -63,9 +43,11 @@ function Media.FontNames()
     return names
 end
 
--- The file for a font name; unknown names get Friz Quadrata.
+-- The file for a font name; unknown names get Friz Quadrata. A font stored
+-- under an older name (LibForeverThemes' aliases) finds its file.
 function Media.FontPath(name)
-    for _, list in ipairs({ Media.BLIZZARD_FONTS, Media.OWN_FONTS }) do
+    name = Lib.FontName(name)
+    for _, list in ipairs({ Media.BLIZZARD_FONTS, Lib.FONTS }) do
         for _, f in ipairs(list) do
             if f.name == name then return f.path end
         end

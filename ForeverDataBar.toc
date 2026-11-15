@@ -12,6 +12,7 @@
 ## SavedVariables: ForeverDataBarDB
 ## SavedVariablesPerCharacter: ForeverDataBarChar
 
+Libs\LibForeverThemes\LibForeverThemes.lua
 Locales\enUS.lua
 Locales\deDE.lua
 Locales\esES.lua

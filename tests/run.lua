@@ -507,6 +507,22 @@ check("language stored account wide", ForeverDataBarDB.language, "deDE")
 ns.Locale.Set("AUTO")
 W.Toggle()
 
+section("Embedded LibForeverThemes")
+-- The copy in Libs/ is the library's own (ForeverThemes, tools/sync there):
+-- checked when that repository sits next to this one (not in CI).
+do
+    local LIBREPO = ROOT .. "/../ForeverThemes"
+    if io.open(LIBREPO .. "/LibForeverThemes.lua") then
+        local diff = io.popen("diff -rq '" .. LIBREPO .. "/LibForeverThemes.lua' '" .. ROOT
+            .. "/Libs/LibForeverThemes/LibForeverThemes.lua' && diff -rq '" .. LIBREPO .. "/Media' '" .. ROOT
+            .. "/Libs/LibForeverThemes/Media' 2>&1"):read("*a")
+        check("copy equals ForeverThemes (run its tools/sync)", diff, "")
+    else
+        print("  (skipped: ForeverThemes not next to this addon)")
+    end
+end
+check("library loaded from our copy", LibForeverThemes.FOLDER, ADDON)
+
 section("Only SavedVariables, nothing private")
 for _, f in ipairs(tocFiles()) do
     local src = io.open(ROOT .. "/" .. f):read("*a")

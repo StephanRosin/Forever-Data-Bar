@@ -14,18 +14,16 @@ they may change any time.
 local ThemeArt = {}
 ns.ThemeArt = ThemeArt
 
-local PATH = "Interface\\AddOns\\ForeverDataBar\\Media\\Themes\\"
+-- Textures and Pitwall's wedge rule come with the embedded LibForeverThemes.
+local Lib = LibForeverThemes
 -- Ornaments stay in the margin before the first part and after the gear
 -- (DataBar CFG.PAD 12), and two fit above each other on a thin bar.
 local ORNAMENT_MAX, ORNAMENT_INSET = 10, 1
 -- Texture coordinates of a top-left ornament for each corner: mirrored,
 -- never rotated.
--- The wedge: the texture's left part (its slanted band) drawn as wide as
--- the bar is high; its right edge runs from 0.98 h (top) to 0.62 h
--- (bottom), and the first part starts TITLE_GAP past it at mid-height, as
--- the title in every Forever addon.
-local WEDGE_PART, TITLE_GAP = 0.53, 8
-local function wedgeReach(h, y) return math.floor(0.98 * h - 0.36 * y + 0.5) end
+-- The wedge (Lib.WEDGE_PART of the texture) is drawn as wide as the bar is
+-- high; the first part starts Lib.TITLE_GAP past it at mid-height, as the
+-- title in every Forever addon.
 local MIRROR = { TOPLEFT = { 0, 1, 0, 1 }, TOPRIGHT = { 1, 0, 0, 1 }, BOTTOMLEFT = { 0, 1, 1, 0 },
     BOTTOMRIGHT = { 1, 0, 1, 0 } }
 
@@ -52,7 +50,7 @@ local function paintBack(back, art)
         back:Hide()
         return
     end
-    back:SetTexture(PATH .. ns.Themes.Back(art), "REPEAT", "REPEAT")
+    back:SetTexture(Lib.Texture(ns.Themes.Back(art)), "REPEAT", "REPEAT")
     if back.SetHorizTile then
         back:SetHorizTile(true)
         back:SetVertTile(true)
@@ -111,7 +109,7 @@ local function paintOrnaments(pieces, frame, art, inner, height)
             piece:ClearAllPoints()
             piece:SetPoint(point, frame, point, dx, dy)
             piece:SetSize(size, size)
-            piece:SetTexture(PATH .. art.ornament)
+            piece:SetTexture(Lib.Texture(art.ornament))
             piece:SetTexCoord(unpack(MIRROR[point]))
             piece:SetVertexColor(c[1], c[2], c[3], c[4])
         end
@@ -124,7 +122,7 @@ end
 function ThemeArt.TextStart(height)
     local art = ns.Themes.Spec(S("theme")).art
     if not (art and art.wedge) then return nil end
-    return wedgeReach(height, height / 2) + TITLE_GAP
+    return Lib.WedgeReach(height, height / 2) + Lib.TITLE_GAP
 end
 
 local function paintWedge(wedge, frame, art, height)
@@ -132,8 +130,8 @@ local function paintWedge(wedge, frame, art, height)
         wedge:ClearAllPoints()
         wedge:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
         wedge:SetSize(height, height)
-        wedge:SetTexture(PATH .. art.wedge)
-        wedge:SetTexCoord(0, WEDGE_PART, 0, 1)
+        wedge:SetTexture(Lib.Texture(art.wedge))
+        wedge:SetTexCoord(0, Lib.WEDGE_PART, 0, 1)
         local c = ns.Themes.WedgeColor(art)
         wedge:SetVertexColor(c[1], c[2], c[3], c[4])
     end
@@ -198,7 +196,7 @@ local CARD_SOLID, CARD_SHADE = { 0, 0, 0, 0.85 }, { 0, 0, 0, 0.3 }
 function ThemeArt.CardColour()
     local art = ns.Themes.Spec(S("theme")).art
     if not art then return ns.Style.COLORS.panel end
-    return art.title and CARD_SOLID or CARD_SHADE
+    return art.strip and CARD_SOLID or CARD_SHADE
 end
 
 function ThemeArt.StyleWindow(frame, titleBar)
@@ -217,7 +215,7 @@ function ThemeArt.StyleWindow(frame, titleBar)
     local bg = S("dataBarBgColor")
     frame.bodyFill:SetColorTexture(bg[1], bg[2], bg[3], S("dataBarAlpha") / 100)
     paintRims(frame.rims, frame, ns.Themes.Rim(art) or { 0, 0, 0, 1 }, ThemeArt.WindowRim())
-    if art.title then titleBar.fill:SetColorTexture(unpack(art.title)) end
-    titleBar.fill:SetShown(art.title ~= nil)
+    if art.strip then titleBar.fill:SetColorTexture(unpack(art.strip)) end
+    titleBar.fill:SetShown(art.strip ~= nil)
     paintWedge(titleBar.wedge, titleBar, art, titleBar:GetHeight())
 end

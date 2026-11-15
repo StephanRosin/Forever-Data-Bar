@@ -17,3 +17,8 @@ The full feature list is in [docs/curseforge/description.md](docs/curseforge/des
 
 Icons: white silhouettes drawn in `tools/art/*.svg`, turned into
 `Media/*.tga` (64 px) and tinted in the game.
+
+The themes (textures, fonts, colours) come from the embedded library LibForeverThemes in
+`Libs/LibForeverThemes` (source: https://github.com/StephanRosin/ForeverThemes, copied in with
+its `tools/sync`). Its fonts in `Media/Fonts` are under the SIL Open Font License (see `OFL.txt`
+and `FONTS.txt` there).

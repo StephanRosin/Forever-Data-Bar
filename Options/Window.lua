@@ -457,7 +457,8 @@ local function fontRow(key, label)
             for _, name in ipairs(ns.Media.FontNames()) do list[#list + 1] = { label = name, value = name, font = name } end
             return list
         end,
-        get = function() return S(key) end,
+        -- A font stored under an older name shows under the one listed.
+        get = function() return LibForeverThemes.FontName(S(key)) end,
         set = function(v) Settings.Set(key, v) end,
     }
 end

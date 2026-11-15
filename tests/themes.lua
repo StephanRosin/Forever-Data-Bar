@@ -10,14 +10,14 @@ return function(ns, M, check, ROOT)
     end
 
     -- Shipped with the addon.
-    for _, font in ipairs(ns.Media.OWN_FONTS) do check("font shipped: " .. font.name, exists(font.path), true) end
+    for _, font in ipairs(LibForeverThemes.FONTS) do check("font shipped: " .. font.name, exists(font.path), true) end
     for _, id in ipairs(Themes.IDS) do
         check("theme " .. id .. ": label", ns.L["THEME_" .. id] ~= "THEME_" .. id, true)
         local spec = Themes.SPECS[id]
         check("theme " .. id .. ": spec", spec ~= nil, true)
         local art = spec.art or {}
         for _, file in ipairs({ art.back, art.bar, art.ornament, art.wedge }) do
-            check("theme " .. id .. ": " .. file .. " shipped", exists("Media/Themes/" .. file .. ".tga"), true)
+            check("theme " .. id .. ": " .. file .. " shipped", exists("Libs/LibForeverThemes/Media/Themes/" .. file .. ".tga"), true)
         end
         if spec.font then check("theme " .. id .. ": its font known", ns.Media.FontPath(spec.font) ~= ns.Media.DEFAULT_FONT, true) end
     end
@@ -43,7 +43,7 @@ return function(ns, M, check, ROOT)
     check("wood: classic stored", ForeverDataBarDB.themeSets.CLASSIC.dataBarHeight, 30)
     check("wood: the live set is not stored twice", ForeverDataBarDB.themeSets.WOOD, nil)
     check("wood: the text in Friz", f.xp.text._font[1], ns.Media.FontPath("Friz Quadrata"))
-    check("wood: backdrop", f.themeBack:IsShown() and f.themeBack._texture, D.CFG.MEDIA .. "Themes\\WoodBack")
+    check("wood: backdrop", f.themeBack:IsShown() and f.themeBack._texture, LibForeverThemes.Texture("WoodBack"))
     check("wood: rim instead of the accent line", f.themeRim:IsShown() and not f.edge:IsShown(), true)
     check("wood: rim in the family's gold", table.concat(f.themeRim._texColor, ","), "0.906,0.702,0.161,1")
     check("wood: four rivets", (function()
@@ -53,7 +53,7 @@ return function(ns, M, check, ROOT)
     end)(), 4)
     check("wood: rivets fit the bar", f.themeOrnaments[1]:GetWidth() <= 10, true)
     check("wood: rivet at the screen corner", f.themeOrnaments[1]:GetPoint("TOPLEFT") ~= nil, true)
-    check("wood: lines in its texture", f.xp.line.fill._texture, D.CFG.MEDIA .. "Themes\\WoodBar")
+    check("wood: lines in its texture", f.xp.line.fill._texture, LibForeverThemes.Texture("WoodBar"))
     check("wood: lines thick enough to show it", f.xp.line:GetHeight(), 4)
     check("wood: soft shadow below the bar", f.themeShadow:IsShown() and f.themeShadow._gradient ~= nil, true)
 
@@ -128,7 +128,7 @@ return function(ns, M, check, ROOT)
     -- standard font at the player's size.
     local BODY = { WOOD = "Friz Quadrata", TECH = "Space Grotesk", RUNESTONE = "Marcellus", PIXEL = "VT323",
         PARCHMENT = "Friz Quadrata", FROST = "Julius Sans One", GLASS = "Friz Quadrata", COMIC = "Bangers",
-        SWISS = "Inter Tight", CONSOLE = "IBM Plex Mono", PITWALL = "Titillium Web" }
+        SWISS = "Inter Tight", CONSOLE = "IBM Plex Mono", PITWALL = "Titillium Web SemiBold" }
     for id, font in pairs(BODY) do
         Themes.Switch(id)
         local add = font == "Friz Quadrata" and 0 or (Themes.SPECS[id].fontSizeAdd or 0)
@@ -153,7 +153,7 @@ return function(ns, M, check, ROOT)
     local function alpha() return f.themeBack._vertex[4] end
     local function accent() local c = Themes.Accent(); return table.concat({ c[1], c[2], c[3] }, ",") end
     local function rgb(t) return table.concat({ t[1], t[2], t[3] }, ",") end
-    local PATH = D.CFG.MEDIA .. "Themes\\"
+    local PATH = LibForeverThemes.Texture("")
     check("colours: none under classic", #registry.Colors(), 0)
     check("colours: classic has no colour", registry.Color(), nil)
     check("colours: comic list", table.concat(registry.Colors("COMIC"), ","), "GREY,DARKGREY,BLACK,WHITE,YELLOW,BLUE,RED,GREEN,PURPLE")
@@ -170,7 +170,7 @@ return function(ns, M, check, ROOT)
             for i, colour in ipairs(registry.Colors()) do
                 check(id .. " " .. colour .. ": named", ns.L["THEME_COLOR_" .. id .. "_" .. colour] ~= "THEME_COLOR_" .. id .. "_" .. colour, true)
                 if Themes.COLORS[id][i].back then
-                    check(id .. " " .. colour .. ": grey texture shipped", exists("Media/Themes/" .. art.back .. "Grey.tga"), true)
+                    check(id .. " " .. colour .. ": grey texture shipped", exists("Libs/LibForeverThemes/Media/Themes/" .. art.back .. "Grey.tga"), true)
                 end
             end
             Themes.Switch("CLASSIC")
@@ -204,15 +204,15 @@ return function(ns, M, check, ROOT)
     -- The flat themes keep their backdrop in every colour.
     Themes.Switch("SWISS")
     local function rim() return rgb(f.themeRim._texColor) end
-    check("swiss: one white rule towards the game", f.themeRim:GetHeight() .. "/" .. rim(), "3/0.95,0.95,0.95")
-    check("swiss: red accent", accent(), "1,0.18,0.13")
+    check("swiss: one white rule towards the game", f.themeRim:GetHeight() .. "/" .. rim(), "3/0.949,0.949,0.949")
+    check("swiss: red accent", accent(), "1,0.176,0.125")
     check("swiss: icons in the red accent", rgb(f.parts.GOLD.icon._vertex) .. " " .. rgb(f.gear.icon._vertex),
-        "1,0.18,0.13 1,0.18,0.13")
+        "1,0.176,0.125 1,0.176,0.125")
     check("swiss blue: set", registry.SetColor("BLUE"), true)
     check("swiss blue: backdrop kept", f.themeBack._texture .. back(), PATH .. "SwissBack1,1,1")
-    check("swiss blue: accent", accent(), "0.18,0.42,1")
+    check("swiss blue: accent", accent(), "0.176,0.42,1")
     check("swiss blue: icons follow", rgb(f.parts.GOLD.icon._vertex) .. " " .. rgb(f.gear.icon._vertex),
-        "0.18,0.42,1 0.18,0.42,1")
+        "0.176,0.42,1 0.176,0.42,1")
     Themes.SetColor("RED")
     Themes.Switch("CONSOLE")
     check("console: mint line", rim(), "0.306,0.929,0.69")
@@ -223,7 +223,7 @@ return function(ns, M, check, ROOT)
     Themes.SetColor("MINT")
     Themes.Switch("PITWALL")
     check("pitwall: a carbon line", f.themeRim:IsShown() and f.themeRim:GetHeight(), 1)
-    check("pitwall: red wedge at the left end", f.themeWedge:IsShown() and rgb(f.themeWedge._vertex), "0.88,0.02,0")
+    check("pitwall: red wedge at the left end", f.themeWedge:IsShown() and rgb(f.themeWedge._vertex), "0.882,0.024,0")
     local h = f:GetHeight()
     check("pitwall: wedge as high as the bar, as wide as high", f.themeWedge:GetHeight() .. "x" .. f.themeWedge:GetWidth(),
         h .. "x" .. h)
@@ -237,17 +237,17 @@ return function(ns, M, check, ROOT)
     end
     check("pitwall: first part 8 past the wedge", first, math.floor(0.8 * h + 0.5) + 8)
     Themes.SetColor("ORANGE")
-    check("pitwall orange: the wedge's colour", rgb(f.themeWedge._vertex), "1,0.54,0")
+    check("pitwall orange: the wedge's colour", rgb(f.themeWedge._vertex), "1,0.541,0")
     check("pitwall orange: accent kept", accent(), rgb(Themes.SPECS.PITWALL.look.dataBarAccent))
     check("pitwall orange: icons follow the wedge", rgb(f.parts.GOLD.icon._vertex) .. " " .. rgb(f.gear.icon._vertex)
-        .. " " .. rgb(f.profs[1].icon._vertex), "1,0.54,0 1,0.54,0 1,0.54,0")
+        .. " " .. rgb(f.profs[1].icon._vertex), "1,0.541,0 1,0.541,0 1,0.541,0")
     check("pitwall orange: the lines keep the accent", rgb(f.profs[1].line.glow._texColor),
         rgb(Themes.SPECS.PITWALL.look.dataBarAccent))
     Settings.Set("dataBarProfColours", true)
-    check("pitwall orange: a profession's own colour kept", rgb(f.profs[1].icon._vertex) ~= "1,0.54,0", true)
+    check("pitwall orange: a profession's own colour kept", rgb(f.profs[1].icon._vertex) ~= "1,0.541,0", true)
     Settings.Set("dataBarProfColours", false)
     Themes.SetColor("RED")
-    check("pitwall red: icons in the wedge's red", rgb(f.gear.icon._vertex), "0.88,0.02,0")
+    check("pitwall red: icons in the wedge's red", rgb(f.gear.icon._vertex), "0.882,0.024,0")
     -- Every icon accent readable on its backdrop (back, else the black
     -- bar): at least 3:1, the contrast WCAG asks of icons.
     local function luminance(c)
@@ -277,7 +277,7 @@ return function(ns, M, check, ROOT)
     -- recolour it, never the accent.
     local RINGS = { WOOD = "0.906,0.702,0.161,1", TECH = "0.25,0.88,0.94,0.9", PARCHMENT = "0.29,0.2,0.12,1",
         RUNESTONE = "0.1,0.1,0.12,1", GLASS = "0.07,0.06,0.05,1", COMIC = "0.07,0.07,0.07,1",
-        FROST = "0.86,0.96,1,0.8", PIXEL = "1,0.95,0.91,1", SWISS = "0.95,0.95,0.95,1",
+        FROST = "0.86,0.96,1,0.8", PIXEL = "1,0.95,0.91,1", SWISS = "0.949,0.949,0.949,1",
         PITWALL = "0.043,0.047,0.055,1" }
     local OWN_RING = { CONSOLE = { MINT = "0.306,0.929,0.69,1", AMBER = "1,0.69,0,1", PHOSPHOR = "0.224,1,0.078,1",
         VIOLET = "0.627,0.471,1,1" }, PIXEL = { HANDHELD = "0.784,0.941,0.439,1" } }
