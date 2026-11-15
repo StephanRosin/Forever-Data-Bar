@@ -101,7 +101,9 @@ Themes.SPECS = {
     -- Translucent ice with quieter cracks, a pale rim, a long soft shadow.
     FROST = {
         font = "Cormorant SC", bodyFont = "Friz Quadrata", fontSizeAdd = 2,
-        look = look({ 0.92, 0.98, 1 }, { 0.6, 0.88, 1 }, { 0.04, 0.12, 0.22 }, 50),
+        -- No outline: Cormorant's hairlines drowned in it; the texts keep
+        -- their font object's 1 px drop shadow (GameFontHighlight*).
+        look = look({ 0.92, 0.98, 1 }, { 0.6, 0.88, 1 }, { 0.04, 0.12, 0.22 }, 50, ""),
         art = { back = "FrostBack", tint = { 0.6, 0.6, 0.6, 0.75 }, rim = { 0.86, 0.96, 1, 0.8 }, rimSize = 1,
             shadow = 8, shadowAlpha = 0.55, bar = "FrostBar", track = 3 },
     },
@@ -250,7 +252,7 @@ local COMIC_PAINT = {
 -- Raised whenever SPECS change a look: theme sets made before are made
 -- anew from CLASSIC (Themes.Upgrade), so a changed theme shows as it is
 -- now. CLASSIC is never touched.
-Themes.REVISION = 8
+Themes.REVISION = 9
 
 local function copy(v)
     if type(v) ~= "table" then return v end

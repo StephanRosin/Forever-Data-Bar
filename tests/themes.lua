@@ -133,11 +133,16 @@ return function(ns, M, check, ROOT)
         Themes.Switch(id)
         local add = font == "Friz Quadrata" and 0 or (Themes.SPECS[id].fontSizeAdd or 0)
         check("body font " .. id, S("dataBarFont") .. S("dataBarFontSize"), font .. (Settings.DEFAULTS.dataBarFontSize + add))
-        -- Light text outlined everywhere, the comic's too (as the Quest Log's titles).
-        check("outline " .. id, S("dataBarFontOutline"), "OUTLINE")
+        -- Light text outlined everywhere, the comic's too (as the Quest Log's
+        -- titles); Frost's only shadowed (its template's drop shadow).
+        check("outline " .. id, S("dataBarFontOutline"), id == "FROST" and "" or "OUTLINE")
+        if id == "FROST" then
+            check("frost: drawn without outline", select(3, f.profs[1].value:GetFont()), "")
+            check("frost: in a shadowed font object", f.profs[1].value._template, "GameFontHighlightSmall")
+        end
         Themes.Switch("CLASSIC")
     end
-    check("revision raised for Swiss and Pitwall in one black", Themes.REVISION, 8)
+    check("revision raised for Frost's shadowed text", Themes.REVISION, 9)
     Themes.Switch("COMIC")
     check("comic: values at full strength", f.profs[1].value._textColor[4], 1)
     Themes.Switch("CLASSIC")
