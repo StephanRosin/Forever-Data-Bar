@@ -488,6 +488,9 @@ dofile("goldledger.lua")(ns, M, check)
 section("Themes")
 dofile("themes.lua")(ns, M, check, ROOT)
 
+section("Forever Themes hub")
+dofile("hub.lua")(ns, M, check)
+
 section("Languages")
 local base = ns.Locales.enUS
 for code, strings in pairs(ns.Locales) do

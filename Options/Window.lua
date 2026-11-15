@@ -297,6 +297,15 @@ local function themeRefused(ok, why)
     if not ok and why then ns.Print(L["THEME_REFUSED_" .. why]) end
 end
 
+-- While Forever Themes (the hub) sets this addon's theme, the pickers are
+-- its: dimmed here, with a way there. Asked anew on every refresh: the
+-- player may switch "own theme" in the hub at any time.
+local function hubFollowed()
+    local hub = LibForeverThemes.Hub()
+    return hub ~= nil and hub.Follows(ADDON) == true
+end
+local function notHubFollowed() return not hubFollowed() end
+
 local function themeRow()
     return {
         type = "select", label = "OPT_THEME_CHOICE",
@@ -309,6 +318,7 @@ local function themeRow()
         end,
         get = function() return ns.Themes.Current() end,
         set = function(v) themeRefused(ns.Themes.Switch(v)) end,
+        enabled = notHubFollowed,
     }
 end
 
@@ -327,6 +337,7 @@ local function themeColorRow()
         end,
         get = function() return ns.Themes.Color() end,
         set = function(v) themeRefused(ns.Themes.SetColor(v)) end,
+        enabled = notHubFollowed,
     }
 end
 
@@ -369,8 +380,12 @@ local function dataBarRows()
         { type = "header", label = "OPT_THEME" },
         themeRow(),
         themeColorRow(),
+        { type = "text", label = "OPT_HUB_FOLLOWS", visible = hubFollowed },
+        { type = "buttons", visible = hubFollowed, buttons = {
+            { label = "OPT_HUB_OPEN", width = 200, onClick = function() LibForeverThemes.Hub().OpenOptions() end },
+        } },
         { type = "text", label = "OPT_THEME_HINT", height = 66 },
-        { type = "buttons", visible = ns.Themes.HasOthers, buttons = {
+        { type = "buttons", visible = function() return ns.Themes.HasOthers() and not hubFollowed() end, buttons = {
             { label = "OPT_THEME_ALL", width = 240, onClick = function()
                 ns.Print(L.MSG_THEME_ALL, ns.Themes.ApplyToAll())
             end },
@@ -418,6 +433,18 @@ local function dataBarPartRows()
         local column = choice(part.key .. "Column", "OPT_DATABAR_COLUMN", ns.DataBar.COLUMNS, "DATABAR_COLUMN_")
         local x = num(part.key .. "X", "OPT_DATABAR_X")
         column.enabled, x.enabled = on, on
+        if part.id == "THEME" then
+            -- Only Forever Themes has a central theme to show.
+            local function hub() return LibForeverThemes.Hub() ~= nil end
+            local function noHub() return not hub() end
+            rows[#rows].enabled = hub
+            column.enabled = function() return hub() and on() end
+            x.enabled = column.enabled
+            rows[#rows + 1] = { type = "text", label = "OPT_HUB_NEEDED", visible = noHub }
+            rows[#rows + 1] = { type = "buttons", visible = noHub, buttons = {
+                { label = "OPT_HUB_LINK", width = 200, onClick = function() ns.ShowHubLink() end },
+            } }
+        end
         rows[#rows + 1] = column
         rows[#rows + 1] = x
         if part.id == "CLOCK" then
@@ -798,6 +825,11 @@ function Window.ShowPage(id)
     Widgets.CloseList()
     for _, p in pairs(pages) do if p ~= page then p:Hide() end end
     current = id
+    -- Rows that come and go (the hub may have come or gone) stack anew.
+    if page.relayout then
+        page.relayout()
+        page:SetHeight(page.height)
+    end
     if page.rebuild then
         page.rebuild()
         page:SetHeight(page.height)
@@ -861,3 +893,23 @@ ns.Locale.OnChange(function()
     frame, pages = nil, {}
     if wasOpen then Window.Open(page) end
 end)
+-- WoW opens no browser: the hub's download link in Blizzard's text popup,
+-- selected for copying.
+local HUB_URL = "https://www.curseforge.com/wow/addons/forever-themes"
+if StaticPopupDialogs then
+    StaticPopupDialogs.FOREVERDATABAR_HUB_LINK = {
+        text = "", button1 = OKAY or "OK", hasEditBox = 1, editBoxWidth = 350,
+        maxLetters = 0,   -- the edit box is shared; another dialog may leave its limit behind
+        OnShow = function(dialog)
+            local box = dialog.GetEditBox and dialog:GetEditBox()
+            if box then box:SetText(HUB_URL); box:HighlightText(); box:SetFocus() end
+        end,
+        EditBoxOnEnterPressed = function(box) box:GetParent():Hide() end,
+        EditBoxOnEscapePressed = function(box) box:GetParent():Hide() end,
+        timeout = 0, whileDead = true, hideOnEscape = true,
+    }
+end
+function ns.ShowHubLink()
+    StaticPopupDialogs.FOREVERDATABAR_HUB_LINK.text = L.POPUP_HUB_LINK
+    StaticPopup_Show("FOREVERDATABAR_HUB_LINK")
+end

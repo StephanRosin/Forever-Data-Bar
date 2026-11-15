@@ -34,6 +34,8 @@ Settings.DEFAULTS = {
     dataBarProfs = true, dataBarProfsColumn = 5, dataBarProfsX = 0, dataBarProfsWidth = 96,
     dataBarRepIcons = "LINES",  -- the standing as icon set or LETTER, see DataBar.STANDING_ICONS
     dataBarReps = true, dataBarRepsColumn = 4, dataBarRepsX = 0, dataBarRepsWidth = 96,
+    -- Forever Themes' central theme: shows only while that addon is loaded.
+    dataBarTheme = true, dataBarThemeColumn = 5, dataBarThemeX = 0,
     hideInCombat = false,
     hideInGroup = false,
     -- The font of every part (the Forever Quest Log's); the clock
@@ -47,7 +49,7 @@ Settings.DEFAULTS = {
 -- A part may have a font of its own: <part key>FontOwn, …Font, …FontSize,
 -- …FontColor (see DataBar.PARTS).
 Settings.FONT_PARTS = { "dataBarXp", "dataBarGold", "dataBarDura", "dataBarBags", "dataBarClock",
-    "dataBarProfs", "dataBarReps" }
+    "dataBarProfs", "dataBarReps", "dataBarTheme" }
 Settings.FONT_SIZES = { 8, 20 }
 for _, key in ipairs(Settings.FONT_PARTS) do
     Settings.DEFAULTS[key .. "FontOwn"] = false
@@ -63,7 +65,7 @@ Settings.RANGES = {
     dataBarAlpha = { 0, 100 },
     dataBarXpX = { -2000, 2000 }, dataBarGoldX = { -2000, 2000 },
     dataBarDuraX = { -2000, 2000 }, dataBarBagsX = { -2000, 2000 }, dataBarClockX = { -2000, 2000 },
-    dataBarProfsX = { -2000, 2000 }, dataBarRepsX = { -2000, 2000 },
+    dataBarProfsX = { -2000, 2000 }, dataBarRepsX = { -2000, 2000 }, dataBarThemeX = { -2000, 2000 },
 }
 Settings.RANGES.dataBarFontSize = Settings.FONT_SIZES
 for _, key in ipairs(Settings.FONT_PARTS) do Settings.RANGES[key .. "FontSize"] = Settings.FONT_SIZES end

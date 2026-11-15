@@ -6,7 +6,8 @@ local S = Settings.Get
 DataBar.lua -- one thin strip across the screen, at its top or bottom edge:
 experience ("75% to level 33" over a hairline), gold, durability, bags, the
 clock, up to four professions (icon, name, value, hairline) and the four
-reputations if wanted. Each part sits in one of five columns, shifted by its
+reputations if wanted, and Forever Themes' theme while that addon is loaded.
+Each part sits in one of five columns, shifted by its
 own X.
 
 What it shows of professions and reputation comes from Data.lua
@@ -494,14 +495,62 @@ DataBar.STATS = {
         -- Looked up at the click: bag addons such as Baganator replace it after we load.
         click = function() if ToggleAllBags then ToggleAllBags() end end,
     },
+    -- Forever Themes' central theme; nothing without that addon (the hub).
+    THEME = {
+        icon = "StatTheme",
+        value = function()
+            local hub = LibForeverThemes.Hub()
+            return hub and DataBar.ThemeLabel(hub.Theme(), hub.Color())
+        end,
+        tip = function(self)
+            local hub = LibForeverThemes.Hub()
+            if not hub then return end
+            TipOwner(self)
+            GameTooltip:AddLine(L.DATABAR_PART_THEME, 1, 1, 1)
+            GameTooltip:AddLine(DataBar.ThemeLabel(hub.Theme(), hub.Color()), 0.8, 0.8, 0.8)
+            for _, addon in ipairs(DataBar.ThemedAddons()) do
+                GameTooltip:AddDoubleLine(addon.title, hub.Follows(addon.folder) and L.DATABAR_TIP_THEME_FOLLOWS
+                    or L.DATABAR_TIP_THEME_OWN, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8)
+            end
+            GameTooltip:AddLine(L.DATABAR_TIP_THEME_LEFT, 0.4, 0.8, 1)
+            GameTooltip:AddLine(L.DATABAR_TIP_THEME_RIGHT, 0.4, 0.8, 1)
+            GameTooltip:Show()
+        end,
+        anyButton = true,
+        click = function(self, button)
+            local hub = LibForeverThemes.Hub()
+            if not hub then return end
+            if button == "RightButton" then hub.OpenOptions() else hub.OpenMenu(self) end
+        end,
+    },
 }
+
+-- "Pitwall · Red" (the colour left out where the theme has none).
+function DataBar.ThemeLabel(theme, color)
+    local name = L["THEME_" .. tostring(theme)]
+    if not color then return name end
+    return L.DATABAR_THEME_AND_COLOR:format(name, L["THEME_COLOR_" .. tostring(theme) .. "_" .. tostring(color)])
+end
+
+-- The addons in the cross-addon registry (not the hub itself), by title.
+local HUB_FOLDER = "ForeverThemes"
+function DataBar.ThemedAddons()
+    local list = {}
+    for folder, entry in pairs(_G.ForeverThemes or {}) do
+        if folder ~= HUB_FOLDER and type(entry) == "table" then
+            list[#list + 1] = { folder = folder, title = tostring(entry.title or folder) }
+        end
+    end
+    table.sort(list, function(a, b) return a.title < b.title end)
+    return list
+end
 
 local function BuildStat(id)
     local def = DataBar.STATS[id]
     local g = CreateFrame("Button", nil, frame)
     g.width = 0
     g:SetHeight(CFG.ICON)
-    g:RegisterForClicks("LeftButtonUp")
+    g:RegisterForClicks(def.anyButton and "AnyUp" or "LeftButtonUp")
     if def.click then g:SetScript("OnClick", def.click) end
     g:SetScript("OnEnter", def.tip)
     g:SetScript("OnLeave", HideTooltip)
@@ -644,6 +693,10 @@ local function Build()
         if clock:IsShown() then clock.text:SetText(date("%H:%M")) end
         -- The rate and the time to the level run on with the clock.
         if S("dataBarXpPerHour") or S("dataBarXpToLevel") then DataBar.UpdateXp() end
+        -- The hub tells no one when its theme changes: an addon with its own
+        -- theme hears nothing, so the label is checked with the clock.
+        local theme = S("dataBarTheme") and DataBar.STATS.THEME.value() or nil
+        if theme ~= frame.parts.THEME.value then DataBar.UpdateStats() end
     end)
     DataBar.frame = frame
 end
@@ -660,6 +713,7 @@ DataBar.PARTS = {
     { id = "CLOCK", key = "dataBarClock" },
     { id = "PROFS", key = "dataBarProfs" },
     { id = "REPS", key = "dataBarReps" },
+    { id = "THEME", key = "dataBarTheme" },
 }
 -- Five columns: the first starts at the left edge, the last ends at the
 -- right one (left of the gear), the three between are centred on 30, 50
@@ -981,7 +1035,7 @@ function DataBar.UpdateReps()
     FillPart(frame.repBox, frame.reps, datas, S("dataBarReps"), FillRep, frame.addRep)
 end
 
--- Gold, durability, bags: value, colour and width; a new width moves the
+-- Gold, durability, bags, theme: value, colour and width; a new width moves the
 -- parts beside it.
 function DataBar.UpdateStats()
     if not frame then return end
@@ -1004,6 +1058,7 @@ function DataBar.UpdateStats()
                 g.width = 0
             end
             g:SetShown(text ~= nil)
+            g.value = text
             moved = moved or before ~= g.width
         end
     end

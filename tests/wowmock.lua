@@ -108,7 +108,7 @@ local function newWidget(name, kind)
     function w:CreateFontString(_, _, template)
         local fs = newWidget(nil, "FontString")
         fs._font = { "Fonts\\FRIZQT__.TTF", 10, "" }
-        fs._template = template
+        fs._template, fs._owner = template, self
         function fs:GetFont() return self._font[1], self._font[2], self._font[3] end
         function fs:SetFont(p, s, f) self._font = { p, s, f }; return true end
         function fs:GetStringWidth() return #(tostring(self._text or "")) * 7 end
