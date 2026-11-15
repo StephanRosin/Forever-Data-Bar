@@ -100,9 +100,9 @@ Themes.SPECS = {
     },
     -- Translucent ice with quieter cracks, a pale rim, a long soft shadow.
     FROST = {
-        font = "Cormorant SC", bodyFont = "Friz Quadrata", fontSizeAdd = 2,
-        -- No outline: Cormorant's hairlines drowned in it; the texts keep
-        -- their font object's 1 px drop shadow (GameFontHighlight*).
+        font = "Cinzel", bodyFont = "Friz Quadrata",
+        -- No outline: the texts keep their font object's 1 px drop shadow
+        -- (GameFontHighlight*).
         look = look({ 0.92, 0.98, 1 }, { 0.6, 0.88, 1 }, { 0.04, 0.12, 0.22 }, 50, ""),
         art = { back = "FrostBack", tint = { 0.6, 0.6, 0.6, 0.75 }, rim = { 0.86, 0.96, 1, 0.8 }, rimSize = 1,
             shadow = 8, shadowAlpha = 0.55, bar = "FrostBar", track = 3 },

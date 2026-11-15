@@ -19,7 +19,6 @@ local FONTS = "Interface\\AddOns\\ForeverDataBar\\Media\\Fonts\\"
 Media.OWN_FONTS = {
     { name = "Bangers",            path = FONTS .. "Bangers-Regular.ttf" },
     { name = "Cinzel",             path = FONTS .. "Cinzel-Bold.ttf" },
-    { name = "Cormorant SC",       path = FONTS .. "CormorantSC-Bold.ttf" },
     { name = "IBM Plex Mono",      path = FONTS .. "IBMPlexMono-Regular.ttf" },
     { name = "IM Fell English SC", path = FONTS .. "IMFeENsc28P.ttf" },
     { name = "Inter Tight",        path = FONTS .. "InterTight-Regular.ttf" },
