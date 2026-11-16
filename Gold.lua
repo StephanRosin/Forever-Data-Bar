@@ -291,8 +291,10 @@ end
 
 local function EmbedGraph(g)
     local first = GameTooltip:NumLines() + 1
-    local line = GameTooltip:GetLeftLine(first > 1 and first - 1 or 1)
-    local _, size = line:GetFont()
+    -- The font object, not a line: a line's size can be a secret value once
+    -- another addon has filled the tooltip, and arithmetic on it errors.
+    local _, size = GameTooltipText:GetFont()
+    if issecretvalue and issecretvalue(size) then size = nil end
     for _ = 1, math.ceil(g:GetHeight() / ((size or TIP_LINE_FALLBACK) + TIP_LINE_SPACING)) do GameTooltip:AddLine(" ") end
     g:ClearAllPoints()
     g:SetPoint("TOPLEFT", GameTooltip:GetLeftLine(first), "TOPLEFT", 0, 0)

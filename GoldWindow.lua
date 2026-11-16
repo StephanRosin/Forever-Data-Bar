@@ -91,7 +91,8 @@ function Window.Tab() return Valid(Window.TABS, Stored().tab, DEFAULT_TAB) end
 -- Texts and their fonts
 -- -----------------------------------------------------------------------------
 -- role: text (text colour), muted (fainter), head (display font), big,
--- title, value (font only: its colour means gain or loss, a quality, a flag).
+-- title, value (font only: its colour means gain or loss, a quality), flag
+-- (font only and no outline: dark text on a bright accent, an outline blots it).
 local texts = {}
 local function Register(fs, role)
     if fs.SetWordWrap then fs:SetWordWrap(false) end
@@ -118,9 +119,9 @@ local function ApplyFonts()
     local fonts = { title = { display, size + TITLE_SIZE_ADD }, head = { display, size }, big = { display, size + BIG_SIZE_ADD } }
     for _, t in ipairs(texts) do
         local f = fonts[t.role] or { path, size }
-        ns.DataBar.SetFont(t.fs, f[1], f[2], outline)
+        ns.DataBar.SetFont(t.fs, f[1], f[2], t.role == "flag" and "" or outline)
         if t.role == "muted" then Paint(t.fs, colour, MUTED_ALPHA)
-        elseif t.role ~= "value" then Paint(t.fs, colour) end
+        elseif t.role ~= "value" and t.role ~= "flag" then Paint(t.fs, colour) end
     end
 end
 
@@ -342,7 +343,8 @@ local function Chart(parent)
         c.yLabels[i] = Text(c, "muted")
     end
     c.flag = c:CreateTexture(nil, "OVERLAY", nil, 1)
-    c.flagText = Text(c, "value", "CENTER")
+    c.flagText = Text(c, "flag", "CENTER")
+    if c.flagText.SetShadowOffset then c.flagText:SetShadowOffset(0, 0) end
     c.flagText:SetDrawLayer("OVERLAY", 2)
     c.finish = c:CreateTexture(nil, "OVERLAY", nil, 3)
     Media(c.finish, "GoldFlag")
@@ -502,7 +504,8 @@ local function DrawChart(c, points, span)
     Paint(c.flagText, FlagInk(accent))
     local fw, fh = (c.flagText:GetStringWidth() or 0) + 2 * FLAG_PAD, RowH()
     c.flag:ClearAllPoints()
-    c.flag:SetPoint("BOTTOMRIGHT", c, "BOTTOMLEFT", lx - FLAG_PAD, math.min(ly + FLAG_LIFT, X_ROW + c.plotH + fh) - fh / 2)
+    -- Inside the plot: at the top the flag hangs below the point.
+    c.flag:SetPoint("BOTTOMRIGHT", c, "BOTTOMLEFT", lx - FLAG_PAD, math.min(ly + FLAG_LIFT - fh / 2, X_ROW + c.plotH - fh))
     c.flag:SetSize(fw, fh)
     Colour(c.flag, accent, 1)
     c.flag:Show()
@@ -536,7 +539,8 @@ local function ItemRow(parent)
     end)
     r:SetScript("OnLeave", function() GameTooltip:Hide() end)
     r:SetScript("OnClick", function(self)
-        if self.link and HandleModifiedItemClick then HandleModifiedItemClick(self.link) end
+        -- Only a full link goes to the chat; a bare "item:id" (not cached yet) shows the tooltip only.
+        if self.link and self.link:find("|H", 1, true) and HandleModifiedItemClick then HandleModifiedItemClick(self.link) end
     end)
     return r
 end

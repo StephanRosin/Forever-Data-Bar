@@ -345,6 +345,26 @@ return function(ns, M, check)
     it.rows[1]:GetScript("OnClick")(it.rows[1])
     check("items: a modified click links it", linked and linked:find("item:2589", 1, true) ~= nil, true)
     _G.C_Item, _G.HandleModifiedItemClick = nil, nil
+    -- Ids from links: posting, owned auctions, purchase mails, bags.
+    local items = {}
+    Ledger.Learn(items, "|cff1eff00|Hitem:2554:0:0|h[Magic Wand]|h|r")
+    check("learn: id from a link", items["Magic Wand"].id, 2554)
+    Ledger.Learn(items, nil)
+    check("learn: no link, nothing", next(items, next(items)), nil)
+    items["Copper Bar"] = { buyCost = 0, buyQty = 0, sellNet = 5, sellQty = 1 }
+    local bags = _G.C_Container
+    _G.C_Container = { GetContainerNumSlots = function(b) return b == 0 and 2 or 0 end,
+        GetContainerItemInfo = function(_, slot) return ({ { hyperlink = "|cffffffff|Hitem:2840::|h[Copper Bar]|h|r" },
+            { hyperlink = "|cffffffff|Hitem:2589::|h[Linen Cloth]|h|r" } })[slot] end }
+    Ledger.LearnFromBags(items)
+    _G.C_Container = bags
+    check("bags: a listed item learns its id", items["Copper Bar"].id, 2840)
+    check("bags: no new entries", items["Linen Cloth"], nil)
+    _G.C_Item = { GetItemInfo = function() return nil end, GetItemInfoInstant = function(id) return id, "", "", "", 135274 end }
+    local link, _, icon = Ledger.ItemInfo("Copper Bar", items["Copper Bar"])
+    check("not cached: the icon at once", icon, 135274)
+    check("not cached: the tooltip by id", link, "item:2840")
+    _G.C_Item = nil
     -- Rows follow the font size.
     local before = select(5, flow.income[2].label:GetPoint("TOPLEFT"))
     ns.Settings.Set("dataBarFontSize", 20)

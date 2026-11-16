@@ -116,6 +116,10 @@ return function(ns, M, check)
     part:GetScript("OnEnter")(part)
     check("tooltip: the curve over blank lines", G.TooltipGraph():IsShown() and G.TooltipGraph():GetParent() == GameTooltip, true)
     check("tooltip: wide enough for it", GameTooltip._minWidth, G.TooltipGraph():GetWidth())
+    -- A secret font size (another addon filled the tooltip): the fallback, no error.
+    _G.issecretvalue = function() return true end
+    check("tooltip: a secret font size, no error", pcall(part:GetScript("OnEnter"), part), true)
+    _G.issecretvalue = nil
     ForeverDataBarChar.goldDays[yesterday] = nil
     check("tooltip: no Blizzard insert (taint)", GameTooltip.insertedFrames, nil)
     local tip = G.TooltipGraph()

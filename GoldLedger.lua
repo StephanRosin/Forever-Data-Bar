@@ -209,7 +209,33 @@ function Ledger.ItemInfo(name, it)
     if not get then return nil end
     local _, link, quality, _, _, _, _, _, _, icon = get(it and it.id or name)
     if link and it and not it.id then it.id = tonumber(link:match("item:(%d+)")) end
+    if not link and it and it.id then
+        -- Known but not cached yet: the icon at once, the tooltip by id.
+        local instant = C_Item and C_Item.GetItemInfoInstant
+        icon = instant and select(5, instant(it.id))
+        link = "item:" .. it.id
+    end
     return link, quality, icon
+end
+
+-- An item's id from its link, kept with the item: invoices name items
+-- only, and a name answers GetItemInfo only from the client's cache.
+function Ledger.Learn(items, link)
+    local id, name = link and tonumber(link:match("item:(%d+)")), link and link:match("|h%[(.-)%]|h")
+    if id and name then Item(items, name).id = id end
+end
+
+-- The bags' links for items already listed without an id (no new entries).
+function Ledger.LearnFromBags(items)
+    if not (C_Container and C_Container.GetContainerItemInfo) then return end
+    for bag = 0, NUM_BAG_SLOTS or 4 do
+        for slot = 1, C_Container.GetContainerNumSlots(bag) or 0 do
+            local info = C_Container.GetContainerItemInfo(bag, slot)
+            local link = info and info.hyperlink
+            local name = link and link:match("|h%[(.-)%]|h")
+            if name and items[name] and not items[name].id then Ledger.Learn(items, link) end
+        end
+    end
 end
 
 -- An auction invoice still to be taken: a sale while it holds its money,
@@ -301,11 +327,28 @@ local function OnTake(i, kinds)
     local alike = PendingAlike(mail.sig)
     if flying >= alike then return end
     inFlight[#inFlight + 1] = { sig = mail.sig, alike = alike, time = now }
-    Ledger.Taken(Ledger.ItemsOf(ns.AccountDB(), GetRealmName()), mail, now)
+    local items = Ledger.ItemsOf(ns.AccountDB(), GetRealmName())
+    Ledger.Taken(items, mail, now)
+    -- A purchase carries the item itself: its link.
+    if mail.kind == "buyer" and GetInboxItemLink then Ledger.Learn(items, GetInboxItemLink(i, 1)) end
 end
 local MONEY, ITEM, BOTH = { seller = true }, { buyer = true }, { seller = true, buyer = true }
 for name, kinds in pairs({ TakeInboxMoney = MONEY, TakeInboxItem = ITEM, AutoLootMailItem = BOTH }) do
     if _G[name] then hooksecurefunc(name, function(i) OnTake(i, kinds) end) end
+end
+
+local function MyItems() return Ledger.ItemsOf(ns.AccountDB(), GetRealmName()) end
+
+-- Items posted: their links, so a later sale shows icon, tooltip and chat link.
+if C_AuctionHouse then
+    for _, name in ipairs({ "PostItem", "PostCommodity" }) do
+        if C_AuctionHouse[name] and C_Item and C_Item.GetItemLink then
+            hooksecurefunc(C_AuctionHouse, name, function(loc)
+                local ok, link = pcall(C_Item.GetItemLink, loc)
+                if ok then Ledger.Learn(MyItems(), link) end
+            end)
+        end
+    end
 end
 
 local handlers = {
@@ -329,6 +372,14 @@ local handlers = {
     AUCTION_HOUSE_AUCTION_CREATED = function(now) Ledger.Claim("AH_FEES", "AH_BUY", -1, ANY, now) end,
     AUCTION_HOUSE_PURCHASE_COMPLETED = function(now) Ledger.Claim("AH_BUY", "AH_FEES", -1, ANY, now) end,
     COMMODITY_PURCHASE_SUCCEEDED = function(now) Ledger.Claim("AH_BUY", "AH_FEES", -1, ANY, now) end,
+    OWNED_AUCTIONS_UPDATED = function()
+        local items = MyItems()
+        for k = 1, C_AuctionHouse.GetNumOwnedAuctions() do
+            local a = C_AuctionHouse.GetOwnedAuctionInfo(k)
+            Ledger.Learn(items, a and a.itemLink)
+        end
+    end,
+    BAG_UPDATE_DELAYED = function() Ledger.LearnFromBags(MyItems()) end,
 }
 
 local events = CreateFrame("Frame")

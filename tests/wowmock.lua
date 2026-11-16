@@ -155,6 +155,7 @@ Minimap = newWidget("Minimap")
 Minimap._w, Minimap._h = 140, 140
 function Minimap:GetCenter() return 1800, 950 end
 GameTooltip = newWidget("GameTooltip")
+GameTooltipText = { GetFont = function() return "Fonts\\FRIZQT__.TTF", 12 end }
 function GameTooltip:AddLine(t) self._lines = self._lines or {}; self._lines[#self._lines + 1] = t end
 function GameTooltip:AddDoubleLine(a, b) self._lines = self._lines or {}; self._lines[#self._lines + 1] = a .. "|" .. b end
 function GameTooltip:SetOwner()
