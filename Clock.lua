@@ -169,7 +169,7 @@ local function WidestTime() return S("dataBarClock12") and "12:00" or "00:00" en
 function Clock.Layout(clock)
     local style, size = Clock.Style(), Clock.Size()
     local body, accent = clock.body, ns.Themes.IconColor()
-    clock.style = style
+    clock.style, clock.timeX = style, nil
     HideAll(clock)
     clock.text:SetShown(style ~= "LED" and style ~= "TILES")
     local x = 0
@@ -245,7 +245,9 @@ function Clock.Layout(clock)
         end
         x = x - gap
     else
-        At(clock.text, body, x)
+        -- Room for the widest time; Clock.Update centres the actual one in it
+        -- (digits differ in width: 08:27 is narrower than 00:00).
+        clock.timeX = x
         x = x + Width(clock.text, WidestTime())
     end
     if style == "SECONDS" then
@@ -255,7 +257,13 @@ function Clock.Layout(clock)
         clock.sec:Show()
         x = x + 1 + Width(clock.sec, ":00")
     end
-    if ampm > 0 then
+    if ampm > 0 and clock.timeX then
+        -- After the time (and seconds), centred with them.
+        clock.ampm:ClearAllPoints()
+        clock.ampm:SetPoint("BOTTOMLEFT", style == "SECONDS" and clock.sec or clock.text, "BOTTOMRIGHT", GAP / 2, 0)
+        clock.ampm:Show()
+        x = x + ampm
+    elseif ampm > 0 then
         clock.ampm:ClearAllPoints()
         clock.ampm:SetPoint("BOTTOMLEFT", body, "LEFT", x + GAP / 2, -size / 2)
         clock.ampm:Show()
@@ -275,6 +283,7 @@ function Clock.Layout(clock)
         clock.dot:Show()
     end
     clock.bodyWidth = x
+    clock.timeRoom = clock.timeX and x - clock.timeX
     body:SetSize(math.max(1, x), size + 4)
     Clock.Update(clock)
     return x
@@ -299,6 +308,12 @@ function Clock.Update(clock, t)
     clock.sec:SetText(":" .. ss)
     clock.ampm:SetText(suffix or "")
     if style == "DATE" then clock.date:SetText(Clock.DateText(t)) end
+    if clock.timeX then
+        local used = clock.text:GetStringWidth() or 0
+        if style == "SECONDS" then used = used + 1 + (clock.sec:GetStringWidth() or 0) end
+        if suffix then used = used + GAP / 2 + (clock.ampm:GetStringWidth() or 0) end
+        At(clock.text, clock.body, clock.timeX + math.floor(math.max(0, clock.timeRoom - used) / 2))
+    end
     if style == "DAYNIGHT" then
         clock.icon:SetTexture(MEDIA .. ((hour >= DAY_START and hour < NIGHT_START) and "ClockSun" or "ClockMoon"))
     elseif style == "DIAL" then

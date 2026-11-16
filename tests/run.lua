@@ -441,6 +441,13 @@ do
     Settings.Set("dataBarClockStyle", "SECONDS")
     check("seconds: on the time's baseline", select(3, f.clock.sec:GetPoint("BOTTOMLEFT")), "BOTTOMRIGHT")
     check("seconds: no vertical offset", select(5, f.clock.sec:GetPoint("BOTTOMLEFT")), 0)
+    -- A narrower time than the widest (digits differ): centred in its room, not left with the slack on the right.
+    local measure = f.clock.text.GetStringWidth
+    f.clock.text.GetStringWidth = function() return 10 end
+    C.Update(f.clock)
+    local x = select(4, f.clock.text:GetPoint("LEFT"))
+    check("seconds: a narrow time centred", x > f.clock.timeX and x - f.clock.timeX < f.clock.timeRoom / 2, true)
+    f.clock.text.GetStringWidth = measure
     Settings.Set("dataBarClockStyle", "LED")
     C.Update(f.clock, os.time({ year = 2026, month = 11, day = 16, hour = 18, min = 1 }))
     local d1 = f.clock.digits[1].segments
