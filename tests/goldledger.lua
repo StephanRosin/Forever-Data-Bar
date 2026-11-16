@@ -292,10 +292,13 @@ return function(ns, M, check)
     check("window: opens on the overview", f.pages.OVERVIEW:IsShown() and not f.pages.ITEMS:IsShown(), true)
     local o = f.pages.OVERVIEW
     check("overview: the money", o.money:GetText(), G.Money(1300))
-    check("overview: today in green", o.today._textColor[2] > o.today._textColor[1], true)
-    check("overview: biggest income today", o.tiles[4].value:GetText():find(ns.L.GOLD_SRC_OTHER, 1, true) ~= nil, true)
-    check("overview: no auction item yet, a dash", o.tiles[3].value:GetText() == G.NONE or o.tiles[3].value:GetText() ~= "", true)
-    check("overview: one day, the curve explains itself", o.graph.empty:IsShown(), true)
+    check("overview: today in green", o.today.value._textColor[2] > o.today.value._textColor[1], true)
+    check("overview: today's arrow up", o.today.arrow._texCoord[3], 0)
+    check("overview: all characters counted", o.tiles[2].sub:GetText():find(ns.L.GOLD_CHARS_COUNT:format(1), 1, true) ~= nil, true)
+    check("overview: today's income as a bar", o.inPieces[1]:IsShown(), true)
+    check("overview: the legend names it", o.legend[1].text:GetText():find(ns.L.GOLD_SRC_OTHER, 1, true) ~= nil, true)
+    check("overview: one day, the curve explains itself", o.chart.empty:IsShown(), true)
+    check("overview: no burst outside the comic", o.burst:IsShown(), false)
     check("tabs: the chosen one underlined", f.tabs[1].underline:IsShown() and not f.tabs[2].underline:IsShown(), true)
     check("tabs: the underline in the accent", f.tabs[1].underline._texColor[1], ns.Themes.Accent()[1])
     check("tabs: the label in the text colour", f.tabs[1].text._textColor[1], select(4, ns.DataBar.FontFor("dataBar"))[1])
@@ -328,13 +331,26 @@ return function(ns, M, check)
     check("items: its profit", it.rows[1].PROFIT:GetText(), (G.Signed(Ledger.Profit(cloth))))
     check("items: the value column fixed", it.rows[1].PROFIT:GetWidth(), it.rows[2].PROFIT:GetWidth())
     check("items: explanation gone", it.empty:IsShown(), false)
-    check("overview: best item tile", o.tiles[3].value:GetText():find("Linen Cloth", 1, true) ~= nil, true)
+    check("overview: best item tile", o.tiles[3].value:GetText(), "Linen Cloth")
+    check("overview: best item listed", o.items[1].name:GetText(), "Linen Cloth")
+    check("items: unknown item, a question mark", it.rows[1].icon._texture, 134400)
+    _G.C_Item = { GetItemInfo = function(x)
+        if x == "Linen Cloth" or x == 2589 then return "Linen Cloth", "|cffffffff|Hitem:2589::|h[Linen Cloth]|h|r", 1, 5, 0, "", "", 200, "", 132889 end
+    end, GetItemQualityColor = function() return 1, 1, 1, "ffffffff" end }
+    W.Fill()
+    check("items: icon once known", it.rows[1].icon._texture, 132889)
+    check("items: id kept for the server", cloth.id, 2589)
+    local linked
+    _G.HandleModifiedItemClick = function(l) linked = l end
+    it.rows[1]:GetScript("OnClick")(it.rows[1])
+    check("items: a modified click links it", linked and linked:find("item:2589", 1, true) ~= nil, true)
+    _G.C_Item, _G.HandleModifiedItemClick = nil, nil
     -- Rows follow the font size.
     local before = select(5, flow.income[2].label:GetPoint("TOPLEFT"))
     ns.Settings.Set("dataBarFontSize", 20)
     check("larger font: taller rows", select(5, flow.income[2].label:GetPoint("TOPLEFT")) < before, true)
     ns.Settings.Set("dataBarFontSize", nil)
-    check("graph labels in the window's font", select(2, f.pages.HISTORY.graph.max:GetFont()), select(2, ns.DataBar.FontFor("dataBar")))
+    check("graph labels in the window's font", select(2, f.pages.HISTORY.chart.yLabels[1]:GetFont()), select(2, ns.DataBar.FontFor("dataBar")))
     f.close:GetScript("OnEnter")()
     check("close: hover", f.close.lines[1]._texColor[4], 1)
     f.close:GetScript("OnLeave")()
@@ -362,6 +378,16 @@ return function(ns, M, check)
             check(id .. ": black title bar on Swiss and Pitwall", f.titleBar.fill:IsShown(), id == "SWISS" or id == "PITWALL")
         end
     end
+    -- The comic's burst only on a day that made money.
+    ns.Themes.Switch("COMIC")
+    local today = ForeverDataBarChar.goldDays[G.DayKey(G.Now())]
+    check("comic: a gain, the burst", f.pages.OVERVIEW.burst:IsShown(), today.gained > today.spent)
+    local gained = today.gained
+    today.gained = today.spent - 100
+    W.Fill()
+    check("comic: a loss, no burst", f.pages.OVERVIEW.burst:IsShown(), false)
+    check("overview: a loss, the arrow down", f.pages.OVERVIEW.today.arrow._texCoord[3], 1)
+    today.gained = gained
     ForeverDataBarDB = snapshot
     ForeverDataBarDB.themeSets = nil
     ns.Settings.Changed(nil)

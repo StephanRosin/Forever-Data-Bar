@@ -201,6 +201,17 @@ function Ledger.TopItems(items, limit)
     return list
 end
 
+-- An item's link, quality and icon. By name the client answers only for
+-- items it has cached; the id, kept once known, asks the server too
+-- (GET_ITEM_INFO_RECEIVED then refills the window).
+function Ledger.ItemInfo(name, it)
+    local get = (C_Item and C_Item.GetItemInfo) or GetItemInfo
+    if not get then return nil end
+    local _, link, quality, _, _, _, _, _, _, icon = get(it and it.id or name)
+    if link and it and not it.id then it.id = tonumber(link:match("item:(%d+)")) end
+    return link, quality, icon
+end
+
 -- An auction invoice still to be taken: a sale while it holds its money,
 -- a purchase while it holds the item; nil for any other mail.
 -- GetInboxHeaderInfo: icon, stationery, sender, subject, money, COD, daysLeft, itemCount, ...
