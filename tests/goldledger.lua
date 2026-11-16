@@ -193,6 +193,27 @@ return function(ns, M, check)
     check("auto loot: a purchase", hand.Herb.buyQty, 2)
     check("auto loot: a letter stays mail", sides(day), "inc:MAIL=100 out:")
     fire("MAIL_CLOSED")
+    -- "Open all" takes mails 1 and 2, mail 1 leaves, and it takes the same mail again as mail 1.
+    ForeverDataBarDB.goldItems = nil
+    day = fresh()
+    M.state.mail = { { "Auction House", "Sold: Ore", 500, invoice = { "seller", "Ore", 500, 0, 0, 1 } },
+        { "Auction House", "Sold: Herb", 300, invoice = { "seller", "Herb", 300, 0, 0, 1 } } }
+    fire("MAIL_SHOW")
+    TakeInboxMoney(1)
+    TakeInboxMoney(2)
+    table.remove(M.state.mail, 1)
+    fire("MAIL_INBOX_UPDATE")
+    TakeInboxMoney(1)
+    Ledger.Book(day, 800)
+    M.state.mail = {}
+    fire("MAIL_INBOX_UPDATE")
+    check("moved up and taken again: counted once", Ledger.ItemsOf(ForeverDataBarDB, realm).Herb.sellQty, 1)
+    -- Forever sends no MAIL_CLOSED: the interaction manager's hide closes the mailbox.
+    fire("PLAYER_INTERACTION_MANAGER_FRAME_HIDE", 17)
+    wait(5)
+    fire("QUEST_TURNED_IN", 1, 0, 700)
+    Ledger.Book(day, 700)
+    check("mailbox left without MAIL_CLOSED", sides(day), "inc:AH_SALE=800,QUEST=700 out:")
     -- Many alike sales: the inbox shows 50 of 60 and refills as it empties, an
     -- alike mail taking the place of the one taken; the money comes in batches.
     ForeverDataBarDB.goldItems = nil

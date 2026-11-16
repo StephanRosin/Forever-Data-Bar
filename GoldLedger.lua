@@ -235,7 +235,7 @@ local function ReadMail(i)
     if not pending then return nil end
     count = (count and count > 0) and count or 1
     return {
-        sig = table.concat({ i, kind, tostring(item), bid or 0, deposit or 0, consignment or 0, count }, "|"),
+        sig = table.concat({ kind, tostring(item), bid or 0, deposit or 0, consignment or 0, count }, "|"),
         money = money or 0, kind = kind, item = item, bid = bid or 0, deposit = deposit or 0,
         cut = consignment or 0, count = count,
     }
@@ -266,37 +266,68 @@ local CONTEXTS = {
     TAXIMAP_OPENED = { "TAXI", true }, TAXIMAP_CLOSED = { "TAXI", false },
     LOOT_OPENED = { "LOOT", true }, LOOT_CLOSED = { "LOOT", false },
 }
+-- Forever was seen not to send MAIL_CLOSED: walking away from the mailbox
+-- left it open, and quest rewards and auction deposits were booked as mail.
+-- The interaction manager's hide closes a frame whichever event is missing.
+local INTERACTIONS = { [1] = "TRADE", [5] = "MERCHANT", [6] = "TAXI", [7] = "TRAINER", [17] = "MAIL", [21] = "AH" }
 
 local function RepairCost() return (GetRepairAllCost and GetRepairAllCost()) or 0 end
 
 -- A take as the mail functions are called, before the server removes the
--- money or the item. A second click on the same money while the server still
--- works on the first must not count twice: the take is remembered until an
--- inbox update after the server is done, or one that shows that mail gone.
-local lastTake
+-- money or the item. "Open all" calls again for a mail that has moved up
+-- while the server still works on it, and a second click does the same:
+-- a take counts only while the inbox holds more such mails than are in
+-- flight. A take is in flight until fewer such mails remain than when it
+-- was taken, or for a few seconds.
+-- shortcut: a refill landing in the same update as a removal keeps the take
+-- in flight until it times out; an alike mail taken meanwhile is missed.
+local IN_FLIGHT = 5
+local inFlight = {}
+
+local function PendingAlike(sig)
+    local n = 0
+    for j = 1, GetInboxNumItems() do
+        local m = ReadMail(j)
+        if m and m.sig == sig then n = n + 1 end
+    end
+    return n
+end
+
+local function Land(now)
+    local counts = {}
+    for k = #inFlight, 1, -1 do
+        local t = inFlight[k]
+        counts[t.sig] = counts[t.sig] or PendingAlike(t.sig)
+        if counts[t.sig] < t.alike or now - t.time > IN_FLIGHT then table.remove(inFlight, k) end
+    end
+end
+
 local function OnTake(i, kinds)
+    local now = Now()
     local mail = i and ReadMail(i)
     Ledger.Log("take %s %s", tostring(i), mail and mail.kind or "-")
     if not (mail and kinds[mail.kind]) then return end
-    if lastTake and lastTake.sig == mail.sig then return end
-    lastTake = { i = i, sig = mail.sig, n = GetInboxNumItems() }
-    Ledger.Taken(Ledger.ItemsOf(ns.AccountDB(), GetRealmName()), mail, Now())
+    Land(now)
+    local flying = 0
+    for _, t in ipairs(inFlight) do if t.sig == mail.sig then flying = flying + 1 end end
+    local alike = PendingAlike(mail.sig)
+    if flying >= alike then Ledger.Log("take %d again, already in flight", i); return end
+    inFlight[#inFlight + 1] = { sig = mail.sig, alike = alike, time = now }
+    Ledger.Taken(Ledger.ItemsOf(ns.AccountDB(), GetRealmName()), mail, now)
 end
 local MONEY, ITEM, BOTH = { seller = true }, { buyer = true }, { seller = true, buyer = true }
 for name, kinds in pairs({ TakeInboxMoney = MONEY, TakeInboxItem = ITEM, AutoLootMailItem = BOTH }) do
     if _G[name] then hooksecurefunc(name, function(i) OnTake(i, kinds) end) end
 end
 
-local function OnInbox()
-    if not lastTake then return end
-    if not (C_Mail and C_Mail.IsCommandPending and C_Mail.IsCommandPending()) then lastTake = nil; return end
-    local now = lastTake.i <= GetInboxNumItems() and ReadMail(lastTake.i)
-    if GetInboxNumItems() ~= lastTake.n or not now or now.sig ~= lastTake.sig then lastTake = nil end
-end
-
 local handlers = {
-    MAIL_SHOW = function() lastTake = nil end,
-    MAIL_INBOX_UPDATE = OnInbox,
+    MAIL_SHOW = function() for k = #inFlight, 1, -1 do inFlight[k] = nil end end,
+    MAIL_INBOX_UPDATE = function(now) Land(now) end,
+    PLAYER_INTERACTION_MANAGER_FRAME_HIDE = function(now, kind)
+        local context = INTERACTIONS[kind]
+        Ledger.Log("interaction hide %s %s", tostring(kind), tostring(context))
+        if context and open[context] == true then open[context] = now end
+    end,
     MERCHANT_SHOW = function() repairCost = RepairCost() end,
     UPDATE_INVENTORY_DURABILITY = function(now)
         if not (IsOpen("MERCHANT", now) and repairCost) then return end
