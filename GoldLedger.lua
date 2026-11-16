@@ -52,18 +52,6 @@ local open, recent, claims = {}, {}, {}
 
 local function Now() return GetTime() end
 
--- Debug trace of mailbox and booking (/fdb maildebug), kept in
--- ForeverDataBarDB.mailLog so it can be read from the SavedVariables file.
-local LOG_MAX = 1000
-function Ledger.Log(fmt, ...)
-    local db = ns.AccountDB()
-    if not db.mailDebug then return end
-    db.mailLog = db.mailLog or {}
-    local log = db.mailLog
-    log[#log + 1] = string.format("%s %.1f ", date("%H:%M:%S"), GetTime()) .. string.format(fmt, ...)
-    while #log > LOG_MAX do table.remove(log, 1) end
-end
-
 local function IsOpen(context, now)
     local v = open[context]
     return v == true or (type(v) == "number" and now - v <= CLOSE_GRACE)
@@ -97,11 +85,7 @@ end
 
 local function Expire(list, now, span)
     for i = #list, 1, -1 do
-        local x = list[i]
-        if now - x.time > span(x) then
-            if x.to and x.amount ~= ANY then Ledger.Log("claim expired %s<-%s left %d", x.to, x.from, x.amount) end
-            table.remove(list, i)
-        end
+        if now - list[i].time > span(list[i]) then table.remove(list, i) end
     end
 end
 
@@ -117,7 +101,6 @@ function Ledger.Reconcile(now)
             if c.amount <= 0 then break end
             if r.source == c.from and r.amount * c.sign > 0 and math.abs(r.time - c.time) <= WINDOW[c.to] then
                 local take = math.min(c.amount, math.abs(r.amount))
-                Ledger.Log("move %d %s->%s", take, c.from, c.to)
                 Move(r.day, c.sign > 0 and "inc" or "out", c.from, c.to, take)
                 r.amount = r.amount - take * c.sign
                 -- The moved part stays open to a later claim (a purchase event after a deposit's).
@@ -135,7 +118,6 @@ function Ledger.Book(day, delta, now)
     now = now or Now()
     local source = Ledger.Classify(delta, now)
     Add(day, source, delta)
-    Ledger.Log("book %d %s", delta, source)
     recent[#recent + 1] = { day = day, source = source, amount = delta, time = now }
     Ledger.Reconcile(now)
     return source
@@ -145,7 +127,6 @@ end
 -- sign +1 for money in, -1 for money out.
 function Ledger.Claim(to, from, sign, amount, now)
     now = now or Now()
-    Ledger.Log("claim %s<-%s %s", to, from, amount == ANY and "any" or tostring(amount))
     claims[#claims + 1] = { to = to, from = from, sign = sign, amount = amount or ANY, time = now }
     Ledger.Reconcile(now)
 end
@@ -226,11 +207,8 @@ end
 -- GetInboxInvoiceInfo: type, itemName, playerName, bid, buyout, deposit, consignment,
 -- moneyDelay, etaHour, etaMin, count.
 local function ReadMail(i)
-    local _, _, sender, subject, money, _, _, itemCount = GetInboxHeaderInfo(i)
+    local _, _, _, _, money, _, _, itemCount = GetInboxHeaderInfo(i)
     local kind, item, _, bid, _, deposit, consignment, _, _, _, count = GetInboxInvoiceInfo(i)
-    Ledger.Log("  mail %d %s | %s | money %s items %s | invoice %s %s bid %s dep %s cut %s",
-        i, tostring(sender), tostring(subject), tostring(money), tostring(itemCount),
-        tostring(kind), tostring(item), tostring(bid), tostring(deposit), tostring(consignment))
     local pending = (kind == "seller" and (money or 0) > 0) or (kind == "buyer" and (itemCount or 0) > 0)
     if not pending then return nil end
     count = (count and count > 0) and count or 1
@@ -305,13 +283,12 @@ end
 local function OnTake(i, kinds)
     local now = Now()
     local mail = i and ReadMail(i)
-    Ledger.Log("take %s %s", tostring(i), mail and mail.kind or "-")
     if not (mail and kinds[mail.kind]) then return end
     Land(now)
     local flying = 0
     for _, t in ipairs(inFlight) do if t.sig == mail.sig then flying = flying + 1 end end
     local alike = PendingAlike(mail.sig)
-    if flying >= alike then Ledger.Log("take %d again, already in flight", i); return end
+    if flying >= alike then return end
     inFlight[#inFlight + 1] = { sig = mail.sig, alike = alike, time = now }
     Ledger.Taken(Ledger.ItemsOf(ns.AccountDB(), GetRealmName()), mail, now)
 end
@@ -325,7 +302,6 @@ local handlers = {
     MAIL_INBOX_UPDATE = function(now) Land(now) end,
     PLAYER_INTERACTION_MANAGER_FRAME_HIDE = function(now, kind)
         local context = INTERACTIONS[kind]
-        Ledger.Log("interaction hide %s %s", tostring(kind), tostring(context))
         if context and open[context] == true then open[context] = now end
     end,
     MERCHANT_SHOW = function() repairCost = RepairCost() end,
@@ -351,6 +327,5 @@ events:SetScript("OnEvent", function(_, event, ...)
     local now = Now()
     local ctx = CONTEXTS[event]
     if ctx then open[ctx[1]] = ctx[2] or now end
-    if event:find("^MAIL") then Ledger.Log("%s mailOpen=%s", event, tostring(IsOpen("MAIL", now))) end
     if handlers[event] then handlers[event](now, ...) end
 end)
