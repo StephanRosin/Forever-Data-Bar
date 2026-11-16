@@ -453,9 +453,13 @@ local function dataBarPartRows()
         rows[#rows + 1] = column
         rows[#rows + 1] = x
         if part.id == "CLOCK" then
+            local style = choice("dataBarClockStyle", "OPT_DATABAR_CLOCK_STYLE", ns.Clock.STYLES, "CLOCK_STYLE_")
             local twelve = check("dataBarClock12", "OPT_DATABAR_CLOCK12")
-            twelve.enabled = on
-            rows[#rows + 1] = twelve
+            local own = check("dataBarClockSizeOwn", "OPT_DATABAR_CLOCK_SIZE_OWN")
+            local size = num("dataBarClockSize", "OPT_FONT_SIZE")
+            style.enabled, twelve.enabled, own.enabled = on, on, on
+            size.enabled = function() return on() and S("dataBarClockSizeOwn") == true end
+            for _, row in ipairs({ style, twelve, own, size }) do rows[#rows + 1] = row end
             rows[#rows + 1] = check("dataBarMicro", "OPT_DATABAR_MICRO")
             local collections = check("dataBarMicroCollections", "OPT_DATABAR_MICRO_COLLECTIONS")
             collections.enabled = function() return S("dataBarMicro") == true end

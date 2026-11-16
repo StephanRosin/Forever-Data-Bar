@@ -27,6 +27,7 @@ Gold.lua
 GoldLedger.lua
 ThemeArt.lua
 DataBar.lua
+Clock.lua
 GoldWindow.lua
 Micro.lua
 Options\Style.lua

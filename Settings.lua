@@ -30,6 +30,8 @@ Settings.DEFAULTS = {
     dataBarBags = true, dataBarBagsColumn = 2, dataBarBagsX = 0,
     dataBarClock = true, dataBarClockColumn = 3, dataBarClockX = 0,
     dataBarClock12 = false,     -- 12-hour clock (1:05 PM) instead of 24-hour
+    dataBarClockStyle = "STANDARD",   -- how it looks (Clock.STYLES)
+    dataBarClockSizeOwn = false, dataBarClockSize = 13,   -- own size, else the bar's font + 2
     dataBarMicro = true,        -- Blizzard's micro menu around the clock (Micro.lua)
     dataBarMicroCollections = false,
     dataBarProfs = true, dataBarProfsColumn = 5, dataBarProfsX = 0, dataBarProfsWidth = 96,
@@ -61,6 +63,7 @@ end
 
 Settings.RANGES = {
     dataBarHeight = { 16, 40 },
+    dataBarClockSize = { 8, 30 },
     dataBarXpWidth = { 80, 800 },
     dataBarProfsWidth = { 40, 400 }, dataBarRepsWidth = { 40, 400 },
     dataBarAlpha = { 0, 100 },

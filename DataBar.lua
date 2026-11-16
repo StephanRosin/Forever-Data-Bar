@@ -28,7 +28,6 @@ local CFG = {
     ICON = 15,
     ICON_GAP = 6,
     TEXT_GAP = 3,           -- between a label and its line
-    CLOCK_PLUS = 2,         -- the clock: larger than its font size
     ADD_PLUS = 5,           -- the reputation's "+"
     CLOCK_INTERVAL = 1,     -- seconds between clock checks
     TRACK = { 0.12, 0.12, 0.12 },   -- the empty part of a line (white at 12 %)
@@ -135,7 +134,8 @@ end
 
 -- Every text, with its part and how it takes the part's font: "text" in
 -- the colour, "value" in the colour but fainter, "size" the font only
--- (its colour means something); plus: larger by this much.
+-- (its colour means something); plus: larger by this much (or a function
+-- of the part's size: the clock's own size).
 local texts = {}
 local VALUE_ALPHA = 0.63
 local function Font(fs, key, role, plus)
@@ -206,7 +206,8 @@ local function ApplyFonts()
     local valueAlpha = ns.Themes.Spec(S("theme")).valueAlpha or VALUE_ALPHA
     for _, t in ipairs(texts) do
         local path, size, outline, c = DataBar.FontFor(t.key)
-        SetFont(t.fs, path, size + t.plus, outline)
+        local plus = type(t.plus) == "function" and t.plus(size) or t.plus
+        SetFont(t.fs, path, size + plus, outline)
         if t.role == "text" then t.fs:SetTextColor(c[1], c[2], c[3], 1)
         elseif t.role == "value" then t.fs:SetTextColor(c[1], c[2], c[3], valueAlpha) end
     end
@@ -640,7 +641,8 @@ local function Build()
     clock:SetWidth(CFG.CLOCK_WIDTH)   -- grows with the font: ApplyFrame
     clock.text = clock:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     clock.text:SetPoint("CENTER", clock, "CENTER", 0, 0)
-    Font(clock.text, "dataBarClock", "text", CFG.CLOCK_PLUS)
+    Font(clock.text, "dataBarClock", "text", ns.Clock.Plus)
+    ns.Clock.Build(clock, Font)
     frame.clock = clock
 
     frame.profBox, frame.repBox = NewGroup(), NewGroup()
@@ -693,7 +695,7 @@ local function Build()
         since = since + (elapsed or 0)
         if since < CFG.CLOCK_INTERVAL then return end
         since = 0
-        if clock:IsShown() then clock.text:SetText(DataBar.ClockText()) end
+        if clock:IsShown() then ns.Clock.Update(clock) end
         -- The rate and the time to the level run on with the clock.
         if S("dataBarXpPerHour") or S("dataBarXpToLevel") then DataBar.UpdateXp() end
         -- The hub tells no one when its theme changes: an addon with its own
@@ -837,18 +839,17 @@ local function ApplyFrame(design)
     -- The clock with the micro menu around it: [icons] 12:34 [icons].
     -- The icons are secure and sit elsewhere (Micro.lua); here only the room.
     local clock, clockOn = frame.clock, S("dataBarClock")
-    -- Room for the widest time, so the micro menu does not move at 10 or 12 o'clock.
-    clock.text:SetText(S("dataBarClock12") and "12:00 PM" or "00:00")
-    clock.text:SetShown(clockOn)
-    clock.textWidth = clockOn and math.max(CFG.CLOCK_WIDTH, math.ceil(clock.text:GetStringWidth() or 0) + 4) or 0
-    clock.text:SetText(DataBar.ClockText())
+    -- Room for the widest time, so the micro menu does not move at 10 or 12 o'clock (Clock.lua).
+    local bodyWidth = ns.Clock.Layout(clock)
+    clock.body:SetShown(clockOn)
+    clock.textWidth = clockOn and math.max(CFG.CLOCK_WIDTH, bodyWidth + 4) or 0
     local left, right = ns.Micro.Count()
     local step = CFG.ICON + CFG.ICON_GAP
     clock.microLeft, clock.micro = left * step, left + right > 0
     clock.width = clock.microLeft + clock.textWidth + right * step
-    clock:SetSize(math.max(1, clock.width), TextHeight("dataBarClock") + CFG.CLOCK_PLUS)
-    clock.text:ClearAllPoints()
-    clock.text:SetPoint("CENTER", clock, "LEFT", clock.microLeft + clock.textWidth / 2, 0)
+    clock:SetSize(math.max(1, clock.width), ns.Clock.Size())
+    clock.body:ClearAllPoints()
+    clock.body:SetPoint("LEFT", clock, "LEFT", clock.microLeft + (clock.textWidth - bodyWidth) / 2, 0)
     clock:SetShown(clockOn or clock.micro)
 end
 
@@ -1073,13 +1074,6 @@ function DataBar.UpdateStats()
         end
     end
     if moved then DataBar.Layout() end
-end
-
--- The time as the options ask: 13:05 or 1:05 PM.
-function DataBar.ClockText(t)
-    if not S("dataBarClock12") then return date("%H:%M", t) end
-    local h = tonumber(date("%H", t))
-    return string.format("%d:%s %s", (h + 11) % 12 + 1, date("%M", t), h < 12 and "AM" or "PM")
 end
 
 function DataBar.Update()
