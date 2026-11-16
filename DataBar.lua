@@ -407,6 +407,7 @@ end
 local EQUIPMENT_SLOTS = 18                      -- 1..18; only some have durability
 local DURABILITY_LOW, DURABILITY_WARN = 25, 50  -- percent: red, yellow below
 local COLOUR_LOW, COLOUR_WARN = { 1, 0.25, 0.2 }, { 1, 0.82, 0 }
+local BAGS_WARN, COLOUR_BAGS_WARN = 3, { 1, 0.5, 0 }  -- this few free: an orange icon; none: red
 
 function DataBar.GoldText(copper)
     copper = copper or 0
@@ -447,8 +448,8 @@ local function TipOwner(self)
     GameTooltip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
 end
 
--- Each: its icon, its value (text, colour or nil: nothing to show), tooltip
--- and click.
+-- Each: its icon, its value (text, text colour, icon colour; nil text:
+-- nothing to show), tooltip and click.
 DataBar.STATS = {
     GOLD = {
         icon = "StatGold",
@@ -481,8 +482,10 @@ DataBar.STATS = {
     BAGS = {
         icon = "StatBags",
         value = function()
-            local free = DataBar.BagSpace()
-            return free and tostring(free)
+            local free, total = DataBar.BagSpace()
+            if not free then return nil end
+            local icon = (free == 0 and COLOUR_LOW) or (free <= BAGS_WARN and COLOUR_BAGS_WARN) or nil
+            return ("%d/%d"):format(total - free, total), nil, icon
         end,
         tip = function(self)
             local free, total, special = DataBar.BagSpace()
@@ -1054,11 +1057,11 @@ function DataBar.UpdateStats()
     for _, p in ipairs(DataBar.PARTS) do
         local def, g = DataBar.STATS[p.id], frame.parts[p.id]
         if def then
-            local text, colour
-            if S(p.key) then text, colour = def.value() end
+            local text, colour, ic
+            if S(p.key) then text, colour, ic = def.value() end
             local before = g.width
             if text then
-                local ic = ns.Themes.IconColor()
+                ic = ic or ns.Themes.IconColor()
                 g.icon:SetVertexColor(ic[1], ic[2], ic[3], 1)
                 g.text:SetText(text)
                 colour = colour or DataBar.TextColour(p.key)

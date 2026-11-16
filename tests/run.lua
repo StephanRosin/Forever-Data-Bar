@@ -254,7 +254,21 @@ do
     check("durability: the worst item", dura.text:GetText(), "10%")
     check("durability low: red", dura.text._textColor[2] < 0.5, true)
     check("bags: special bags apart", table.concat({ D.BagSpace() }, ","), "6,26,15")
-    check("bags: free slots", bags.text:GetText(), "6")
+    check("bags: used of all", bags.text:GetText(), "20/26")
+    local accent = ns.Themes.IconColor()
+    check("bags: room enough, icon in the accent", bags.icon._vertex[1] .. "," .. bags.icon._vertex[2],
+        accent[1] .. "," .. accent[2])
+    M.state.bags[0][2] = 1
+    M.Fire("BAG_UPDATE_DELAYED")
+    check("bags: three free, orange icon", bags.icon._vertex[1] .. "," .. bags.icon._vertex[2], "1,0.5")
+    check("bags: text colour unchanged", bags.text._textColor[1], D.TextColour("dataBarBags")[1])
+    M.state.bags[0][2], M.state.bags[1][2] = 0, 0
+    M.Fire("BAG_UPDATE_DELAYED")
+    check("bags: full", bags.text:GetText(), "26/26")
+    check("bags: full, red icon", bags.icon._vertex[2] < 0.3, true)
+    M.state.bags[0][2], M.state.bags[1][2] = 4, 2
+    M.Fire("BAG_UPDATE_DELAYED")
+    check("bags: room again, accent again", bags.icon._vertex[2], accent[2])
     check("own icon in the accent", bags.icon._texture, D.CFG.MEDIA .. "StatBags")
     check("column 1: XP, gold, durability, bags in a row", select(4, gold:GetPoint("LEFT")), D.CFG.PAD + f.xp.width + D.CFG.PROF_GAP)
     check("bags after durability", select(4, bags:GetPoint("LEFT")),
