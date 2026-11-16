@@ -216,7 +216,9 @@ end
 -- baseline and a left edge; g.labels for a window's fonts.
 function Gold.NewGraph(parent, plotW, plotH)
     local g = CreateFrame("Frame", nil, parent)
-    g:SetSize(plotW + LABEL_W, plotH + DATE_ROW)
+    -- The size kept too: read back from a frame on the tooltip it can be secret.
+    g.width, g.height = plotW + LABEL_W, plotH + DATE_ROW
+    g:SetSize(g.width, g.height)
     g.plotW, g.plotH, g.lines = plotW, plotH, {}
     g.axes = {}
     for i, size in ipairs({ { plotW, 1 }, { 1, plotH } }) do
@@ -291,14 +293,15 @@ end
 
 local function EmbedGraph(g)
     local first = GameTooltip:NumLines() + 1
-    -- The font object, not a line: a line's size can be a secret value once
-    -- another addon has filled the tooltip, and arithmetic on it errors.
+    -- Sizes from the font object and our own numbers, never read back from
+    -- the tooltip's lines or frames: those can be secret values once another
+    -- addon has filled the tooltip, and arithmetic on them errors.
     local _, size = GameTooltipText:GetFont()
     if issecretvalue and issecretvalue(size) then size = nil end
-    for _ = 1, math.ceil(g:GetHeight() / ((size or TIP_LINE_FALLBACK) + TIP_LINE_SPACING)) do GameTooltip:AddLine(" ") end
+    for _ = 1, math.ceil(g.height / ((size or TIP_LINE_FALLBACK) + TIP_LINE_SPACING)) do GameTooltip:AddLine(" ") end
     g:ClearAllPoints()
     g:SetPoint("TOPLEFT", GameTooltip:GetLeftLine(first), "TOPLEFT", 0, 0)
-    GameTooltip:SetMinimumWidth(g:GetWidth())
+    GameTooltip:SetMinimumWidth(g.width)
     g:Show()
 end
 

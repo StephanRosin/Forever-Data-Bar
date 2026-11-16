@@ -115,11 +115,15 @@ return function(ns, M, check)
     ForeverDataBarChar.goldDays[yesterday] = { gained = 0, spent = 0, close = 1 }
     part:GetScript("OnEnter")(part)
     check("tooltip: the curve over blank lines", G.TooltipGraph():IsShown() and G.TooltipGraph():GetParent() == GameTooltip, true)
-    check("tooltip: wide enough for it", GameTooltip._minWidth, G.TooltipGraph():GetWidth())
-    -- A secret font size (another addon filled the tooltip): the fallback, no error.
+    check("tooltip: wide enough for it", GameTooltip._minWidth, G.TooltipGraph().width)
+    -- Secret sizes (another addon filled the tooltip): nothing read back from it.
     _G.issecretvalue = function() return true end
-    check("tooltip: a secret font size, no error", pcall(part:GetScript("OnEnter"), part), true)
-    _G.issecretvalue = nil
+    local graph = G.TooltipGraph()
+    local secret = function() error("attempt to perform arithmetic on a secret number value") end
+    local getH, getW = graph.GetHeight, graph.GetWidth
+    graph.GetHeight, graph.GetWidth = secret, secret
+    check("tooltip: secret sizes, no error", pcall(part:GetScript("OnEnter"), part), true)
+    graph.GetHeight, graph.GetWidth, _G.issecretvalue = getH, getW, nil
     ForeverDataBarChar.goldDays[yesterday] = nil
     check("tooltip: no Blizzard insert (taint)", GameTooltip.insertedFrames, nil)
     local tip = G.TooltipGraph()
