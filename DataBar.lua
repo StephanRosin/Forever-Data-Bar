@@ -444,6 +444,14 @@ function DataBar.BagSpace()
     return free, total, special
 end
 
+-- Whether two colours look alike (each channel within a quarter).
+function DataBar.CloseColours(a, b)
+    for i = 1, 3 do
+        if math.abs(a[i] - b[i]) > 0.25 then return false end
+    end
+    return true
+end
+
 local function TipOwner(self)
     GameTooltip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
 end
@@ -485,7 +493,10 @@ DataBar.STATS = {
             local free, total = DataBar.BagSpace()
             if not free then return nil end
             local icon = (free == 0 and COLOUR_LOW) or (free <= BAGS_WARN and COLOUR_BAGS_WARN) or nil
-            return ("%d/%d"):format(total - free, total), nil, icon
+            -- Icons already in a warm colour (Pitwall orange or red) would hide
+            -- the warning: then the text takes it as well.
+            local text = icon and DataBar.CloseColours(icon, ns.Themes.IconColor()) and icon or nil
+            return ("%d/%d"):format(total - free, total), text, icon
         end,
         tip = function(self)
             local free, total, special = DataBar.BagSpace()

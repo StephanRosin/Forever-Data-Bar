@@ -269,6 +269,18 @@ do
     M.state.bags[0][2], M.state.bags[1][2] = 4, 2
     M.Fire("BAG_UPDATE_DELAYED")
     check("bags: room again, accent again", bags.icon._vertex[2], accent[2])
+    -- Icons in a warm colour already (Pitwall orange): the text warns too.
+    local iconColour = ns.Themes.IconColor
+    ns.Themes.IconColor = function() return { 0.95, 0.55, 0.1 } end
+    M.state.bags[0][2], M.state.bags[1][2] = 1, 2
+    M.Fire("BAG_UPDATE_DELAYED")
+    check("bags: orange theme, the text warns", bags.text._textColor[1] .. "," .. bags.text._textColor[2], "1,0.5")
+    M.state.bags[0][2], M.state.bags[1][2] = 4, 2
+    M.Fire("BAG_UPDATE_DELAYED")
+    check("bags: room again, text as before", bags.text._textColor[1], D.TextColour("dataBarBags")[1])
+    ns.Themes.IconColor = iconColour
+    check("close colours", D.CloseColours({ 1, 0.5, 0 }, { 0.9, 0.6, 0.1 }), true)
+    check("far colours", D.CloseColours({ 1, 0.5, 0 }, { 1, 0.82, 0 }), false)
     check("own icon in the accent", bags.icon._texture, D.CFG.MEDIA .. "StatBags")
     check("column 1: XP, gold, durability, bags in a row", select(4, gold:GetPoint("LEFT")), D.CFG.PAD + f.xp.width + D.CFG.PROF_GAP)
     check("bags after durability", select(4, bags:GetPoint("LEFT")),
