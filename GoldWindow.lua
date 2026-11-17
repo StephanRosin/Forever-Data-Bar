@@ -380,20 +380,23 @@ local function FlagInk(c)
 end
 
 -- The day labels: each weekday on a week, else the first, middle and last date.
-local function DayLabels(c, points, span, X)
-    local picks = {}
+-- By calendar day, also where there is no balance yet: every weekday on
+-- short spans, else first, middle and today.
+local function DayLabels(c, today, span, XBack)
+    local backs = {}
     if span <= OVERVIEW_DAYS then
-        for i = 1, #points do picks[#picks + 1] = { i, Weekday(points[i].t) } end
+        for back = span - 1, 0, -1 do backs[#backs + 1] = back end
     else
-        for _, i in ipairs({ 1, math.floor((#points + 1) / 2), #points }) do picks[#picks + 1] = { i, date(L.GOLD_DATE, points[i].t) } end
+        backs = { span - 1, math.floor((span - 1) / 2), 0 }
     end
     HideAll(c.xLabels)
-    for k, p in ipairs(picks) do
+    for k, back in ipairs(backs) do
+        local t = ns.Gold.DayTime(today, back)
         local fs = Get(c.xLabels, k, function() return Text(c, "muted", "CENTER") end)
         fs:ClearAllPoints()
-        fs:SetPoint("BOTTOM", c, "BOTTOMLEFT", X(p[1]), 0)
-        fs:SetText(p[2])
-        Paint(fs, TextColour(), p[1] == #points and 1 or MUTED_ALPHA)
+        fs:SetPoint("BOTTOM", c, "BOTTOMLEFT", XBack(back), 0)
+        fs:SetText(span <= OVERVIEW_DAYS and Weekday(t) or date(L.GOLD_DATE, t))
+        Paint(fs, TextColour(), back == 0 and 1 or MUTED_ALPHA)
         fs:Show()
     end
 end
@@ -436,10 +439,11 @@ local function DrawChart(c, points, span)
     if #points < 2 then return false end
     local lo, hi = ns.Gold.Range(points)
     local accent, text = ns.Themes.Accent(), TextColour()
-    -- From the first day with a balance: a new character's few days fill the width.
-    local first = math.max(1, points[1].back)
-    span = first + 1   -- the days shown decide labels, columns and rings
-    local function X(i) return (first - points[i].back) / first * c.plotW end
+    -- Always the whole span: days before the first balance stay empty on the
+    -- left, so a new character's first days are not stretched over the width.
+    local first = math.max(1, span - 1)
+    local function XBack(back) return (first - back) / first * c.plotW end
+    local function X(i) return XBack(points[i].back) end
     local function Y(v)
         local share = hi > lo and (v - lo) / (hi - lo) or 0.5
         return X_ROW + share * c.plotH
@@ -497,7 +501,7 @@ local function DrawChart(c, points, span)
             d:Show()
         end
     end
-    DayLabels(c, points, span, X)
+    DayLabels(c, points[#points].t, span, XBack)
     -- Today's value on a flag left above its point.
     local lx, ly = X(#points), Y(points[#points].value)
     c.flagText:SetText(ns.Gold.Money(points[#points].value))

@@ -45,6 +45,8 @@ local function DayTime(t, back)
     return time({ year = d.year, month = d.month, day = d.day - (back or 0), hour = NOON })
 end
 
+Gold.DayTime = DayTime
+
 -- The local date `back` days before t, as "YYYY-MM-DD".
 function Gold.DayKey(t, back) return date("%Y-%m-%d", DayTime(t, back)) end
 

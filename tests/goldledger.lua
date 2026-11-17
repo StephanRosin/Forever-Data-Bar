@@ -298,6 +298,15 @@ return function(ns, M, check)
     check("overview: today's income as a bar", o.inPieces[1]:IsShown(), true)
     check("overview: the legend names it", o.legend[1].text:GetText():find(ns.L.GOLD_SRC_OTHER, 1, true) ~= nil, true)
     check("overview: one day, the curve explains itself", o.chart.empty:IsShown(), true)
+    -- Two days of balance still span the whole week: six labels before today.
+    ForeverDataBarChar.goldDays[G.DayKey(G.Now(), 1)] = { gained = 0, spent = 0, close = 1000, inc = {}, out = {} }
+    W.Fill()
+    local shown = 0
+    for _, fs in ipairs(o.chart.xLabels) do if fs:IsShown() then shown = shown + 1 end end
+    check("overview: all seven days labelled", shown, 7)
+    check("overview: yesterday one step left of today", o.chart.xLabels[6]._points.BOTTOM[3], o.chart.plotW * 5 / 6)
+    ForeverDataBarChar.goldDays[G.DayKey(G.Now(), 1)] = nil
+    W.Fill()
     check("overview: no burst outside the comic", o.burst:IsShown(), false)
     check("tabs: the chosen one underlined", f.tabs[1].underline:IsShown() and not f.tabs[2].underline:IsShown(), true)
     check("tabs: the underline in the accent", f.tabs[1].underline._texColor[1], ns.Themes.Accent()[1])
