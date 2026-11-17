@@ -81,7 +81,7 @@ Settings.DEFAULT_REPS = {
 }
 
 -- Skills hidden until shown in the options.
-Settings.DEFAULT_HIDDEN = { FISHING = true, RIDING = true }
+Settings.DEFAULT_HIDDEN = { FISHING = true }
 
 function ns.AccountDB()
     ForeverDataBarDB = ForeverDataBarDB or {}

@@ -41,7 +41,6 @@ L.PROF_TAILORING = "Sastrería"
 L.PROF_FIRST_AID = "Primeros auxilios"
 L.PROF_COOKING = "Cocina"
 L.PROF_FISHING = "Pesca"
-L.PROF_RIDING = "Equitación"
 L.STANDING_1 = "Odiado"
 L.STANDING_2 = "Hostil"
 L.STANDING_3 = "Adverso"
@@ -119,7 +118,7 @@ L.GOLD_ALL_CHARS = "Todos los personajes, desde siempre"
 
 
 L.OPT_PROFESSIONS = "Profesiones y habilidades"
-L.OPT_PROFESSIONS_HINT = "Se muestran dos profesiones principales y dos secundarias. Desmarca una habilidad para ocultarla."
+L.OPT_PROFESSIONS_HINT = "Se muestran dos profesiones principales y tres secundarias. Desmarca una habilidad para ocultarla."
 L.OPT_NO_SKILLS = "Todavía no se han encontrado habilidades."
 
 L.OPT_REPUTATION = "Reputación"

@@ -3,7 +3,7 @@ local L, Settings = ns.L, ns.Settings
 
 --[[---------------------------------------------------------------------------
 Data.lua -- what the data bar shows of professions and reputation: two
-primary professions and two secondary skills (the skill list, read off the
+primary professions and three secondary skills (the skill list, read off the
 running client), the four chosen reputations, and opening a profession the
 way Blizzard's own tabs do. Taken over from Forever Progress Data.
 
@@ -18,7 +18,7 @@ ns.Data = Data
 
 -- Fixed values: not settings.
 local CFG = {
-    NUM_SLOTS = 4,          -- 2 primary professions + 2 secondary skills
+    NUM_SLOTS = 5,          -- 2 primary professions + First Aid, Cooking, Fishing
     NUM_REP_SLOTS = 4,
     REFRESH_THROTTLE = 0.20,
     SKILLFRAME_RETRY = 1.00,
@@ -36,7 +36,6 @@ local CFG = {
         FIRST_AID      = { 0.95, 0.95, 0.95 },  -- bandage white
         COOKING        = { 0.95, 0.75, 0.45 },  -- warm bread
         FISHING        = { 0.35, 0.70, 0.90 },  -- water blue
-        RIDING         = { 0.70, 0.65, 0.55 },  -- saddle brown
         UNKNOWN        = { 0.55, 0.55, 0.60 },
     },
 }
@@ -49,8 +48,7 @@ ns.CFG = CFG
 -- Skill line names are localised, so nothing is matched by English name. Each
 -- profession's localised name comes from its apprentice spell at login.
 -- `openSpellID` is the spell whose cast opens the window, if there is one:
--- Mining opens nothing (Smelting does), gathering skills and Riding have no
--- window, and Fishing must never be wired (casting it starts fishing).
+-- Mining opens nothing (Smelting does), gathering skills have no window, and Fishing must never be wired (casting it starts fishing).
 -- `ab` is the expansion a profession came with; Jewelcrafting (TBC) does not
 -- exist on a vanilla content client such as Forever.
 -- =============================================================================
@@ -71,7 +69,8 @@ local PROFESSIONS = {
     { key = "FIRST_AID",      spellID = 3273,  kind = "secondary", priority = 1, openSpellID = 3273 },
     { key = "COOKING",        spellID = 2550,  kind = "secondary", priority = 2, openSpellID = 2550 },
     { key = "FISHING",        spellID = 7620,  kind = "secondary", priority = 3 },
-    { key = "RIDING",         spellID = 33388, kind = "secondary", priority = 4 },
+    -- Known only so it can be left out: it sits under the secondary header.
+    { key = "RIDING",         spellID = 33388, kind = "secondary", skip = true },
 }
 Data.PROFESSIONS = PROFESSIONS
 
@@ -425,7 +424,7 @@ local function ScanSkills()
     local primaries, secondaries = {}, {}
     local function accept(list, line, kind)
         -- Weapon and armour proficiencies have a maximum of 1.
-        if (line.maxRank or 0) <= 1 then return end
+        if (line.maxRank or 0) <= 1 or (line.prof and line.prof.skip) then return end
         line.key = line.prof and line.prof.key or "UNKNOWN"
         line.kind = kind
         list[#list + 1] = line
@@ -578,7 +577,7 @@ function Data.KnownSkills()
     return list
 end
 
--- The four slots' skill lines; an empty slot stays empty, nothing shifts.
+-- The five slots' skill lines; an empty slot stays empty, nothing shifts.
 function Data.Professions() return shown end
 
 function Data.Refresh()
@@ -599,9 +598,9 @@ function Data.Refresh()
         if not Settings.IsHidden(line.name, line.key) and #p < 2 then p[#p + 1] = line end
     end
     for _, line in ipairs(secondaries) do
-        if not Settings.IsHidden(line.name, line.key) and #s < 2 then s[#s + 1] = line end
+        if not Settings.IsHidden(line.name, line.key) and #s < CFG.NUM_SLOTS - 2 then s[#s + 1] = line end
     end
-    shown = { p[1], p[2], s[1], s[2] }
+    shown = { p[1], p[2], s[1], s[2], s[3] }
     if ns.DataBar then ns.DataBar.UpdateProfessions() end
 end
 

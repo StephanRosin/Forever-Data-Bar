@@ -63,7 +63,7 @@ DataBar.ICONS = {
     ENGINEERING = "ProfEngineering", HERBALISM = "ProfHerbalism", JEWELCRAFTING = "ProfJewelcrafting",
     LEATHERWORKING = "ProfLeatherworking", MINING = "ProfMining", SKINNING = "ProfSkinning",
     TAILORING = "ProfTailoring", FIRST_AID = "ProfFirstAid", COOKING = "ProfCooking",
-    FISHING = "ProfFishing", RIDING = "ProfRiding",
+    FISHING = "ProfFishing",
 }
 
 -- The standing as an icon (Media/Rep<Set><1..8>.tga, own art, white) or

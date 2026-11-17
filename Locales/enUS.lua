@@ -65,7 +65,6 @@ L.PROF_TAILORING = "Tailoring"
 L.PROF_FIRST_AID = "First Aid"
 L.PROF_COOKING = "Cooking"
 L.PROF_FISHING = "Fishing"
-L.PROF_RIDING = "Riding"
 L.STANDING_1 = "Hated"
 L.STANDING_2 = "Hostile"
 L.STANDING_3 = "Unfriendly"
@@ -143,7 +142,7 @@ L.GOLD_ALL_CHARS = "All characters, all time"
 
 
 L.OPT_PROFESSIONS = "Professions and skills"
-L.OPT_PROFESSIONS_HINT = "Two primary professions and two secondary skills are shown. Untick a skill to hide it."
+L.OPT_PROFESSIONS_HINT = "Two primary professions and three secondary skills are shown. Untick a skill to hide it."
 L.OPT_NO_SKILLS = "No skills found yet."
 
 L.OPT_REPUTATION = "Reputation"

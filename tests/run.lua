@@ -56,6 +56,17 @@ check("hiding First Aid: Cooking moves up", name(3), "Cooking")
 check("hidden per character", ForeverDataBarChar.hidden["First Aid"], true)
 Settings.SetHidden("First Aid", false)
 check("back to First Aid", name(3), "First Aid")
+Settings.SetHidden("Fishing", false)
+check("Fishing shown beside First Aid and Cooking", name(5), "Fishing")
+Settings.SetHidden("Fishing", true)
+check("Fishing hidden again", name(5), nil)
+Settings.SetHidden("Riding", false)
+check("Riding never on the bar", name(5), nil)
+check("Riding not in the options", (function()
+    for _, l in ipairs(Data.KnownSkills()) do if l.name == "Riding" then return true end end
+    return false
+end)(), false)
+Settings.SetHidden("Riding", true)
 -- A collapsed header is expanded for the scan and collapsed again.
 M.state.skills[4][3] = false
 Data.Refresh()

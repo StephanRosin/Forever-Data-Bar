@@ -251,6 +251,7 @@ M.state.skills = {
     { "First Aid",        false, false, 300, 0, 0, 375, false },
     { "Cooking",          false, false, 150, 0, 0, 225, false },
     { "Fishing",          false, false, 100, 0, 0, 375, false },
+    { "Riding",           false, false, 75,  0, 0, 75,  false },
     { "Weapon Skills",    true,  true },
     { "Swords",           false, false, 200, 0, 0, 215, false },
     { "Armor Proficiencies", true, true },
@@ -267,7 +268,7 @@ function CollapseSkillHeader(i) local s = M.state.skills[i]; if s then s[3] = fa
 
 M.state.spellNames = {
     [2259] = "Alchemy", [2575] = "Mining", [2656] = "Smelting",
-    [3273] = "First Aid", [2550] = "Cooking", [7620] = "Fishing",
+    [3273] = "First Aid", [2550] = "Cooking", [7620] = "Fishing", [33388] = "Riding",
 }
 function GetSpellInfo(id) return M.state.spellNames[id] end
 function GetSpellTexture(id) return "ICON" .. tostring(id) end

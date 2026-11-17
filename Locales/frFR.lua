@@ -40,7 +40,6 @@ L.PROF_TAILORING = "Couture"
 L.PROF_FIRST_AID = "Secourisme"
 L.PROF_COOKING = "Cuisine"
 L.PROF_FISHING = "Pêche"
-L.PROF_RIDING = "Monte"
 L.STANDING_1 = "Détesté"
 L.STANDING_2 = "Hostile"
 L.STANDING_3 = "Inamical"
@@ -118,7 +117,7 @@ L.GOLD_ALL_CHARS = "Tous les personnages, depuis toujours"
 
 
 L.OPT_PROFESSIONS = "Métiers et compétences"
-L.OPT_PROFESSIONS_HINT = "Deux métiers principaux et deux compétences secondaires sont affichés. Décochez une compétence pour la masquer."
+L.OPT_PROFESSIONS_HINT = "Deux métiers principaux et trois compétences secondaires sont affichées. Décochez une compétence pour la masquer."
 L.OPT_NO_SKILLS = "Aucune compétence trouvée pour l'instant."
 
 L.OPT_REPUTATION = "Réputation"

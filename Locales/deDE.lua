@@ -40,7 +40,6 @@ L.PROF_TAILORING = "Schneiderei"
 L.PROF_FIRST_AID = "Erste Hilfe"
 L.PROF_COOKING = "Kochkunst"
 L.PROF_FISHING = "Angeln"
-L.PROF_RIDING = "Reiten"
 L.STANDING_1 = "Hasserfüllt"
 L.STANDING_2 = "Feindselig"
 L.STANDING_3 = "Unfreundlich"
@@ -118,7 +117,7 @@ L.GOLD_ALL_CHARS = "Alle Charaktere, gesamt"
 
 
 L.OPT_PROFESSIONS = "Berufe und Fertigkeiten"
-L.OPT_PROFESSIONS_HINT = "Angezeigt werden zwei Hauptberufe und zwei Nebenberufe. Den Haken entfernen, um eine Fertigkeit auszublenden."
+L.OPT_PROFESSIONS_HINT = "Angezeigt werden zwei Hauptberufe und drei Nebenberufe. Den Haken entfernen, um eine Fertigkeit auszublenden."
 L.OPT_NO_SKILLS = "Noch keine Fertigkeiten gefunden."
 
 L.OPT_REPUTATION = "Ruf"
