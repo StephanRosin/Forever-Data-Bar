@@ -128,7 +128,8 @@ end
 -- -----------------------------------------------------------------------------
 -- Theme touches
 -- -----------------------------------------------------------------------------
-local function ThemeId() return ns.Themes.Current() end
+-- The base theme: an HD theme wears its base's touches.
+local function ThemeId() return LibForeverThemes.BaseTheme(ns.Themes.Current()) end
 
 local function Colour(t, c, a) t:SetColorTexture(c[1], c[2], c[3], a or c[4] or 1) end
 

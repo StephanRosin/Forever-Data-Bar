@@ -287,9 +287,30 @@ return function(ns, M, check, ROOT)
             for _, c in ipairs(registry.Colors()) do
                 Themes.SetColor(c)
                 check("rim " .. id .. " " .. c, f.themeRim:IsShown() and table.concat(f.themeRim._texColor, ","),
-                    (OWN_RING[id] or {})[c] or RINGS[id])
+                    (OWN_RING[id] or {})[c] or RINGS[LibForeverThemes.BaseTheme(id)])
             end
             Themes.SetColor(chosen)
+        end
+    end
+    -- HD: each theme on its base's part, in every colour its own backdrop, untinted.
+    check("HD: offered after the others", table.concat(LibForeverThemes.SpecIds(Themes.SPECS), " ", 13),
+        "WOOD_HD TECH_HD PARCHMENT_HD RUNESTONE_HD GLASS_HD COMIC_HD FROST_HD")
+    check("glass HD: lighter fill to show the glass", Themes.SPECS.GLASS_HD.look.dataBarAlpha .. "/"
+        .. Themes.SPECS.GLASS.look.dataBarAlpha, "60/90")
+    for _, id in ipairs(LibForeverThemes.SpecIds(Themes.SPECS)) do
+        local base = LibForeverThemes.BaseTheme(id)
+        if base ~= id then
+            check(id .. ": its base's bar", Themes.SPECS[id].art.bar, Themes.SPECS[base].art.bar)
+            check(id .. ": named after its base", ns.L["THEME_" .. id], ns.L["THEME_" .. base] .. " HD")
+            Themes.Switch(id)
+            check(id .. ": its base's look", rgb(S("dataBarAccent")), rgb(Themes.SPECS[base].look.dataBarAccent))
+            for _, c in ipairs(registry.Colors()) do
+                Themes.SetColor(c)
+                check(id .. " " .. c .. ": own backdrop", f.themeBack._texture, PATH .. LibForeverThemes.Colour(id, c).texture)
+                check(id .. " " .. c .. ": untinted", back(), "1,1,1")
+            end
+            Themes.SetColor(registry.Colors()[1])
+            Themes.Switch("CLASSIC")
         end
     end
     -- The comic as built: paper tint and accent.

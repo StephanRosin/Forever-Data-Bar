@@ -407,7 +407,10 @@ return function(ns, M, check)
             check(id .. ": black title bar on Swiss and Pitwall", f.titleBar.fill:IsShown(), id == "SWISS" or id == "PITWALL")
         end
     end
-    -- The comic's burst only on a day that made money.
+    -- The comic's burst only on a day that made money; Comic HD wears it too.
+    ns.Themes.Switch("COMIC_HD")
+    check("comic HD: its base's ink", f.pages.OVERVIEW.burst:IsShown(),
+        ForeverDataBarChar.goldDays[G.DayKey(G.Now())].gained > ForeverDataBarChar.goldDays[G.DayKey(G.Now())].spent)
     ns.Themes.Switch("COMIC")
     local today = ForeverDataBarChar.goldDays[G.DayKey(G.Now())]
     check("comic: a gain, the burst", f.pages.OVERVIEW.burst:IsShown(), today.gained > today.spent)

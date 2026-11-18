@@ -118,7 +118,9 @@ Themes.SPECS = Lib.Specs({
         look = look({ 0.95, 0.95, 0.96 }, { 0.13, 0.77, 0.37 }, { 0.039, 0.039, 0.039 }, 100),
         art = { rimSize = 1, bar = "PitwallBar", track = 4 },
     },
-})
+}, true) -- the HD themes too, each from its base theme's part here
+-- Glass HD is there to show its glass: the dark fill over it at 60 % (Glass: 90 %).
+Themes.SPECS.GLASS_HD.look.dataBarAlpha = 60
 
 -- Keys of ForeverDataBarDB that belong to no theme's set (and survive a reset):
 -- the gold records are data, not settings.
