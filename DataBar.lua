@@ -330,12 +330,12 @@ end
 DataBar.DIFFICULTY_COLOURS = { [0] = { 1, 0.5, 0.25 }, { 1, 1, 0 }, { 0.25, 0.75, 0.25 } }
 
 -- The tooltip's part of Crafts.SkillUps: each recipe in its colour, how often.
-function DataBar.AddSkillUps(skillLine)
+function DataBar.AddSkillUps(skillLine, rank)
     if not ns.Crafts.Known(skillLine) then
         GameTooltip:AddLine(L.TIP_SKILLUPS_UNKNOWN, 0.6, 0.6, 0.6, true)
         return
     end
-    local list = ns.Crafts.SkillUps(skillLine)
+    local list = ns.Crafts.SkillUps(skillLine, rank)
     if #list == 0 then
         GameTooltip:AddLine(L.TIP_SKILLUPS_NONE, 0.6, 0.6, 0.6)
         return
@@ -361,7 +361,7 @@ local function ShowProfTooltip(self)
     GameTooltip:AddDoubleLine(L.TIP_RANK, ("%d / %d"):format(d.rank, d.maxRank), 0.8, 0.8, 0.8, 1, 1, 1)
     local remaining = math.max(0, d.maxRank - d.rank)
     GameTooltip:AddDoubleLine(L.TIP_TO_CAP, tostring(remaining), 0.8, 0.8, 0.8, 1, 1, 1)
-    if S("dataBarSkillUps") then DataBar.AddSkillUps(self.skillLine) end
+    if S("dataBarSkillUps") then DataBar.AddSkillUps(self.skillLine, d.rank) end
     if self.spellOffset then GameTooltip:AddLine(L.TIP_CLICK_OPEN, 0.4, 0.8, 1) end
     GameTooltip:Show()
 end
@@ -1095,7 +1095,7 @@ end
 local function FillProf(b, d, design, x)
     b.skillLine, b.spellOffset = ns.Data.ProfessionInfo(d.name)
     local file = DataBar.ICONS[d.key]
-    local skillUps = S("dataBarSkillUps") and #ns.Crafts.SkillUps(b.skillLine) or 0
+    local skillUps = S("dataBarSkillUps") and #ns.Crafts.SkillUps(b.skillLine, d.rank) or 0
     return FillEntry(b, design, x, ProfColour(d), ns.Data.ProfessionLabel(d), DataBar.ProfValue(d.rank, skillUps),
         d.rank / math.max(1, d.maxRank), file and (CFG.MEDIA .. file) or (d.prof and d.prof.icon))
 end

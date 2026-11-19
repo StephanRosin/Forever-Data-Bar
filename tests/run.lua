@@ -400,13 +400,14 @@ do
     local first = f.profs[1]
     local recipes = {
         [1] = { name = "Elixir", learned = true, relativeDifficulty = 0, r = { { 500, 2 } } },
-        [2] = { name = "Potion", learned = true, relativeDifficulty = 1, r = { { 501, 1 }, { 500, 1 } } },
+        [2] = { name = "Potion", learned = true, relativeDifficulty = 1, maxTrivialLevel = 400, r = { { 501, 1 }, { 500, 1 } } },
         [3] = { name = "Old Potion", learned = true, relativeDifficulty = 3, r = { { 500, 1 } } },
         [4] = { name = "Unknown", learned = false, relativeDifficulty = 0, r = { { 500, 1 } } },
     }
     local profID = first.skillLine
     C_TradeSkillUI = {
-        GetBaseProfessionInfo = function() return { professionID = profID } end,
+        -- As in Forever: id 0, the name is what tells it.
+        GetBaseProfessionInfo = function() return { professionID = 0, professionName = first.data.name } end,
         GetFilteredRecipeIDs = function() return { 1, 2, 3, 4 } end,
         GetRecipeInfo = function(id) return recipes[id] end,
         GetRecipeSchematic = function(id)
@@ -443,6 +444,8 @@ do
     check("skill-ups: both can be made, orange first", #list .. " " .. list[1].name .. " " .. list[1].times, "2 Elixir 2")
     check("skill-ups: limited by the scarcest material", list[2].times, 1)
     check("skill-ups: +2 behind the rank", first.value:GetText():find("+2", 1, true) ~= nil, true)
+    check("skill-ups: grey from its trivial rank on", #C.SkillUps(profID, 400), 1)
+    check("skill-ups: below it still counted", #C.SkillUps(profID, 399), 2)
     -- A recipe turns grey: dropped when the window shows it again.
     recipes[1].relativeDifficulty = 3
     M.Fire("TRADE_SKILL_LIST_UPDATE")

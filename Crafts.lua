@@ -7,8 +7,9 @@ the bags, per profession (dataBarSkillUps, off by default).
 The game tells a recipe's difficulty and materials only for the profession
 whose window is open, so each one is read when its window shows and kept per
 character (ForeverDataBarChar.crafts[skillLine][recipeID] = { n = name,
-d = difficulty, r = { itemID, count, itemID, count, ... } }). Only recipes
-that still give points are kept; one seen grey is dropped. Seen recipes are
+d = difficulty, t = maxTrivialLevel, r = { itemID, count, itemID, count, ... } }).
+Only recipes that still give points are kept; one seen grey is dropped, and
+one is left out once the rank reaches its maxTrivialLevel. Seen recipes are
 merged, never cleared: the window's filters may hide some.
 The bar never opens a profession itself (that would taint Blizzard's window).
 -----------------------------------------------------------------------------]]
@@ -18,6 +19,36 @@ ns.Crafts = Crafts
 Crafts.TRIVIAL = 3          -- Enum.TradeskillRelativeDifficulty.Trivial: no more points
 local BASIC = 1             -- Enum.CraftingReagentType.Basic: the materials
 local SCAN_DELAY = 0.3      -- TRADE_SKILL_LIST_UPDATE comes in bursts
+
+-- The skill line of the open window, as GetProfessionInfo names it. Forever
+-- answers GetBaseProfessionInfo with professionID 0, so the child and the
+-- first recipe's profession are asked too, by id and else by name.
+local function knownLine(id)
+    if type(id) ~= "number" or id == 0 or type(GetProfessions) ~= "function" then return nil end
+    for _, index in pairs({ GetProfessions() }) do
+        if select(7, GetProfessionInfo(index)) == id then return id end
+    end
+end
+
+function Crafts.OpenLine(firstRecipe)
+    local api = C_TradeSkillUI
+    local infos = {}
+    for _, ask in ipairs({ api.GetBaseProfessionInfo, api.GetChildProfessionInfo,
+        api.GetProfessionInfoByRecipeID and firstRecipe and function() return api.GetProfessionInfoByRecipeID(firstRecipe) end }) do
+        local ok, info = pcall(ask)
+        if ok and type(info) == "table" then infos[#infos + 1] = info end
+    end
+    for _, info in ipairs(infos) do
+        local line = knownLine(info.parentProfessionID) or knownLine(info.professionID)
+        if line then return line end
+    end
+    for _, info in ipairs(infos) do
+        for _, name in ipairs({ info.parentProfessionName or "", info.professionName or "" }) do
+            local line = name ~= "" and ns.Data.ProfessionInfo(name)
+            if line then return line end
+        end
+    end
+end
 
 local function store()
     local char = ns.CharDB()
@@ -31,15 +62,14 @@ function Crafts.Known(skillLine) return skillLine ~= nil and store()[skillLine] 
 -- Reads the open profession window into the store; true when it did.
 function Crafts.Scan()
     local api = C_TradeSkillUI
-    if not (api and api.GetBaseProfessionInfo and api.GetFilteredRecipeIDs and api.GetRecipeInfo) then return false end
+    if not (api and api.GetFilteredRecipeIDs and api.GetRecipeInfo) then return false end
     -- Someone else's (a link, an NPC) is not ours.
     if api.IsNPCCrafting and api.IsNPCCrafting() then return false end
     if api.IsTradeSkillLinked and api.IsTradeSkillLinked() then return false end
-    local ok, prof = pcall(api.GetBaseProfessionInfo)
-    local skillLine = ok and type(prof) == "table" and prof.professionID
-    if not skillLine or skillLine == 0 then return false end
     local ids = api.GetFilteredRecipeIDs() or {}
     if #ids == 0 then return false end
+    local skillLine = Crafts.OpenLine(ids[1])
+    if not skillLine then return false end
     local list = store()[skillLine] or {}
     for _, id in ipairs(ids) do
         local okInfo, info = pcall(api.GetRecipeInfo, id)
@@ -56,7 +86,7 @@ function Crafts.Scan()
                         reagents[#reagents + 1] = slot.quantityRequired or 1
                     end
                 end
-                list[id] = { n = info.name, d = info.relativeDifficulty, r = reagents }
+                list[id] = { n = info.name, d = info.relativeDifficulty, t = info.maxTrivialLevel, r = reagents }
             end
         end
     end
@@ -79,12 +109,12 @@ function Crafts.Times(reagents)
     return times or 0
 end
 
--- The recipes of a profession that give points and can be made now:
--- { name, difficulty, times }, hardest first.
-function Crafts.SkillUps(skillLine)
+-- The recipes of a profession that give points at this rank and can be made
+-- now: { name, difficulty, times }, hardest first.
+function Crafts.SkillUps(skillLine, rank)
     local list = {}
     for _, r in pairs(skillLine and store()[skillLine] or {}) do
-        local times = Crafts.Times(r.r)
+        local times = (r.t and rank and rank >= r.t) and 0 or Crafts.Times(r.r)
         if times > 0 then list[#list + 1] = { name = r.n or "?", difficulty = r.d, times = times } end
     end
     table.sort(list, function(a, b)
