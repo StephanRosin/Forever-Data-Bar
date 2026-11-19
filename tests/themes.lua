@@ -279,7 +279,7 @@ return function(ns, M, check, ROOT)
     local RINGS = { WOOD = "0.906,0.702,0.161,1", TECH = "0.25,0.88,0.94,0.9", PARCHMENT = "0.29,0.2,0.12,1",
         RUNESTONE = "0.1,0.1,0.12,1", GLASS = "0.07,0.06,0.05,1", COMIC = "0.07,0.07,0.07,1",
         FROST = "0.86,0.96,1,0.8", PIXEL = "1,0.95,0.91,1", SWISS = "0.949,0.949,0.949,1",
-        PITWALL = "0.043,0.047,0.055,1" }
+        PITWALL = "0.043,0.047,0.055,1", AZEROTH = "0.79,0.635,0.29,1", GOBLIN = "0.23,0.11,0.05,1" }
     local OWN_RING = { CONSOLE = { MINT = "0.306,0.929,0.69,1", AMBER = "1,0.69,0,1", PHOSPHOR = "0.224,1,0.078,1",
         VIOLET = "0.627,0.471,1,1" }, PIXEL = { HANDHELD = "0.784,0.941,0.439,1" } }
     for _, id in ipairs(LibForeverThemes.SpecIds(Themes.SPECS)) do
@@ -295,8 +295,9 @@ return function(ns, M, check, ROOT)
         end
     end
     -- HD: each theme on its base's part, in every colour its own backdrop, untinted.
-    check("HD: offered after the others", table.concat(LibForeverThemes.SpecIds(Themes.SPECS), " ", 13),
+    check("HD: offered after the others", table.concat(LibForeverThemes.SpecIds(Themes.SPECS), " ", 13, 19),
         "WOOD_HD TECH_HD PARCHMENT_HD RUNESTONE_HD GLASS_HD COMIC_HD FROST_HD")
+    check("framed: after them", table.concat(LibForeverThemes.SpecIds(Themes.SPECS), " ", 20), "AZEROTH GOBLIN")
     check("glass HD: lighter fill to show the glass", Themes.SPECS.GLASS_HD.look.dataBarAlpha .. "/"
         .. Themes.SPECS.GLASS.look.dataBarAlpha, "60/90")
     for _, id in ipairs(LibForeverThemes.SpecIds(Themes.SPECS)) do
@@ -478,8 +479,14 @@ return function(ns, M, check, ROOT)
     end
     Settings.Changed(nil)
     check("refused font: the default meanwhile", fs._font[1], ns.Media.DEFAULT_FONT)
+    local update, relaid = D.Update, 0
+    D.Update = function() relaid = relaid + 1 end
     M.RunTimers()
     check("refused font: taken on the next try", fs._font[1], ns.Media.FontPath("Marcellus"))
+    M.RunTimers()
+    -- Measured with the client's font so far (a wide font overlapped its neighbours).
+    check("refused font: the bar laid out anew, once", relaid, 1)
+    D.Update = update
     fs.SetFont = set
 
     -- The options: the theme first on the first page.
@@ -525,6 +532,37 @@ return function(ns, M, check, ROOT)
     Themes.SetColor(Themes.Colors("PIXEL")[1], "PIXEL")
     Themes.Switch("CLASSIC")
     Settings.Reset()
+    ForeverDataBarDB.themeSets = nil
+
+    -- The framed themes (LibForeverThemes 10): their frame along the edge
+    -- towards the game, inside the bar, the rim inside it.
+    local function file(tex) return tex._texture and tex._texture:match("[^\\]+$") end
+    Themes.Switch("AZEROTH")
+    check("azeroth: fonts", S("dataBarFont"), "Alegreya")
+    check("azeroth: light parchment", file(f.themeBack), "AzerothParchment")
+    check("azeroth: walnut frame along the inner edge", f.themeFrame:IsShown() and file(f.themeFrame), "WoodHDWalnut")
+    check("azeroth: frame inside the bar, repeating", select(5, f.themeFrame:GetPoint("BOTTOMLEFT")) .. " "
+        .. f.themeFrame:GetHeight() .. " " .. tostring(f.themeFrame:GetHorizTile()), "0 3 true")
+    check("azeroth: the gold rim inside the frame", select(5, f.themeRim:GetPoint("BOTTOMLEFT")), 3)
+    check("azeroth: gold corners", f.themeOrnaments[1]:IsShown() and file(f.themeOrnaments[1]), "Bracket")
+    check("azeroth: dark ink, no outline", S("dataBarFontOutline") .. " " .. tostring(S("dataBarFontColor")[1] < 0.3), " true")
+    check("azeroth: values at full strength", f.profs[1].value._textColor[4], 1)
+    local amber = Themes.Ink({ 1, 0.82, 0 })
+    check("azeroth: yellow warning in dark amber, not olive", amber[1] > amber[2] and amber[1] < 0.6, true)
+    check("azeroth: a light colour darkened", Themes.Ink({ 0.3, 1, 0.3 })[2] < 0.5, true)
+    check("azeroth: dark already: as it is", table.concat(Themes.Ink({ 0.1, 0.2, 0.1 }), "/"), "0.1/0.2/0.1")
+    check("azeroth: own icon colours in ink", Themes.IconColor({ 1, 1, 1 })[1] < 0.5, true)
+    Themes.Switch("GOBLIN")
+    check("goblin: fonts", S("dataBarFont"), "Rubik Medium")
+    check("goblin: copper frame", f.themeFrame:IsShown() and file(f.themeFrame), "GoblinCopper")
+    check("goblin: rivets", file(f.themeOrnaments[1]), "Rivet")
+    check("goblin: light text, outlined", S("dataBarFontOutline"), "OUTLINE")
+    check("goblin: colours as they are", table.concat(Themes.Ink({ 1, 1, 1 }), "/"), "1/1/1")
+    Themes.Switch("SWISS")
+    check("swiss after them: no frame, the rim at the edge", tostring(f.themeFrame:IsShown()) .. " "
+        .. select(5, f.themeRim:GetPoint("BOTTOMLEFT")), "false 0")
+    Themes.Switch("CLASSIC")
+    check("classic after them: no frame", f.themeFrame:IsShown(), false)
     ForeverDataBarDB.themeSets = nil
 
     -- The shipped look is Stephan's: his stored Wood and Pitwall sets, less

@@ -36,6 +36,8 @@ function ThemeArt.Build(frame)
     frame.themeShadow:Hide()
     frame.themeRim = frame:CreateTexture(nil, "BORDER", nil, 1)
     frame.themeRim:Hide()
+    frame.themeFrame = frame:CreateTexture(nil, "BORDER", nil, 0)
+    frame.themeFrame:Hide()
     frame.themeWedge = frame:CreateTexture(nil, "OVERLAY", nil, 6)
     frame.themeWedge:Hide()
     frame.themeOrnaments = {}
@@ -60,13 +62,28 @@ local function paintBack(back, art)
     back:Show()
 end
 
--- Along the inner edge: the rim inside the bar, the shadow outside it.
-local function alongEdge(texture, frame, inner, outside, size)
+-- Along the inner edge: the rim inside the bar (in from it by `away`: past
+-- the frame), the shadow outside it.
+local function alongEdge(texture, frame, inner, outside, size, away)
     texture:ClearAllPoints()
     local from = outside and (inner == "BOTTOM" and "TOP" or "BOTTOM") or inner
-    texture:SetPoint(from .. "LEFT", frame, inner .. "LEFT", 0, 0)
-    texture:SetPoint(from .. "RIGHT", frame, inner .. "RIGHT", 0, 0)
+    local dy = (away or 0) * (inner == "BOTTOM" and 1 or -1)
+    texture:SetPoint(from .. "LEFT", frame, inner .. "LEFT", 0, dy)
+    texture:SetPoint(from .. "RIGHT", frame, inner .. "RIGHT", 0, dy)
     texture:SetHeight(size)
+end
+
+-- A framed theme's material (its frame) along the bar's inner edge, inside
+-- the box, repeating at its own size; returns how wide, 0 without.
+local function paintFrame(strip, frame, art, inner)
+    strip:SetShown(art.frame ~= nil)
+    if not art.frame then return 0 end
+    alongEdge(strip, frame, inner, false, art.frameSize)
+    strip:SetTexture(Lib.Texture(art.frame), "REPEAT", "REPEAT")
+    strip:SetHorizTile(true)
+    strip:SetVertTile(true)
+    strip:SetVertexColor(1, 1, 1, 1)
+    return art.frameSize
 end
 
 local function paintShadow(shadow, frame, art, inner)
@@ -142,9 +159,10 @@ function ThemeArt.Style(frame, atTop, height)
     local art = ns.Themes.Spec(S("theme")).art or {}
     local inner = atTop and "BOTTOM" or "TOP"
     paintBack(frame.themeBack, art)
+    local framed = paintFrame(frame.themeFrame, frame, art, inner)
     if art.rim then
         local rim = ns.Themes.Rim(art)
-        alongEdge(frame.themeRim, frame, inner, false, art.rimSize)
+        alongEdge(frame.themeRim, frame, inner, false, art.rimSize, framed)
         frame.themeRim:SetColorTexture(rim[1], rim[2], rim[3], rim[4])
     end
     frame.themeRim:SetShown(art.rim ~= nil)
@@ -157,7 +175,10 @@ end
 -- A window (the gold window): under a theme the bar's backdrop with its
 -- background colour over it (one background per theme in every Forever
 -- addon), the rim on every side, the title bar's colour and the wedge in it;
--- under Classic the options window's flat look.
+-- under Classic the options window's flat look. A framed theme (Azeroth,
+-- Goblin) puts its frame around the rim's outside with its ornaments on the
+-- frame's corners, and its banner into the title bar (band: { height }, nil
+-- height: the bar's).
 -- -----------------------------------------------------------------------------
 function ThemeArt.BuildWindow(frame, titleBar)
     frame.themeBack = frame:CreateTexture(nil, "BACKGROUND", nil, -8)
@@ -169,6 +190,100 @@ function ThemeArt.BuildWindow(frame, titleBar)
     titleBar.fill = titleBar:CreateTexture(nil, "BACKGROUND")
     titleBar.fill:SetAllPoints(titleBar)
     titleBar.wedge = titleBar:CreateTexture(nil, "OVERLAY", nil, 6)
+    titleBar.banner = titleBar:CreateTexture(nil, "BACKGROUND", nil, 1)
+    titleBar.ends = {}
+    for i = 1, 2 do titleBar.ends[i] = titleBar:CreateTexture(nil, "BACKGROUND", nil, 1) end
+    frame.frames, frame.corners = {}, {}
+    for i = 1, 4 do frame.frames[i] = frame:CreateTexture(nil, "OVERLAY", nil, 6) end
+    for i = 1, 4 do frame.corners[i] = frame:CreateTexture(nil, "OVERLAY", nil, 7) end
+end
+
+-- The frame's four strips around the window's outside, the top and bottom
+-- ones across the corners; the ornaments on its outer corners.
+local CORNERS = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT" }
+local function paintWindowFrame(frame, art)
+    local framed = art.frame ~= nil
+    for i = 1, 4 do
+        frame.frames[i]:SetShown(framed)
+        frame.corners[i]:SetShown(framed and art.ornament ~= nil)
+    end
+    if not framed then return end
+    local w = art.windowFrameSize
+    local spots = {
+        { "TOPLEFT", -w, w, "TOPRIGHT", w, 0 },
+        { "BOTTOMLEFT", -w, 0, "BOTTOMRIGHT", w, -w },
+        { "TOPLEFT", -w, 0, "BOTTOMLEFT", 0, 0 },
+        { "TOPRIGHT", 0, 0, "BOTTOMRIGHT", w, 0 },
+    }
+    for i, s in ipairs(frame.frames) do
+        local p = spots[i]
+        s:ClearAllPoints()
+        s:SetPoint("TOPLEFT", frame, p[1], p[2], p[3])
+        s:SetPoint("BOTTOMRIGHT", frame, p[4], p[5], p[6])
+        s:SetTexture(Lib.Texture(art.frame), "REPEAT", "REPEAT")
+        s:SetHorizTile(true)
+        s:SetVertTile(true)
+        s:SetVertexColor(1, 1, 1, 1)
+    end
+    if not art.ornament then return end
+    local c = art.ornamentColor or { 1, 1, 1, 1 }
+    for i, piece in ipairs(frame.corners) do
+        local point = CORNERS[i]
+        local dx = point:find("LEFT", 1, true) and -w or w
+        local dy = point:find("TOP", 1, true) and w or -w
+        piece:ClearAllPoints()
+        piece:SetPoint(point, frame, point, dx, dy)
+        piece:SetSize(art.windowOrnament, art.windowOrnament)
+        piece:SetTexture(Lib.Texture(art.ornament))
+        piece:SetTexCoord(unpack(MIRROR[point]))
+        piece:SetVertexColor(c[1], c[2], c[3], c[4])
+    end
+end
+
+-- A banner end's width per height of the band (the file is half as wide as high).
+local BANNER_END = 0.5
+
+local function bannerHeight(art, titleBar)
+    return art.band and (art.band.height or titleBar:GetHeight()) or 0
+end
+
+-- The title's banner: its two ends (the right one mirrored) and between
+-- them the banner, stretched or repeated at its own size (bannerTile).
+-- SetHeight(0) would draw the file at its own height: no height, no banner.
+local function paintBanner(titleBar, art)
+    local h = bannerHeight(art, titleBar)
+    local shown = art.banner ~= nil and h > 0
+    titleBar.banner:SetShown(shown)
+    local withEnds = shown and art.bannerEnd ~= nil
+    for _, e in ipairs(titleBar.ends) do e:SetShown(withEnds) end
+    if not shown then return end
+    local w = withEnds and math.floor(h * BANNER_END + 0.5) or 0
+    for i, e in ipairs(titleBar.ends) do
+        local point = i == 1 and "TOPLEFT" or "TOPRIGHT"
+        e:ClearAllPoints()
+        e:SetPoint(point, titleBar, point, 0, 0)
+        e:SetSize(w, h)
+        e:SetTexture(Lib.Texture(art.bannerEnd or art.banner))
+        if i == 1 then e:SetTexCoord(0, 1, 0, 1) else e:SetTexCoord(1, 0, 0, 1) end
+    end
+    local b, tile = titleBar.banner, art.bannerTile == true
+    b:ClearAllPoints()
+    b:SetPoint("TOPLEFT", titleBar, "TOPLEFT", w, 0)
+    b:SetPoint("TOPRIGHT", titleBar, "TOPRIGHT", -w, 0)
+    b:SetHeight(h)
+    b:SetTexture(Lib.Texture(art.banner), tile and "REPEAT" or nil, tile and "REPEAT" or nil)
+    b:SetHorizTile(tile)
+    b:SetVertTile(tile)
+end
+
+-- Where a window's title starts in a title bar `height` high: past the
+-- banner's end or the wedge; nil: the window's own inset.
+function ThemeArt.TitleStart(height)
+    local art = ns.Themes.Spec(S("theme")).art
+    if art and art.band and not art.band.height and art.banner and art.bannerEnd then
+        return math.floor(height * BANNER_END + 0.5) + Lib.TITLE_GAP
+    end
+    return ThemeArt.TextStart(height)
 end
 
 local function paintRims(rims, frame, c, size)
@@ -191,11 +306,14 @@ function ThemeArt.WindowRim()
 end
 
 -- Cards on a window: the options' panel under Classic; dark on Swiss and
--- Pitwall's black as in every Forever addon; a light shade elsewhere.
-local CARD_SOLID, CARD_SHADE = { 0, 0, 0, 0.85 }, { 0, 0, 0, 0.3 }
+-- Pitwall's black as in every Forever addon; a light shade elsewhere (on
+-- a light page a faint brown one: grey muddied the parchment).
+local CARD_SOLID, CARD_SHADE, CARD_INK = { 0, 0, 0, 0.85 }, { 0, 0, 0, 0.3 }, { 0.35, 0.22, 0.08, 0.15 }
 function ThemeArt.CardColour()
-    local art = ns.Themes.Spec(S("theme")).art
+    local spec = ns.Themes.Spec(S("theme"))
+    local art = spec.art
     if not art then return ns.Style.COLORS.panel end
+    if spec.ink then return CARD_INK end
     return art.strip and CARD_SOLID or CARD_SHADE
 end
 
@@ -209,6 +327,8 @@ function ThemeArt.StyleWindow(frame, titleBar)
         titleBar.fill:SetColorTexture(unpack(Style.panel))
         titleBar.fill:Show()
         titleBar.wedge:Hide()
+        paintBanner(titleBar, {})
+        paintWindowFrame(frame, {})
         return
     end
     paintBack(frame.themeBack, art)
@@ -218,4 +338,6 @@ function ThemeArt.StyleWindow(frame, titleBar)
     if art.strip then titleBar.fill:SetColorTexture(unpack(art.strip)) end
     titleBar.fill:SetShown(art.strip ~= nil)
     paintWedge(titleBar.wedge, titleBar, art, titleBar:GetHeight())
+    paintBanner(titleBar, art)
+    paintWindowFrame(frame, art)
 end

@@ -110,17 +110,33 @@ local function FontSize() return select(2, ns.DataBar.FontFor("dataBar")) end
 local function RowH() return FontSize() + ROW_PAD end
 local function TextColour() return select(4, ns.DataBar.FontFor("dataBar")) end
 
-local function Paint(fs, c, a) fs:SetTextColor(c[1], c[2], c[3], a or 1) end
+-- A signed amount's text and colour; the colour in dark ink on a light page
+-- (Themes.Ink), the bars and columns drawn in it too.
+local function Signed(copper)
+    local text, c = ns.Gold.Signed(copper)
+    return text, ns.Themes.Ink(c)
+end
+
+-- In dark ink on a light page (Themes.Ink): gains, losses, qualities too.
+local function Paint(fs, c, a)
+    c = ns.Themes.Ink(c)
+    fs:SetTextColor(c[1], c[2], c[3], a or 1)
+end
 
 local function ApplyFonts()
     local path, size, outline, colour = ns.DataBar.FontFor("dataBar")
     local display = ns.Themes.TitleFont()
     display = display and ns.Media.FontPath(display) or path
-    local fonts = { title = { display, size + TITLE_SIZE_ADD }, head = { display, size }, big = { display, size + BIG_SIZE_ADD } }
+    -- A wide display font (Goblin's Bungee) a point or so smaller: headings stay on their card.
+    local d = size + (ns.Themes.Spec(ns.Themes.Current()).displaySizeAdd or 0)
+    local fonts = { title = { display, d + TITLE_SIZE_ADD }, head = { display, d }, big = { display, d + BIG_SIZE_ADD } }
     for _, t in ipairs(texts) do
         local f = fonts[t.role] or { path, size }
         ns.DataBar.SetFont(t.fs, f[1], f[2], t.role == "flag" and "" or outline)
         if t.role == "muted" then Paint(t.fs, colour, MUTED_ALPHA)
+        elseif t.role == "title" and ns.Themes.BannerInk() then
+            local gold = ns.Themes.BannerInk()
+            t.fs:SetTextColor(gold[1], gold[2], gold[3], 1)
         elseif t.role ~= "value" and t.role ~= "flag" then Paint(t.fs, colour) end
     end
 end
@@ -314,7 +330,7 @@ local function LayoutChip(c, w, h)
 end
 
 local function FillChip(c, copper)
-    local text, colour = ns.Gold.Signed(copper)
+    local text, colour = Signed(copper)
     c.value:SetText(text)
     Paint(c.value, colour)
     Colour(c.fill, colour, CHIP_ALPHA)
@@ -471,7 +487,7 @@ local function DrawChart(c, points, span)
             local dv = points[i].value - points[i - 1].value
             if dv ~= 0 then
                 local col = Get(c.deltas, i, function() return c:CreateTexture(nil, "BACKGROUND", nil, 3) end)
-                local _, colour = ns.Gold.Signed(dv)
+                local _, colour = Signed(dv)
                 col:ClearAllPoints()
                 col:SetPoint("BOTTOM", c, "BOTTOMLEFT", X(i), X_ROW)
                 col:SetSize(DELTA_W, math.max(1, math.abs(dv) / biggest * c.plotH * DELTA_SHARE))
@@ -506,7 +522,9 @@ local function DrawChart(c, points, span)
     -- Today's value on a flag left above its point.
     local lx, ly = X(#points), Y(points[#points].value)
     c.flagText:SetText(ns.Gold.Money(points[#points].value))
-    Paint(c.flagText, FlagInk(accent))
+    -- On the accent's flag: no page ink.
+    local ink = FlagInk(accent)
+    c.flagText:SetTextColor(ink[1], ink[2], ink[3], 1)
     local fw, fh = (c.flagText:GetStringWidth() or 0) + 2 * FLAG_PAD, RowH()
     c.flag:ClearAllPoints()
     -- Inside the plot: at the top the flag hangs below the point.
@@ -560,7 +578,7 @@ local function FillItemRow(r, e, best)
     r.name:SetText(e.name)
     local q = quality and C_Item and C_Item.GetItemQualityColor and { C_Item.GetItemQualityColor(quality) }
     Paint(r.name, q and q[1] and q or TextColour())
-    local _, colour = ns.Gold.Signed(e.profit)
+    local _, colour = Signed(e.profit)
     r.share:SetWidth(math.max(1, r.shareW * math.max(0, e.profit) / math.max(1, best)))
     Colour(r.share, colour, SHARE_ALPHA)
     r.share:SetShown(e.profit > 0)
@@ -586,7 +604,8 @@ local function CloseButton(bar)
         b.lines[i] = t
     end
     function b.Paint(alpha)
-        for _, t in ipairs(b.lines) do Colour(t, TextColour(), alpha) end
+        -- On a banner in its gold, as the title.
+        for _, t in ipairs(b.lines) do Colour(t, ns.Themes.BannerInk() or TextColour(), alpha) end
     end
     b:SetScript("OnEnter", function() b.Paint(1) end)
     b:SetScript("OnLeave", function() b.Paint(MUTED_ALPHA) end)
@@ -895,7 +914,7 @@ function Window.Style()
     bar:SetHeight(titleH)
     ns.ThemeArt.StyleWindow(frame, bar)
     frame.title:ClearAllPoints()
-    frame.title:SetPoint("LEFT", bar, "LEFT", ns.ThemeArt.TextStart(titleH) or INSET, 0)
+    frame.title:SetPoint("LEFT", bar, "LEFT", ns.ThemeArt.TitleStart(titleH) or INSET, 0)
     frame.close:SetSize(titleH, titleH)
     frame.close:SetPoint("RIGHT", bar, "RIGHT", 0, 0)
     frame.close.Paint(MUTED_ALPHA)
@@ -926,7 +945,7 @@ end
 -- Data
 -- -----------------------------------------------------------------------------
 local function SetSigned(fs, copper, prefix)
-    local text, c = ns.Gold.Signed(copper)
+    local text, c = Signed(copper)
     fs:SetText((prefix or "") .. text)
     Paint(fs, c)
 end
@@ -998,8 +1017,8 @@ local function FillToday(page, days, now)
     local tin, tout = 0, 0
     for _, e in ipairs(inc) do tin = tin + e.amount end
     for _, e in ipairs(out) do tout = tout + e.amount end
-    page.daySum:SetText((G.Signed(tin)) .. "  ·  " .. (G.Signed(-tout)))
-    local gain, loss = select(2, G.Signed(1)), select(2, G.Signed(-1))
+    page.daySum:SetText((Signed(tin)) .. "  ·  " .. (Signed(-tout)))
+    local gain, loss = select(2, Signed(1)), select(2, Signed(-1))
     local scale = math.max(tin, tout) > 0 and CONTENT_W / math.max(tin, tout) or 0
     FillPieces(page.inPieces, inc, 0, page.barY, BAR_H, scale, gain, INCOME_SHADES, page)
     FillPieces(page.outPieces, out, 0, page.barY - BAR_H - 3, OUT_H, scale, loss, OUTCOME_SHADES, page)
@@ -1033,7 +1052,7 @@ local function FillOverview(page, days, now, money)
         local net = s.gained - s.spent
         local rate = G.PerHour(net, now - s.start)
         SetSigned(session.value, net)
-        session.sub:SetText(rate and L.GOLD_PER_HOUR_SHORT:format((G.Signed(math.floor(rate + 0.5)))) or G.NONE)
+        session.sub:SetText(rate and L.GOLD_PER_HOUR_SHORT:format((Signed(math.floor(rate + 0.5)))) or G.NONE)
     else
         SetDash(session.value)
         session.sub:SetText("")
@@ -1050,7 +1069,7 @@ local function FillOverview(page, days, now, money)
         local _, quality = Ledger.ItemInfo(best.name, best.item)
         local q = quality and C_Item and C_Item.GetItemQualityColor and { C_Item.GetItemQualityColor(quality) }
         Paint(item.value, q and q[1] and q or TextColour())
-        item.sub:SetText(L.GOLD_PROFIT_SUB:format((G.Signed(best.profit))))
+        item.sub:SetText(L.GOLD_PROFIT_SUB:format((Signed(best.profit))))
     else
         SetDash(item.value)
         item.sub:SetText("")
@@ -1100,7 +1119,7 @@ local function FillSources(rows, list, sign, total)
         row.label:SetText(e and L["GOLD_SRC_" .. e.source] or "")
         row.bar:SetShown(e ~= nil)
         if e then
-            local _, c = ns.Gold.Signed(sign)
+            local _, c = Signed(sign)
             SetSigned(row.value, e.amount * sign)
             row.bar:SetWidth(math.max(1, row.width * e.amount / math.max(1, total)))
             Colour(row.bar, c, SHARE_ALPHA)

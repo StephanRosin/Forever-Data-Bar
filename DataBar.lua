@@ -163,6 +163,22 @@ local refusedFonts = {}
 -- chosen a second time). Setting it again a little later, through another
 -- font, as that second choice did, draws them. Once per text and font.
 local REDRAW_DELAYS = { 0.5, 2 }
+
+-- Parts were measured while a text had another font (the client's, or none
+-- drawn yet): a much wider theme font then overlapped its neighbours until
+-- some later update. Once a font is there, the bar lays out anew (queued:
+-- once per frame). The gold window's texts are anchored on both sides and
+-- cut, they cannot overlap.
+local relayoutQueued = false
+local function fontArrived()
+    if relayoutQueued then return end
+    relayoutQueued = true
+    C_Timer.After(0, function()
+        relayoutQueued = false
+        DataBar.Update()
+    end)
+end
+
 local function redrawLater(fs, path, size, flags, wanted)
     if fs.fontDrawn == wanted then return end
     fs.fontDrawn = wanted
@@ -173,6 +189,7 @@ local function redrawLater(fs, path, size, flags, wanted)
             fs:SetFont(path, size, flags)
             local text = fs:GetText()
             if text then fs:SetText(""); fs:SetText(text) end
+            fontArrived()
         end)
     end
 end
@@ -183,6 +200,8 @@ local function SetFont(fs, path, size, outline, retries)
     fs.fontWanted = wanted
     if fs:SetFont(path, size, outline) and HasFont(fs, path) then
         redrawLater(fs, path, size, outline, wanted)
+        -- Taken on a later try: measured with the client's font until now.
+        if retries then fontArrived() end
         return
     end
     fs:SetFont(ns.Media.DEFAULT_FONT, size, outline)
@@ -1149,7 +1168,7 @@ function DataBar.UpdateStats()
                 ic = ic or ns.Themes.IconColor()
                 g.icon:SetVertexColor(ic[1], ic[2], ic[3], 1)
                 g.text:SetText(text)
-                colour = colour or DataBar.TextColour(p.key)
+                colour = colour and ns.Themes.Ink(colour) or DataBar.TextColour(p.key)
                 g.text:SetTextColor(colour[1], colour[2], colour[3])
                 g.width = CFG.ICON + CFG.ICON_GAP + math.ceil(g.text:GetStringWidth() or 0)
                 g:SetWidth(g.width)

@@ -95,6 +95,9 @@ local function newWidget(name, kind)
     function w:SetTexture(t) self._texture = t end
     function w:SetAtlas(a) self._atlas = a end
     function w:SetTexCoord(...) self._texCoord = { ... } end
+    function w:SetHorizTile(v) self._horizTile = v == true end
+    function w:GetHorizTile() return self._horizTile == true end
+    function w:SetVertTile(v) self._vertTile = v == true end
     function w:CreateTexture()
         local t = newWidget(nil, "Texture")
         t._owner = self

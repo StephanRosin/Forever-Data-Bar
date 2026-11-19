@@ -118,6 +118,27 @@ Themes.SPECS = Lib.Specs({
         look = look({ 0.95, 0.95, 0.96 }, { 0.13, 0.77, 0.37 }, { 0.039, 0.039, 0.039 }, 100),
         art = { rimSize = 1, bar = "PitwallBar", track = 4 },
     },
+    -- A window of the game's own world: light parchment, a walnut frame with
+    -- a gold ring and corners. Dark ink without an outline on the page (as
+    -- the Quest Log's), coloured values darkened (Themes.Ink); a window's
+    -- title on the red banner in gold (bannerInk). On the thin bar the frame
+    -- is narrower (frameSize) and runs along the edge towards the game only.
+    AZEROTH = {
+        valueAlpha = 1, ink = true, bannerInk = { 1, 0.82, 0 },
+        look = look({ 0.2, 0.12, 0.05 }, { 0.5, 0.3, 0.08 }, { 0, 0, 0 }, 0, ""),
+        art = { rimSize = 1, frameSize = 3, windowFrameSize = 7, corners = ALL, shadow = 6, shadowAlpha = 0.5,
+            bar = "WoodBar", track = 4, band = {}, windowOrnament = 22 },
+    },
+    -- A goblin workshop: sooty sheet metal, a copper frame with rivets; on a
+    -- window a thin strip of warning stripes along the top of the title
+    -- (band: never text on the stripes).
+    GOBLIN = {
+        -- Bungee runs wide: the gold window's headings smaller to fit their cards.
+        displaySizeAdd = -2,
+        look = look({ 0.96, 0.92, 0.85 }, { 0.95, 0.76, 0.19 }, { 0, 0, 0 }, 0),
+        art = { rimSize = 1, frameSize = 3, windowFrameSize = 7, corners = ALL, shadow = 6, shadowAlpha = 0.6,
+            bar = "TechBar", track = 4, band = { height = 5 }, windowOrnament = 11 },
+    },
 }, true) -- the HD themes too, each from its base theme's part here
 -- Glass HD is there to show its glass: the dark fill over it at 60 % (Glass: 90 %).
 Themes.SPECS.GLASS_HD.look.dataBarAlpha = 60
@@ -201,11 +222,38 @@ end
 -- The icons' colour: own (an element's own colour: a profession's, a
 -- standing's, a maxed one) where it has one, else the colour's accent; on a
 -- theme with a wedge (Pitwall) the wedge's, as the colour changes it there.
--- The comic's icons too (the bar has no dark ink: no Lib.IconColor).
+-- The comic's icons too (the bar has no dark ink: no Lib.IconColor). An own
+-- colour in dark ink on a light page (Azeroth).
 function Themes.IconColor(own)
-    if own then return own end
+    if own then return Themes.Ink(own) end
     local art = Themes.Spec(Themes.Current()).art
     return art and art.wedge and Themes.WedgeColor(art) or Themes.Accent()
+end
+
+-- Dark ink on a light page (Azeroth): luminance at most this, about 3:1 on
+-- its parchment. Plain darkening turns yellow olive: yellow goes amber first.
+local INK_LUMINANCE, AMBER = 0.13, 0.68
+local function luminance(r, g, b)
+    local function lin(v) return v <= 0.04045 and v / 12.92 or ((v + 0.055) / 1.055) ^ 2.4 end
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+end
+
+-- A text colour { r, g, b } (a warning, a gain or loss, a quality) as dark
+-- ink on a theme with a light page (ink), else as it is.
+function Themes.Ink(c)
+    if not Themes.Spec(Themes.Current()).ink then return c end
+    local r, g, b = c[1], c[2], c[3]
+    if r > 0.8 and g > 0.8 and b < 0.3 then g = r * AMBER end
+    local lum = luminance(r, g, b)
+    if lum <= INK_LUMINANCE then return { r, g, b } end
+    local k = (INK_LUMINANCE / lum) ^ (1 / 2.2)
+    return { r * k, g * k, b * k }
+end
+
+-- A window title's colour on the theme's banner (Azeroth's gold), nil
+-- without one: never ink on the red banner.
+function Themes.BannerInk()
+    return Themes.Spec(Themes.Current()).bannerInk
 end
 
 -- The settings in use, without the keys of no theme.
