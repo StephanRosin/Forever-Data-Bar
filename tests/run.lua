@@ -312,15 +312,23 @@ do
     Settings.Set("dataBarGold", nil)
     M.state.money, M.state.bags = nil, nil
     -- Unspent talents: beside the line, and alone at the top level.
-    local hasPoints, toggles = true, 0
+    local hasPoints = true
+    TalentMicroButton = CreateFrame("Button", "TalentMicroButton")
     C_ClassTalents = { HasUnspentTalentPoints = function() return hasPoints end }
-    PlayerSpellsUtil = { ToggleClassTalentOrSpecFrame = function() toggles = toggles + 1 end }
     M.Fire("PLAYER_TALENT_UPDATE")
     check("talents: shown", f.xp.talents:IsShown(), true)
     check("talents: beside the XP", select(2, f.xp.talents:GetPoint("LEFT")), f.xp.main)
     check("talents: label", f.xp.talents.text:GetText(), "Talents")
+    local click = D.TalentClick()
+    check("talents: secure click on Blizzard's button", click:GetAttribute("type") .. " " .. tostring(click:GetAttribute("clickbutton") == TalentMicroButton), "click true")
+    check("talents: click button not on the bar", click:GetParent(), UIParent)
+    check("talents: click button shown over the text", click:IsShown() and click:GetWidth() == f.xp.talents:GetWidth(), true)
+    check("talents: hidden in combat by a state driver", click._driver, "[combat] hide; show")
+    local toggled = false
+    PlayerSpellsUtil = { ToggleClassTalentOrSpecFrame = function() toggled = true end }
     f.xp.talents:GetScript("OnClick")(f.xp.talents)
-    check("talents: click opens", toggles, 1)
+    check("talents: the text itself never opens from addon code", toggled, false)
+    PlayerSpellsUtil, TalentMicroButton = nil, nil
     f.xp.talents:GetScript("OnUpdate")(f.xp.talents, 0)
     check("talents: pulsing", f.xp.talents.text._textColor ~= nil, true)
     M.state.level = 60

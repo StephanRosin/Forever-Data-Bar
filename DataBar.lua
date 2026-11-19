@@ -342,6 +342,13 @@ local function HideTooltip(self)
     if GameTooltip:IsOwned(self) then GameTooltip:Hide() end
 end
 
+local function TalentTooltip(self)
+    GameTooltip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
+    GameTooltip:AddLine(L.TIP_UNSPENT_TALENTS, 1, 1, 1)
+    GameTooltip:AddLine(L.TIP_UNSPENT_TALENTS_CLICK, 0.4, 0.8, 1)
+    GameTooltip:Show()
+end
+
 local function ShowRepTooltip(self)
     local d = self.data
     if not d then return end
@@ -618,14 +625,10 @@ local function Build()
     -- between the accent colour and white.
     local t = CreateFrame("Button", nil, xp)
     t:SetWidth(CFG.TALENT_WIDTH)   -- height: ApplyFrame, from the font
+    -- Out of combat the click lands on DataBar.PlaceTalentClick's secure button above; here only in combat.
     t:RegisterForClicks("LeftButtonUp")
-    t:SetScript("OnClick", function() ns.Xp.ToggleTalents() end)
-    t:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
-        GameTooltip:AddLine(L.TIP_UNSPENT_TALENTS, 1, 1, 1)
-        GameTooltip:AddLine(L.TIP_UNSPENT_TALENTS_CLICK, 0.4, 0.8, 1)
-        GameTooltip:Show()
-    end)
+    t:SetScript("OnClick", function() ns.Print(L.MSG_TALENTS_IN_COMBAT) end)
+    t:SetScript("OnEnter", TalentTooltip)
     t:SetScript("OnLeave", HideTooltip)
     t.text = t:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     t.text:SetPoint("CENTER", t, "CENTER", 0, 0)
@@ -747,6 +750,47 @@ DataBar.COLUMN_CENTRE = { [2] = 0.3, [3] = 0.5, [4] = 0.7 }
 
 -- Each column lines its parts up in PARTS order, PROF_GAP apart. A part's
 -- X shifts only itself, so it may run into its neighbour on purpose.
+-- "Talents" opens the tree from secure code, as the micro icons do: a
+-- SecureActionButton clicking Blizzard's TalentMicroButton. Opened from addon
+-- code, the talent window tainted Blizzard's gamepad stance button (secret
+-- boolean error on the next stance change). On UIParent at the text's place
+-- by coordinates, never anchored to the bar (that would protect the bar);
+-- placed out of combat only, hidden in combat.
+local talentClick, talentPending
+function DataBar.PlaceTalentClick()
+    local t = frame and frame.xp.talents
+    if not t then return end
+    if InCombatLockdown() then
+        talentPending = true
+        return
+    end
+    talentPending = false
+    if not talentClick then
+        if not _G.TalentMicroButton then return end
+        talentClick = CreateFrame("Button", "ForeverDataBarTalents", UIParent, "SecureActionButtonTemplate")
+        talentClick:RegisterForClicks("AnyUp", "AnyDown")
+        talentClick:SetAttribute("type", "click")
+        talentClick:SetAttribute("clickbutton", _G.TalentMicroButton)
+        talentClick:SetScript("OnEnter", TalentTooltip)
+        talentClick:SetScript("OnLeave", HideTooltip)
+    end
+    UnregisterStateDriver(talentClick, "visibility")
+    local left, bottom = t:GetLeft(), t:GetBottom()
+    if not (t:IsVisible() and left) then
+        talentClick:Hide()
+        return
+    end
+    local s = t:GetEffectiveScale() / UIParent:GetEffectiveScale()
+    talentClick:SetFrameStrata(t:GetFrameStrata())
+    talentClick:SetFrameLevel(t:GetFrameLevel() + 5)
+    talentClick:ClearAllPoints()
+    talentClick:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", left * s, bottom * s)
+    talentClick:SetSize(t:GetWidth() * s, t:GetHeight() * s)
+    talentClick:Show()
+    RegisterStateDriver(talentClick, "visibility", "[combat] hide; " .. (S("hideInGroup") and "[group] hide; " or "") .. "show")
+end
+DataBar.TalentClick = function() return talentClick end   -- the tests
+
 function DataBar.Layout()
     if not frame then return end
     local at = { {}, {}, {}, {}, {} }
@@ -783,6 +827,7 @@ function DataBar.Layout()
     else
         ns.Micro.Hide()
     end
+    DataBar.PlaceTalentClick()
 end
 
 -- -----------------------------------------------------------------------------
@@ -940,7 +985,7 @@ function DataBar.UpdateXp()
     if talents then width = width + (width > 0 and CFG.PROF_GAP or 0) + CFG.TALENT_WIDTH end
     xp.width = width
     xp:SetWidth(math.max(1, xp.width))
-    if before ~= xp.width or not shown then DataBar.Layout() end
+    if before ~= xp.width or not shown then DataBar.Layout() else DataBar.PlaceTalentClick() end
 end
 
 -- One entry at x in its part: icon (professions), name, value, line;
@@ -1105,6 +1150,7 @@ function DataBar.UpdateVisibility()
     frame:SetShown(DataBar.Wanted())
     -- Shown again (out of combat, the group left): the icons come back.
     if frame:IsShown() and not was then DataBar.Layout() end
+    if talentPending or frame:IsShown() ~= was then DataBar.PlaceTalentClick() end
 end
 
 function DataBar.Apply()

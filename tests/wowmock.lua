@@ -68,6 +68,9 @@ local function newWidget(name, kind)
     function w:GetParent() return self._parent end
     function w:SetFrameLevel(v) self._level = v end
     function w:GetEffectiveScale() return 1 end
+    function w:GetLeft() return self._shown and 10 or nil end
+    function w:GetBottom() return self._shown and 2 or nil end
+    function w:GetFrameStrata() return self._strata or "MEDIUM" end
     function w:SetMovable(v) self._movable = v end
     function w:IsMovable() return self._movable end
     function w:EnableMouse(v) self._mouse = v end

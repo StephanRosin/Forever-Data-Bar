@@ -55,15 +55,6 @@ function Xp.HasUnspentTalents()
     return api ~= nil and api() == true
 end
 
--- From addon code the panel manager refuses in combat.
-function Xp.ToggleTalents()
-    if InCombatLockdown() then
-        ns.Print(L.MSG_TALENTS_IN_COMBAT)
-        return
-    end
-    PlayerSpellsUtil.ToggleClassTalentOrSpecFrame()
-end
-
 -- Blizzard's experience and reputation bars, hidden while the XP part shows.
 local hooked = false
 function Xp.BlizzardBars(show)
