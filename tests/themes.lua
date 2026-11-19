@@ -544,7 +544,7 @@ return function(ns, M, check, ROOT)
     check("azeroth: frame inside the bar, repeating", select(5, f.themeFrame:GetPoint("BOTTOMLEFT")) .. " "
         .. f.themeFrame:GetHeight() .. " " .. tostring(f.themeFrame:GetHorizTile()), "0 3 true")
     check("azeroth: the gold rim inside the frame", select(5, f.themeRim:GetPoint("BOTTOMLEFT")), 3)
-    check("azeroth: gold corners", f.themeOrnaments[1]:IsShown() and file(f.themeOrnaments[1]), "Bracket")
+    check("azeroth: no corner pieces", f.themeOrnaments[1]:IsShown(), false)
     check("azeroth: dark ink, no outline", S("dataBarFontOutline") .. " " .. tostring(S("dataBarFontColor")[1] < 0.3), " true")
     check("azeroth: values at full strength", f.profs[1].value._textColor[4], 1)
     local amber = Themes.Ink({ 1, 0.82, 0 })

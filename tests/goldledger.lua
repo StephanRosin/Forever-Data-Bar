@@ -416,7 +416,7 @@ return function(ns, M, check)
         and file(f.frames[1]), "WoodHDWalnut")
     check("azeroth: frame outside the window, 7 wide", select(4, f.frames[1]:GetPoint("TOPLEFT")) .. "/"
         .. select(5, f.frames[1]:GetPoint("TOPLEFT")), "-7/7")
-    check("azeroth: gold corners on the frame", f.corners[1]:IsShown() and file(f.corners[1]), "Bracket")
+    check("azeroth: no corner pieces", f.corners[1]:IsShown(), false)
     check("azeroth: banner as the title", f.titleBar.banner:IsShown() and file(f.titleBar.banner), "AzerothBanner")
     check("azeroth: banner as high as the title", f.titleBar.banner:GetHeight(), f.titleBar:GetHeight())
     check("azeroth: banner ends, the right one mirrored", f.titleBar.ends[1]:IsShown()
