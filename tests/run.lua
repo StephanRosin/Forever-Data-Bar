@@ -423,7 +423,7 @@ do
     local items = {}
     local oldItem = C_Item
     C_Item = setmetatable({ GetItemCount = function(id) return items[id] or 0 end }, { __index = oldItem })
-    check("skill-ups: off by default", Settings.DEFAULTS.dataBarSkillUps, false)
+    check("skill-ups: on by default", Settings.DEFAULTS.dataBarSkillUps, true)
     check("skill-ups: not read yet", C.Known(profID), false)
     Settings.Set("dataBarSkillUps", true)
     check("skill-ups: never read, the tooltip says to open it", (function()
@@ -454,8 +454,9 @@ do
     -- Another player's profession (a link) or an NPC's is not read.
     C_TradeSkillUI.IsNPCCrafting = function() return true end
     check("skill-ups: NPC crafting not read", C.Scan(), false)
-    Settings.Set("dataBarSkillUps", nil)
+    Settings.Set("dataBarSkillUps", false)
     check("skill-ups: off, the rank alone", first.value:GetText(), tostring(first.data.rank))
+    Settings.Set("dataBarSkillUps", nil)
     C_TradeSkillUI, C_Item = nil, oldItem
     ns.CharDB().crafts = nil
 end

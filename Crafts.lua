@@ -2,7 +2,7 @@ local ADDON, ns = ...
 
 --[[---------------------------------------------------------------------------
 Crafts.lua -- recipes that still give skill points and whose materials are in
-the bags, per profession (dataBarSkillUps, off by default).
+the bags, per profession (dataBarSkillUps, on by default).
 
 The game tells a recipe's difficulty and materials only for the profession
 whose window is open, so each one is read when its window shows and kept per
