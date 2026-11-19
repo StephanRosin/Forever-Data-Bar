@@ -344,13 +344,82 @@ return function(ns, M, check, ROOT)
     ns.Window.Open("databar")
     local row = colourRow()
     local items = row and row.opts.items() or {}
-    check("options: the comic's colours", #items .. items[1].text, "9" .. ns.L.THEME_COLOR_COMIC_GREY)
+    check("options: the comic's colours, then HD", #items .. items[1].text, "13" .. ns.L.THEME_COLOR_COMIC_GREY)
     Themes.Switch("WOOD")
     row = colourRow()
     items = row and row.opts.items() or {}
-    check("options: wood's colours after the switch", #items .. items[1].text, "6" .. ns.L.THEME_COLOR_WOOD_OAK)
+    check("options: wood's colours after the switch, then HD", #items .. items[1].text, "10" .. ns.L.THEME_COLOR_WOOD_OAK)
     Themes.Switch("CLASSIC")
     check("options: no colour under classic", colourRow(), nil)
+    -- HD is a colour of its base: one set of settings for both.
+    local function themeRow()
+        for _, x in ipairs(M.frames) do
+            if x.opts and x.label and x.label._text == ns.L.OPT_THEME_CHOICE and x:IsShown() ~= false then return x end
+        end
+    end
+    local texts = {}
+    for _, item in ipairs(themeRow().opts.items()) do texts[#texts + 1] = item.value end
+    check("hd: not in the theme menu", table.concat(texts, " "):find("_HD") == nil, true)
+    themeRow().opts.set("TECH")
+    Settings.Set("dataBarClockX", 33)
+    items = colourRow().opts.items()
+    check("hd: colour menu lists tech's, then HD", #items .. " " .. items[1].text .. " / " .. items[7].text,
+        "8 " .. ns.L.THEME_COLOR_TECH_CYAN .. " / HD " .. ns.L.THEME_COLOR_TECH_HD_CARBON)
+    colourRow().opts.set(items[8].value)
+    check("hd: colour switches to the HD theme", Themes.Current() .. " " .. Themes.Color(), "TECH_HD STEEL")
+    check("hd: settings kept", S("dataBarClockX"), 33)
+    check("hd: theme menu shows the base", themeRow().opts.get(), "TECH")
+    check("hd: colour menu shows HD steel", colourRow().opts.get(), "TECH_HD:STEEL")
+    check("hd: no own set stored", ForeverDataBarDB.themeSets.TECH_HD, nil)
+    themeRow().opts.set("TECH")
+    check("hd: choosing the base shown keeps HD", Themes.Current() .. " " .. Themes.Color(), "TECH_HD STEEL")
+    colourRow().opts.set(items[2].value)
+    check("hd: back to a plain colour", Themes.Current() .. " " .. Themes.Color() .. " " .. S("dataBarClockX"),
+        "TECH GREEN 33")
+    Themes.Switch("TECH_HD")
+    themeRow().opts.set("PIXEL")
+    check("hd: stored under tech", ForeverDataBarDB.themeSets.TECH.dataBarClockX, 33)
+    local stored = table.concat(Themes.Stored(), " ")
+    check("copy from: tech listed, no HD", stored:find("TECH") ~= nil and stored:find("_HD") == nil, true)
+    themeRow().opts.set("TECH")
+    check("pixel -> tech: the shared set", S("dataBarClockX") .. " " .. Themes.Current(), "33 TECH")
+    Themes.SetColor("CYAN", "TECH")
+    Themes.SetColor("CARBON", "TECH_HD")
+
+    -- Sets kept apart before LibForeverThemes 9, merged once per account:
+    -- a customised HD set wins, a plain one loses to the base's.
+    Themes.Switch("PIXEL")
+    local sets = ForeverDataBarDB.themeSets
+    sets.TECH_HD = Themes.Seed("TECH_HD", sets.CLASSIC)
+    sets.TECH.dataBarClockX = 44
+    sets.hdMerged = nil
+    Themes.Upgrade()
+    check("merge: plain HD set, tech's stays", sets.TECH.dataBarClockX, 44)
+    check("merge: HD set gone", sets.TECH_HD, nil)
+    check("merge: once only", sets.hdMerged, true)
+    sets.TECH_HD = Themes.Seed("TECH_HD", sets.CLASSIC)
+    sets.TECH_HD.dataBarClockX = 55
+    sets.hdMerged = nil
+    Themes.Upgrade()
+    check("merge: customised HD set wins", sets.TECH.dataBarClockX, 55)
+    -- On the HD theme itself: its live settings win when customised.
+    Themes.Switch("TECH")
+    ForeverDataBarDB.theme = "TECH_HD"
+    Settings.Set("dataBarClockX", 66)
+    sets.TECH = Themes.Seed("TECH", sets.CLASSIC)
+    sets.TECH.dataBarClockX = 11
+    sets.hdMerged = nil
+    Themes.Upgrade()
+    check("merge: on customised HD, it stays live", S("dataBarClockX") .. " " .. Themes.Current(), "66 TECH_HD")
+    check("merge: no stale tech set", sets.TECH, nil)
+    -- On a plain HD theme, the base's stored set comes in.
+    Themes.Reset()
+    sets.TECH = Themes.Seed("TECH", sets.CLASSIC)
+    sets.TECH.dataBarClockX = 12
+    sets.hdMerged = nil
+    Themes.Upgrade()
+    check("merge: on plain HD, tech's set comes in", S("dataBarClockX") .. " " .. Themes.Current(), "12 TECH_HD")
+    Themes.Switch("CLASSIC")
     ns.Window.Toggle()
     ForeverDataBarDB.themeColors = nil
     Themes.Switch("CLASSIC")

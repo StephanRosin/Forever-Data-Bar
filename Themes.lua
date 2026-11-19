@@ -310,9 +310,15 @@ function Themes.Switch(id)
     if why then return nil, why end
     local current = Themes.Current()
     if id == current then return true end
+    -- A base and its HD theme share their settings: only the look changes.
+    if Lib.SetKey(id) == Lib.SetKey(current) then
+        ns.DB().theme = id
+        Settings.Changed(nil)
+        return true
+    end
     local sets = storedSets()
-    sets[current] = liveSet()
-    local nextSet = sets[id]
+    sets[Lib.SetKey(current)] = liveSet()
+    local nextSet = sets[Lib.SetKey(id)]
     if not nextSet then
         -- CLASSIC is never made from a theme: without a stored one the
         -- settings stay as they are.
@@ -320,7 +326,7 @@ function Themes.Switch(id)
         nextSet = Themes.Seed(id, base)
     end
     -- The live set is ForeverDataBarDB: no stale copy stays behind.
-    sets[id] = nil
+    sets[Lib.SetKey(id)] = nil
     use(nextSet, id)
     return true
 end
@@ -340,8 +346,8 @@ end
 -- The themes with stored settings to copy from, in the themes' order.
 function Themes.Stored()
     local sets, list = storedSets(), {}
-    for _, id in ipairs(Lib.SpecIds(Themes.SPECS)) do
-        if sets[id] and id ~= Themes.Current() then list[#list + 1] = id end
+    for _, id in ipairs(Lib.MenuIds(Lib.SpecIds(Themes.SPECS))) do
+        if sets[id] and id ~= Lib.SetKey(Themes.Current()) then list[#list + 1] = id end
     end
     return list
 end
@@ -382,20 +388,48 @@ function Themes.Restore(undo)
     return true
 end
 
--- At load, before the bar exists: a theme in use made under an older
--- revision is made anew from CLASSIC, quietly (the bar is built later).
+-- Whether two sets hold the same settings; the theme field does not count.
+local function same(a, b)
+    if type(a) ~= "table" or type(b) ~= "table" then return a == b end
+    for k, v in pairs(a) do
+        if k ~= "theme" and not same(v, b[k]) then return false end
+    end
+    for k in pairs(b) do
+        if k ~= "theme" and a[k] == nil then return false end
+    end
+    return true
+end
+
+-- The live settings replaced by set, quietly (the bar is built later).
+local function replaceLive(set)
+    local db = ns.DB()
+    for k in pairs(db) do
+        if not META[k] then db[k] = nil end
+    end
+    for k, v in pairs(set) do
+        if not META[k] then db[k] = v end
+    end
+end
+
+-- At load, before the bar exists: a base and its HD theme, kept apart
+-- before LibForeverThemes 9, made one set once per account (a customised
+-- HD set wins); then a theme in use made under an older revision is made
+-- anew from CLASSIC.
 function Themes.Upgrade()
     local db = ns.DB()
-    if not db.themeSets or not Lib.NeedsReseed(db.themeSets, OWN_REVISION) then return end
+    if not db.themeSets then return end
+    local sets, current = db.themeSets, Themes.Current()
+    local merged = Lib.MergeHD(sets, current, liveSet(), function(hdId, set)
+        local classic = sets[Themes.CLASSIC] or (current == Themes.CLASSIC and liveSet())
+        return not (classic and same(set, Themes.Seed(hdId, classic)))
+    end)
+    if merged then replaceLive(merged) end
+    if not Lib.NeedsReseed(db.themeSets, OWN_REVISION) then return end
     local base = db.themeSets[Themes.CLASSIC]
     storedSets()
     local current = Themes.Current()
     if current == Themes.CLASSIC or not base then return end
-    local fresh = Themes.Seed(current, base)
-    for k in pairs(db) do
-        if not META[k] then db[k] = nil end
-    end
-    for k, v in pairs(fresh) do db[k] = v end
+    replaceLive(Themes.Seed(current, base))
 end
 
 -- The Theme part's switch was a theme setting before it joined META: hidden

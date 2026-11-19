@@ -312,13 +312,18 @@ local function themeRow()
         type = "select", label = "OPT_THEME_CHOICE",
         choices = function()
             local list = {}
-            for _, id in ipairs(LibForeverThemes.SpecIds(ns.Themes.SPECS)) do
+            -- HD themes are colours of their base (colour menu below).
+            for _, id in ipairs(LibForeverThemes.MenuIds(LibForeverThemes.SpecIds(ns.Themes.SPECS))) do
                 list[#list + 1] = { label = L["THEME_" .. id], value = id, font = ns.Themes.SPECS[id].font }
             end
             return list
         end,
-        get = function() return ns.Themes.Current() end,
-        set = function(v) themeRefused(ns.Themes.Switch(v)) end,
+        get = function() return LibForeverThemes.BaseTheme(ns.Themes.Current()) end,
+        -- The base shown already (on its HD theme too): nothing changes, HD stays.
+        set = function(v)
+            if v == LibForeverThemes.BaseTheme(ns.Themes.Current()) then return end
+            themeRefused(ns.Themes.Switch(v))
+        end,
         enabled = notHubFollowed,
     }
 end
@@ -330,14 +335,21 @@ local function themeColorRow()
         type = "select", label = "OPT_THEME_COLOR",
         visible = function() return #ns.Themes.Colors() > 0 end,
         choices = function()
-            local theme, list = ns.Themes.Current(), {}
-            for _, id in ipairs(ns.Themes.Colors()) do
-                list[#list + 1] = { label = L["THEME_COLOR_" .. theme .. "_" .. id], value = id }
+            local Lib, list = LibForeverThemes, {}
+            for _, e in ipairs(Lib.MenuColors(ns.Themes.SPECS, ns.Themes.Current())) do
+                local label = L["THEME_COLOR_" .. e.theme .. "_" .. e.color]
+                list[#list + 1] = { label = e.hd and "HD " .. label or label, value = Lib.MenuValue(e.theme, e.color) }
             end
             return list
         end,
-        get = function() return ns.Themes.Color() end,
-        set = function(v) themeRefused(ns.Themes.SetColor(v)) end,
+        get = function() return LibForeverThemes.MenuValue(ns.Themes.Current(), ns.Themes.Color()) end,
+        -- An HD colour switches to the HD theme (same settings), a plain one back.
+        set = function(v)
+            local theme, color = LibForeverThemes.ParseMenuValue(v)
+            local ok, why = ns.Themes.Switch(theme)
+            if ok then ok, why = ns.Themes.SetColor(color, theme) end
+            themeRefused(ok, why)
+        end,
         enabled = notHubFollowed,
     }
 end
