@@ -167,7 +167,8 @@ return function(ns, M, check, ROOT)
             check(id .. ": default keeps its tint", back() .. "/" .. alpha(), art.tint and rgb(art.tint) .. "/" .. art.tint[4] or "1,1,1/1")
             -- An HD default wears its own accent where it has one.
             check(id .. ": default keeps its accent", accent(),
-                rgb(LibForeverThemes.Accent(id, first) or Themes.SPECS[id].look.dataBarAccent))
+                -- An ink theme (Azeroth) keeps the bar's own: the colour's gold is the banner's.
+                rgb(not Themes.SPECS[id].ink and LibForeverThemes.Accent(id, first) or Themes.SPECS[id].look.dataBarAccent))
             for i, colour in ipairs(registry.Colors()) do
                 check(id .. " " .. colour .. ": named", ns.L["THEME_COLOR_" .. id .. "_" .. colour] ~= "THEME_COLOR_" .. id .. "_" .. colour, true)
                 if LibForeverThemes.COLORS[id][i].back then

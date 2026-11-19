@@ -126,7 +126,7 @@ Themes.SPECS = Lib.Specs({
     AZEROTH = {
         -- Alegreya ran too thin at bar size (Stephan: hard to read): Friz in near-black ink.
         bodyFont = "Friz Quadrata", valueAlpha = 1, ink = true, bannerInk = { 1, 0.82, 0 },
-        look = look({ 0.12, 0.07, 0.03 }, { 0.5, 0.3, 0.08 }, { 0, 0, 0 }, 0, ""),
+        look = look({ 0.12, 0.07, 0.03 }, { 0.6, 0.12, 0.08 }, { 0, 0, 0 }, 0, ""),
         art = { rimSize = 1, frameSize = 3, windowFrameSize = 7, corners = ALL, shadow = 6, shadowAlpha = 0.5,
             bar = "WoodBar", track = 4, band = {}, windowOrnament = 22 },
     },
@@ -207,7 +207,10 @@ function Themes.TitleFont()
 end
 
 -- The accent the bar shows: the colour's, else the setting.
+-- On a light paper in ink (Azeroth) the bar's own accent (the banner's red):
+-- the colour's gold, meant for the banner's titles, vanished on the parchment.
 function Themes.Accent()
+    if Themes.Spec(Themes.Current()).ink then return Settings.Get("dataBarAccent") end
     return Lib.Accent(Themes.Current(), Themes.Color()) or Settings.Get("dataBarAccent")
 end
 
