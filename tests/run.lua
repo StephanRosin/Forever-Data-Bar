@@ -394,6 +394,70 @@ do
 end
 
 
+section("Skill-ups")
+do
+    local D, C, f = ns.DataBar, ns.Crafts, ns.DataBar.frame
+    local first = f.profs[1]
+    local recipes = {
+        [1] = { name = "Elixir", learned = true, relativeDifficulty = 0, r = { { 500, 2 } } },
+        [2] = { name = "Potion", learned = true, relativeDifficulty = 1, r = { { 501, 1 }, { 500, 1 } } },
+        [3] = { name = "Old Potion", learned = true, relativeDifficulty = 3, r = { { 500, 1 } } },
+        [4] = { name = "Unknown", learned = false, relativeDifficulty = 0, r = { { 500, 1 } } },
+    }
+    local profID = first.skillLine
+    C_TradeSkillUI = {
+        GetBaseProfessionInfo = function() return { professionID = profID } end,
+        GetFilteredRecipeIDs = function() return { 1, 2, 3, 4 } end,
+        GetRecipeInfo = function(id) return recipes[id] end,
+        GetRecipeSchematic = function(id)
+            local slots = {}
+            for _, r in ipairs(recipes[id].r) do
+                slots[#slots + 1] = { reagentType = 1, quantityRequired = r[2], reagents = { { itemID = r[1] } } }
+            end
+            slots[#slots + 1] = { reagentType = 0, quantityRequired = 1, reagents = { { itemID = 999 } } }
+            return { reagentSlotSchematics = slots }
+        end,
+        IsNPCCrafting = function() return false end,
+    }
+    local items = {}
+    local oldItem = C_Item
+    C_Item = setmetatable({ GetItemCount = function(id) return items[id] or 0 end }, { __index = oldItem })
+    check("skill-ups: off by default", Settings.DEFAULTS.dataBarSkillUps, false)
+    check("skill-ups: not read yet", C.Known(profID), false)
+    Settings.Set("dataBarSkillUps", true)
+    check("skill-ups: never read, the tooltip says to open it", (function()
+        GameTooltip._lines = nil
+        first:GetScript("OnEnter")(first)
+        return table.concat(GameTooltip._lines or {}, "\n"):find(ns.L.TIP_SKILLUPS_UNKNOWN, 1, true) ~= nil
+    end)(), true)
+    M.Fire("TRADE_SKILL_SHOW")
+    M.RunTimers()
+    check("skill-ups: read when the window shows", C.Known(profID), true)
+    local kept = ns.CharDB().crafts[profID]
+    check("skill-ups: grey and unlearned ones not kept", (kept[3] == nil and kept[4] == nil and kept[1] ~= nil), true)
+    check("skill-ups: only materials, not optional reagents", #kept[2].r, 4)
+    check("skill-ups: nothing in the bags, none", #C.SkillUps(profID), 0)
+    items[500], items[501] = 5, 1
+    M.Fire("BAG_UPDATE_DELAYED")
+    local list = C.SkillUps(profID)
+    check("skill-ups: both can be made, orange first", #list .. " " .. list[1].name .. " " .. list[1].times, "2 Elixir 2")
+    check("skill-ups: limited by the scarcest material", list[2].times, 1)
+    check("skill-ups: +2 behind the rank", first.value:GetText():find("+2", 1, true) ~= nil, true)
+    -- A recipe turns grey: dropped when the window shows it again.
+    recipes[1].relativeDifficulty = 3
+    M.Fire("TRADE_SKILL_LIST_UPDATE")
+    M.RunTimers()
+    check("skill-ups: grey now, dropped", #C.SkillUps(profID), 1)
+    -- Another player's profession (a link) or an NPC's is not read.
+    C_TradeSkillUI.IsNPCCrafting = function() return true end
+    check("skill-ups: NPC crafting not read", C.Scan(), false)
+    Settings.Set("dataBarSkillUps", nil)
+    check("skill-ups: off, the rank alone", first.value:GetText(), tostring(first.data.rank))
+    C_TradeSkillUI, C_Item = nil, oldItem
+    ns.CharDB().crafts = nil
+end
+
+
 section("Fonts")
 do
     local f = ns.DataBar.frame

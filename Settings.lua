@@ -35,6 +35,7 @@ Settings.DEFAULTS = {
     dataBarMicro = true,        -- Blizzard's micro menu around the clock (Micro.lua)
     dataBarMicroCollections = false,
     dataBarProfs = true, dataBarProfsColumn = 5, dataBarProfsX = 0, dataBarProfsWidth = 96,
+    dataBarSkillUps = false,    -- "+3": recipes giving skill points whose materials are in the bags (Crafts.lua)
     dataBarRepIcons = "LINES",  -- the standing as icon set or LETTER, see DataBar.STANDING_ICONS
     dataBarReps = true, dataBarRepsColumn = 4, dataBarRepsX = 0, dataBarRepsWidth = 96,
     -- Forever Themes' central theme: shows only while that addon is loaded.

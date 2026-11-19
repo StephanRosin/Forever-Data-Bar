@@ -471,6 +471,12 @@ local function dataBarPartRows()
             width.enabled = on
             rows[#rows + 1] = width
         end
+        if part.id == "PROFS" then
+            local skillUps = check("dataBarSkillUps", "OPT_DATABAR_SKILLUPS")
+            skillUps.enabled = on
+            rows[#rows + 1] = skillUps
+            rows[#rows + 1] = { type = "text", label = "OPT_DATABAR_SKILLUPS_HINT" }
+        end
         if part.id == "XP" then
             for _, info in ipairs(ns.DataBar.XP_INFOS) do
                 local show = check(info.key, "OPT_XPINFO_" .. info.id:upper())
