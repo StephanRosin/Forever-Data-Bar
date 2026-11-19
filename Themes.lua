@@ -118,18 +118,6 @@ Themes.SPECS = Lib.Specs({
         look = look({ 0.95, 0.95, 0.96 }, { 0.13, 0.77, 0.37 }, { 0.039, 0.039, 0.039 }, 100),
         art = { rimSize = 1, bar = "PitwallBar", track = 4 },
     },
-    -- A window of the game's own world: light parchment, a walnut frame with
-    -- a gold ring and corners. Dark ink without an outline on the page (as
-    -- the Quest Log's), coloured values darkened (Themes.Ink); a window's
-    -- title on the red banner in gold (bannerInk). On the thin bar the frame
-    -- is narrower (frameSize) and runs along the edge towards the game only.
-    AZEROTH = {
-        -- Alegreya ran too thin at bar size (Stephan: hard to read): Friz in near-black ink.
-        bodyFont = "Friz Quadrata", valueAlpha = 1, ink = true, bannerInk = { 1, 0.82, 0 },
-        look = look({ 0.12, 0.07, 0.03 }, { 0.6, 0.12, 0.08 }, { 0, 0, 0 }, 0, ""),
-        art = { rimSize = 1, frameSize = 3, windowFrameSize = 7, corners = ALL, shadow = 6, shadowAlpha = 0.5,
-            bar = "WoodBar", track = 4, band = {}, windowOrnament = 22 },
-    },
     -- A goblin workshop: sooty sheet metal, a copper frame with rivets; on a
     -- window a thin strip of warning stripes along the top of the title
     -- (band: never text on the stripes).
@@ -207,10 +195,7 @@ function Themes.TitleFont()
 end
 
 -- The accent the bar shows: the colour's, else the setting.
--- On a light paper in ink (Azeroth) the bar's own accent (the banner's red):
--- the colour's gold, meant for the banner's titles, vanished on the parchment.
 function Themes.Accent()
-    if Themes.Spec(Themes.Current()).ink then return Settings.Get("dataBarAccent") end
     return Lib.Accent(Themes.Current(), Themes.Color()) or Settings.Get("dataBarAccent")
 end
 
@@ -226,40 +211,11 @@ end
 -- The icons' colour: own (an element's own colour: a profession's, a
 -- standing's, a maxed one) where it has one, else the colour's accent; on a
 -- theme with a wedge (Pitwall) the wedge's, as the colour changes it there.
--- The comic's icons too (the bar has no dark ink: no Lib.IconColor). An own
--- colour in dark ink on a light page (Azeroth).
+-- The comic's icons too (the bar has no dark ink: no Lib.IconColor).
 function Themes.IconColor(own)
-    -- On the parchment (Azeroth) every symbol in the accent, the banner's red (Stephan).
-    if Themes.Spec(Themes.Current()).ink then return Themes.Accent() end
-    if own then return Themes.Ink(own) end
+    if own then return own end
     local art = Themes.Spec(Themes.Current()).art
     return art and art.wedge and Themes.WedgeColor(art) or Themes.Accent()
-end
-
--- Dark ink on a light page (Azeroth): luminance at most this, about 3:1 on
--- its parchment. Plain darkening turns yellow olive: yellow goes amber first.
-local INK_LUMINANCE, AMBER = 0.13, 0.68
-local function luminance(r, g, b)
-    local function lin(v) return v <= 0.04045 and v / 12.92 or ((v + 0.055) / 1.055) ^ 2.4 end
-    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
-end
-
--- A text colour { r, g, b } (a warning, a gain or loss, a quality) as dark
--- ink on a theme with a light page (ink), else as it is.
-function Themes.Ink(c)
-    if not Themes.Spec(Themes.Current()).ink then return c end
-    local r, g, b = c[1], c[2], c[3]
-    if r > 0.8 and g > 0.8 and b < 0.3 then g = r * AMBER end
-    local lum = luminance(r, g, b)
-    if lum <= INK_LUMINANCE then return { r, g, b } end
-    local k = (INK_LUMINANCE / lum) ^ (1 / 2.2)
-    return { r * k, g * k, b * k }
-end
-
--- A window title's colour on the theme's banner (Azeroth's gold), nil
--- without one: never ink on the red banner.
-function Themes.BannerInk()
-    return Themes.Spec(Themes.Current()).bannerInk
 end
 
 -- The settings in use, without the keys of no theme.
@@ -465,6 +421,19 @@ local function replaceLive(set)
     end
 end
 
+-- A theme that is gone (Azeroth, LibForeverThemes 13) still saved: the
+-- stored Classic set comes back as it was, quietly (the bar is built later;
+-- without one the settings stay), the gone theme's set is dropped.
+function Themes.LeaveRemoved()
+    local db = ns.DB()
+    if db.theme == nil or Themes.SPECS[db.theme] then return end
+    local sets = db.themeSets or {}
+    local classic = sets[Themes.CLASSIC]
+    sets[Themes.CLASSIC], sets[db.theme] = nil, nil
+    if classic then replaceLive(classic) end
+    db.theme = nil
+end
+
 -- At load, before the bar exists: a base and its HD theme, kept apart
 -- before LibForeverThemes 9, made one set once per account (a customised
 -- HD set wins); then a theme in use made under an older revision is made
@@ -527,5 +496,6 @@ events:SetScript("OnEvent", function(self, _, name)
     self:UnregisterEvent("ADDON_LOADED")
     Themes.MigrateComicColor()
     Themes.MigrateThemePart()
+    Themes.LeaveRemoved()
     Themes.Upgrade()
 end)

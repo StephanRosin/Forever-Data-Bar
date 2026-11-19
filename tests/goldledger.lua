@@ -408,34 +408,19 @@ return function(ns, M, check)
         end
     end
     -- The framed themes: the frame around the rim's outside, the ornaments
-    -- on its corners; Azeroth's title on a banner in gold, Goblin's under a
-    -- thin strip of warning stripes; no frame, no banner elsewhere.
+    -- on its corners; Goblin's title under a thin strip of warning stripes;
+    -- no frame, no banner elsewhere.
     local function file(tex) return tex._texture and tex._texture:match("[^\\]+$") end
-    ns.Themes.Switch("AZEROTH")
-    check("azeroth: walnut frame on four sides", f.frames[1]:IsShown() and f.frames[4]:IsShown()
-        and file(f.frames[1]), "WoodHDWalnut")
-    check("azeroth: frame outside the window, 7 wide", select(4, f.frames[1]:GetPoint("TOPLEFT")) .. "/"
-        .. select(5, f.frames[1]:GetPoint("TOPLEFT")), "-7/7")
-    check("azeroth: no corner pieces", f.corners[1]:IsShown(), false)
-    check("azeroth: banner as the title", f.titleBar.banner:IsShown() and file(f.titleBar.banner), "AzerothBanner")
-    check("azeroth: banner as high as the title", f.titleBar.banner:GetHeight(), f.titleBar:GetHeight())
-    check("azeroth: banner ends, the right one mirrored", f.titleBar.ends[1]:IsShown()
-        and f.titleBar.ends[2]._texCoord[1], 1)
-    local endW = f.titleBar.ends[1]._w
-    check("azeroth: title past the banner's end", select(4, f.title:GetPoint("LEFT")), endW + LibForeverThemes.TITLE_GAP)
-    local gold = ns.Themes.BannerInk()
-    check("azeroth: title in gold, never ink on red", f.title._textColor[1] .. "/" .. f.title._textColor[2],
-        gold[1] .. "/" .. gold[2])
-    check("azeroth: close cross in gold too", f.close.lines[1]._texColor[2], gold[2])
-    check("azeroth: body text in ink", f.tabs[1].text._textColor[1] < 0.3, true)
     ns.Themes.Switch("GOBLIN")
-    check("goblin: copper frame", file(f.frames[2]), "GoblinCopper")
+    check("goblin: copper frame on four sides", f.frames[1]:IsShown() and f.frames[4]:IsShown()
+        and file(f.frames[2]), "GoblinCopper")
+    check("goblin: frame outside the window, 7 wide", select(4, f.frames[1]:GetPoint("TOPLEFT")) .. "/"
+        .. select(5, f.frames[1]:GetPoint("TOPLEFT")), "-7/7")
     check("goblin: rivets on the frame", file(f.corners[1]), "Rivet")
     check("goblin: hazard strip 5 high, repeating", file(f.titleBar.banner) .. " " .. f.titleBar.banner:GetHeight()
         .. " " .. tostring(f.titleBar.banner:GetHorizTile()), "GoblinHazard 5 true")
     check("goblin: no banner ends", f.titleBar.ends[1]:IsShown(), false)
     check("goblin: title at the window's inset", select(4, f.title:GetPoint("LEFT")), 12)
-    check("goblin: title not in banner gold", ns.Themes.BannerInk(), nil)
     ns.Themes.Switch("PITWALL")
     check("pitwall after them: no frame, no banner", tostring(f.frames[1]:IsShown()) .. tostring(f.corners[1]:IsShown())
         .. tostring(f.titleBar.banner:IsShown()) .. tostring(f.titleBar.ends[1]:IsShown()), "falsefalsefalsefalse")

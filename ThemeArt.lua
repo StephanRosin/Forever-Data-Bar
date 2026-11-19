@@ -175,8 +175,8 @@ end
 -- A window (the gold window): under a theme the bar's backdrop with its
 -- background colour over it (one background per theme in every Forever
 -- addon), the rim on every side, the title bar's colour and the wedge in it;
--- under Classic the options window's flat look. A framed theme (Azeroth,
--- Goblin) puts its frame around the rim's outside with its ornaments on the
+-- under Classic the options window's flat look. A framed theme (Goblin)
+-- puts its frame around the rim's outside with its ornaments on the
 -- frame's corners, and its banner into the title bar (band: { height }, nil
 -- height: the bar's).
 -- -----------------------------------------------------------------------------
@@ -306,14 +306,11 @@ function ThemeArt.WindowRim()
 end
 
 -- Cards on a window: the options' panel under Classic; dark on Swiss and
--- Pitwall's black as in every Forever addon; a light shade elsewhere (on
--- a light page a faint brown one: grey muddied the parchment).
-local CARD_SOLID, CARD_SHADE, CARD_INK = { 0, 0, 0, 0.85 }, { 0, 0, 0, 0.3 }, { 0.35, 0.22, 0.08, 0.15 }
+-- Pitwall's black as in every Forever addon; a light shade elsewhere.
+local CARD_SOLID, CARD_SHADE = { 0, 0, 0, 0.85 }, { 0, 0, 0, 0.3 }
 function ThemeArt.CardColour()
-    local spec = ns.Themes.Spec(S("theme"))
-    local art = spec.art
+    local art = ns.Themes.Spec(S("theme")).art
     if not art then return ns.Style.COLORS.panel end
-    if spec.ink then return CARD_INK end
     return art.strip and CARD_SOLID or CARD_SHADE
 end
 
