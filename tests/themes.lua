@@ -538,7 +538,7 @@ return function(ns, M, check, ROOT)
     -- towards the game, inside the bar, the rim inside it.
     local function file(tex) return tex._texture and tex._texture:match("[^\\]+$") end
     Themes.Switch("AZEROTH")
-    check("azeroth: fonts", S("dataBarFont"), "Alegreya")
+    check("azeroth: fonts", S("dataBarFont"), "Friz Quadrata")
     check("azeroth: light parchment", file(f.themeBack), "AzerothParchment")
     check("azeroth: walnut frame along the inner edge", f.themeFrame:IsShown() and file(f.themeFrame), "WoodHDWalnut")
     check("azeroth: frame inside the bar, repeating", select(5, f.themeFrame:GetPoint("BOTTOMLEFT")) .. " "

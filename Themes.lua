@@ -124,8 +124,9 @@ Themes.SPECS = Lib.Specs({
     -- title on the red banner in gold (bannerInk). On the thin bar the frame
     -- is narrower (frameSize) and runs along the edge towards the game only.
     AZEROTH = {
-        valueAlpha = 1, ink = true, bannerInk = { 1, 0.82, 0 },
-        look = look({ 0.2, 0.12, 0.05 }, { 0.5, 0.3, 0.08 }, { 0, 0, 0 }, 0, ""),
+        -- Alegreya ran too thin at bar size (Stephan: hard to read): Friz in near-black ink.
+        bodyFont = "Friz Quadrata", valueAlpha = 1, ink = true, bannerInk = { 1, 0.82, 0 },
+        look = look({ 0.12, 0.07, 0.03 }, { 0.5, 0.3, 0.08 }, { 0, 0, 0 }, 0, ""),
         art = { rimSize = 1, frameSize = 3, windowFrameSize = 7, corners = ALL, shadow = 6, shadowAlpha = 0.5,
             bar = "WoodBar", track = 4, band = {}, windowOrnament = 22 },
     },
