@@ -229,8 +229,8 @@ end
 -- The comic's icons too (the bar has no dark ink: no Lib.IconColor). An own
 -- colour in dark ink on a light page (Azeroth).
 function Themes.IconColor(own)
-    -- Ink on the parchment (Azeroth): every symbol, no gold or amber ones (Stephan).
-    if Themes.Spec(Themes.Current()).ink then return Settings.Get("dataBarFontColor") end
+    -- On the parchment (Azeroth) every symbol in the accent, the banner's red (Stephan).
+    if Themes.Spec(Themes.Current()).ink then return Themes.Accent() end
     if own then return Themes.Ink(own) end
     local art = Themes.Spec(Themes.Current()).art
     return art and art.wedge and Themes.WedgeColor(art) or Themes.Accent()
