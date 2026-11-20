@@ -18,6 +18,9 @@ Each part can be shown or hidden, put into one of five columns (1 = left edge, 3
 - **Professions**: up to four, each with its icon, name, skill and a thin line. At the skill cap the line turns gold: time for the trainer. Click to open the profession window.
 - **Reputations**: up to four, each with its standing as an icon, its name and a thin line. Eight icon sets from grim to beaming: faces (round, coin, features only), wolf turning dog, a little monster, weather, a heart and a growing plant; or the short standing as a letter ("F" for Friendly, "H" for Honored). Left-click to pick the faction, right-click to open the reputation tab; a **+** adds a faction to an empty slot.
 
+## Data Broker
+Have addons with a LibDataBroker feed (a minimap button, an FPS display, a training reminder…)? They get a page of their own in the options, **Data Broker**, shown as soon as one is installed. Switch each feed on and place it like a part: column and nudge. Text feeds show their icon and text in the bar's font, launchers just their icon; tooltip and click are the feed's own. Every feed starts off, so nothing changes until you pick one.
+
 ## Designs
 Five looks for the lines:
 - **Glass** (default): the fill glows.

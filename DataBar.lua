@@ -841,13 +841,16 @@ DataBar.TalentClick = function() return talentClick end   -- the tests
 function DataBar.Layout()
     if not frame then return end
     local at = { {}, {}, {}, {}, {} }
-    for _, p in ipairs(DataBar.PARTS) do
+    local function place(p)
         local g = frame.parts[p.id]
-        if g:IsShown() and g.width > 0 then
+        if g and g:IsShown() and g.width > 0 then
             local list = at[tonumber(S(p.key .. "Column"))] or at[1]
             list[#list + 1] = { g = g, x = S(p.key .. "X") }
         end
     end
+    for _, p in ipairs(DataBar.PARTS) do place(p) end
+    -- The data broker feeds after the built-in parts of their column.
+    for _, p in ipairs(ns.Broker.Parts()) do place(p) end
     local width = frame:GetWidth()
     if not width or width <= 0 then width = UIParent:GetWidth() or 0 end
     for column, list in ipairs(at) do
@@ -1183,8 +1186,112 @@ function DataBar.UpdateStats()
     if moved then DataBar.Layout() end
 end
 
+-- -----------------------------------------------------------------------------
+-- Data broker feeds (Broker.lua): the feed's icon in its own colours and its
+-- text in the bar's font (colour codes in it win); tooltip and click are the
+-- feed's.
+-- -----------------------------------------------------------------------------
+local FEED_FONT = "dataBarFeeds"   -- no font of its own: FontFor gives the bar's
+
+local function FeedTooltip(self)
+    local obj = ns.Broker.Object(self.feed)
+    if not obj then return end
+    -- As LibDataBroker's displays do: the feed's own frame, its OnEnter, or
+    -- our GameTooltip for it to fill.
+    if obj.tooltip then
+        obj.tooltip:ClearAllPoints()
+        if frame.atTop then obj.tooltip:SetPoint("TOP", self, "BOTTOM", 0, -4)
+        else obj.tooltip:SetPoint("BOTTOM", self, "TOP", 0, 4) end
+        obj.tooltip:Show()
+    elseif obj.OnEnter then
+        obj.OnEnter(self)
+    elseif obj.OnTooltipShow then
+        TipOwner(self)
+        obj.OnTooltipShow(GameTooltip)
+        GameTooltip:Show()
+    end
+end
+
+local function FeedLeave(self)
+    local obj = ns.Broker.Object(self.feed)
+    if obj and obj.tooltip then obj.tooltip:Hide() end
+    if obj and obj.OnLeave then obj.OnLeave(self) end
+    HideTooltip(self)
+end
+
+local function FeedClick(self, button)
+    local obj = ns.Broker.Object(self.feed)
+    if obj and obj.OnClick then obj.OnClick(self, button) end
+end
+
+local function BuildFeed(part)
+    local g = CreateFrame("Button", nil, frame)
+    g.width, g.feed, g.key = 0, part.name, part.key
+    g:SetHeight(CFG.ICON)
+    g:RegisterForClicks("AnyUp")
+    g:SetScript("OnClick", FeedClick)
+    g:SetScript("OnEnter", FeedTooltip)
+    g:SetScript("OnLeave", FeedLeave)
+    g.icon = g:CreateTexture(nil, "ARTWORK")
+    g.icon:SetSize(CFG.ICON, CFG.ICON)
+    g.icon:SetPoint("LEFT", g, "LEFT", 0, 0)
+    g.text = g:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    Font(g.text, FEED_FONT)
+    g:Hide()
+    frame.parts[part.id] = g
+    return g
+end
+
+-- Icon and text of one feed; returns whether its width changed.
+local function FillFeed(g)
+    local obj = S(g.key) and ns.Broker.Object(g.feed) or nil
+    local icon = obj and obj.icon
+    local text = obj and ns.Broker.Text(g.feed, obj)
+    local before = g.width
+    g.icon:SetShown(icon ~= nil)
+    if icon then
+        g.icon:SetTexture(icon)
+        local c = obj.iconCoords
+        if type(c) == "table" then g.icon:SetTexCoord(c[1], c[2], c[3], c[4]) else g.icon:SetTexCoord(0, 1, 0, 1) end
+        g.icon:SetVertexColor(obj.iconR or 1, obj.iconG or 1, obj.iconB or 1, 1)
+    end
+    g.text:ClearAllPoints()
+    g.text:SetPoint("LEFT", g, "LEFT", icon and (CFG.ICON + CFG.ICON_GAP) or 0, 0)
+    g.text:SetText(text or "")
+    g.text:SetShown(text ~= nil)
+    local width = (icon and CFG.ICON or 0) + (icon and text and CFG.ICON_GAP or 0)
+        + (text and math.ceil(g.text:GetStringWidth() or 0) or 0)
+    g.width = obj and width or 0
+    g:SetWidth(math.max(1, g.width))
+    g:SetShown(g.width > 0)
+    return before ~= g.width
+end
+
+-- One feed's attribute changed (Broker.lua): a new width moves its neighbours.
+function DataBar.UpdateFeed(part)
+    local g = frame and frame.parts[part.id]
+    if g and FillFeed(g) then DataBar.Layout() end
+end
+
+-- Every feed, built the first time it is seen.
+function DataBar.UpdateFeeds()
+    if not frame then return end
+    local built, moved = false, false
+    for _, part in ipairs(ns.Broker.Parts()) do
+        if not frame.parts[part.id] then
+            BuildFeed(part)
+            built = true
+        end
+    end
+    -- A new text needs its font before it is measured.
+    if built then ApplyFonts() end
+    for _, part in ipairs(ns.Broker.Parts()) do moved = FillFeed(frame.parts[part.id]) or moved end
+    if moved then DataBar.Layout() end
+end
+
 function DataBar.Update()
     if not frame then return end
+    DataBar.UpdateFeeds()
     DataBar.UpdateStats()
     DataBar.UpdateXp()
     DataBar.UpdateProfessions()

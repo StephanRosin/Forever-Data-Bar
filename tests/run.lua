@@ -603,7 +603,9 @@ local function shown(want)
 end
 for _, p in ipairs(W.PAGES) do
     W.ShowPage(p.id)
-    check("page " .. p.id .. " opens", W.Current(), p.id)
+    -- A page not offered (Data Broker without feeds) gives way to the first.
+    local offered = not p.shown or p.shown()
+    check("page " .. p.id .. " opens", W.Current(), offered and p.id or "databar")
     check("page " .. p.id .. " labelled", ns.L[p.label] ~= p.label, true)
 end
 local function rowFor(label, field)
@@ -658,6 +660,9 @@ dofile("themes.lua")(ns, M, check, ROOT)
 
 section("Forever Themes hub")
 dofile("hub.lua")(ns, M, check)
+
+section("Data broker feeds")
+dofile("broker.lua")(ns, M, check)
 
 section("Languages")
 local base = ns.Locales.enUS

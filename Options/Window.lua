@@ -503,6 +503,23 @@ local function dataBarPartRows()
     return rows
 end
 
+-- The data broker feeds (Broker.lua), placed like the parts; the page only
+-- while some addon offers one.
+local function feedRows()
+    local rows = { { type = "text", label = "OPT_FEEDS_HINT", height = 54 } }
+    for _, part in ipairs(ns.Broker.Parts()) do
+        rows[#rows + 1] = { type = "header", label = function() return ns.Broker.Title(part.name) end }
+        local function on() return S(part.key) == true end
+        rows[#rows + 1] = check(part.key, "OPT_DATABAR_SHOW")
+        local column = choice(part.key .. "Column", "OPT_DATABAR_COLUMN", ns.DataBar.COLUMNS, "DATABAR_COLUMN_")
+        local x = num(part.key .. "X", "OPT_DATABAR_X")
+        column.enabled, x.enabled = on, on
+        rows[#rows + 1] = column
+        rows[#rows + 1] = x
+    end
+    return rows
+end
+
 -- In two groups: the progress bars (professions, reputation, the level
 
 -- A font by name, each shown in itself.
@@ -562,6 +579,7 @@ end
 Window.PAGES = {
     { id = "databar", label = "PAGE_DATABAR", rows = dataBarRows },
     { id = "parts", label = "PAGE_DATABAR_PARTS", rows = dataBarPartRows },
+    { id = "feeds", label = "PAGE_FEEDS", rows = feedRows, shown = function() return #ns.Broker.Parts() > 0 end },
     { id = "fonts", label = "PAGE_FONTS", rows = fontRows },
     { id = "professions", label = "PAGE_PROFESSIONS", build = buildSkillPage },
     { id = "reputation", label = "PAGE_REPUTATION", rows = repRows },
@@ -911,6 +929,17 @@ end
 -- the page.
 Settings.OnChange(function()
     if frame and frame:IsShown() then Window.Refresh() end
+end)
+
+-- A feed made later (an addon loaded on demand): its rows were not built.
+-- Frames cannot be destroyed, so the old page stays hidden and unreferenced.
+ns.Broker.OnChange(function()
+    if not frame then return end
+    if pages.feeds then
+        pages.feeds:Hide()
+        pages.feeds = nil
+    end
+    if frame:IsShown() then Window.ShowPage(current) else layoutNav() end
 end)
 
 -- Every label is set when its widget is built: a new language gets a new
