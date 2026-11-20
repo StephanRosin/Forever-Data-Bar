@@ -113,6 +113,14 @@ function Gold.PerHour(net, seconds)
     return net / seconds * SECONDS_PER_HOUR
 end
 
+-- Forever's characters carry a surname, and only first name and surname
+-- together tell two of them apart ("Brannoc Ironfist", "Brannoc Stonehand").
+function Gold.PlayerName()
+    local name, surname = UnitName("player")
+    if type(surname) == "string" and surname ~= "" then return name .. " " .. surname end
+    return name
+end
+
 -- All characters of every realm and faction, account wide.
 function Gold.Remember(account, name, realm, class, money)
     account.goldChars = account.goldChars or {}
@@ -360,7 +368,11 @@ local function Record(isLogin)
     else
         Gold.Update(char, money, now)
     end
-    Gold.Remember(ns.AccountDB(), UnitName("player"), GetRealmName(), select(2, UnitClass("player")), money)
+    local name, realm = Gold.PlayerName(), GetRealmName()
+    Gold.Remember(ns.AccountDB(), name, realm, select(2, UnitClass("player")), money)
+    -- Before surnames counted, "Brannoc Ironfist" and "Brannoc Stonehand" shared "Brannoc".
+    local first = UnitName("player")
+    if first ~= name then ns.AccountDB().goldChars[first .. "-" .. realm] = nil end
     ns.GoldWindow.Update()
 end
 

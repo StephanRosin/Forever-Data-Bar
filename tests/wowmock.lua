@@ -183,7 +183,24 @@ UISpecialFrames = {}
 tinsert = table.insert
 StaticPopupDialogs = {}
 function StaticPopup_Show(which, a) M.popups[#M.popups + 1] = { which = which, text = StaticPopupDialogs[which].text, arg = a } end
-C_Timer = { After = function(_, fn) M.timers[#M.timers + 1] = fn end }
+C_Timer = { After = function(_, fn) M.timers[#M.timers + 1] = fn end,
+    NewTicker = function(_, fn) M.ticker = fn end }
+-- The character window's values (CharInfo.lua).
+function GetSpellBonusDamage(school) return school == 6 and 312 or 200 end
+function GetSpellBonusHealing() return 540 end
+function GetSpellCritChance() return 5.24 end
+function GetCombatRatingBonus() return 1 end
+function GetSpellHitModifier() return 2 end
+function GetHitModifier() return 0 end
+function GetRangedHitModifier() return 0 end
+function GetCritChance() return 7.5 end
+function GetRangedCritChance() return 6 end
+function UnitAttackPower() return 100, 20, -5 end
+function UnitRangedAttackPower() return 80, 0, 0 end
+function GetDodgeChance() return 4.25 end
+function GetParryChance() return 5 end
+function GetBlockChance() return 0 end
+function UnitArmor() return 900, M.state.armor or 1200 end
 -- Atlases this client has; the ornate ring is missing on purpose.
 M.atlases = { ["communities-ring-gold"] = true }
 C_Texture = { GetAtlasInfo = function(a) if M.atlases[a] then return { width = 64, height = 64 } end end }
@@ -241,7 +258,7 @@ function hooksecurefunc(name, fn)
     _G[name] = function(...) orig(...); fn(...) end
 end
 function GetRepairAllCost() return M.state.repairCost or 0, true end
-function UnitName() return M.state.name or "Testeria" end
+function UnitName() return M.state.name or "Testeria", M.state.surname end
 function GetRealmName() return M.state.realm or "Mockrealm" end
 function UnitSex() return M.state.sex end
 RAID_CLASS_COLORS = { WARLOCK = { r = 0.53, g = 0.53, b = 0.93 } }

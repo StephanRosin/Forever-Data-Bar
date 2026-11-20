@@ -483,6 +483,15 @@ local function dataBarPartRows()
             width.enabled = on
             rows[#rows + 1] = width
         end
+        if part.id == "CHAR" then
+            for _, stat in ipairs(ns.CharInfo.STATS) do
+                -- Per character, not in the theme sets.
+                local show = { type = "check", label = "CHAR_STAT_" .. stat.id:upper(), enabled = on,
+                    get = function() return ns.CharInfo.Chosen(stat.id) end,
+                    set = function(v) ns.CharInfo.Choose(stat.id, v) end }
+                rows[#rows + 1] = show
+            end
+        end
         if part.id == "PROFS" then
             local skillUps = check("dataBarSkillUps", "OPT_DATABAR_SKILLUPS")
             skillUps.enabled = on

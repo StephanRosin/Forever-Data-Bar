@@ -104,6 +104,13 @@ return function(ns, M, check)
     M.Fire("PLAYER_MONEY")
     check("event: gained counted", ForeverDataBarChar.goldSession.gained, 5 * GOLD)
     check("event: remembered account wide", ForeverDataBarDB.goldChars["Testeria-Mockrealm"].money, 75 * GOLD)
+    M.state.surname = "Ironfist"
+    M.Fire("PLAYER_MONEY")
+    check("surname: kept apart from a namesake", ForeverDataBarDB.goldChars["Testeria Ironfist-Mockrealm"].name, "Testeria Ironfist")
+    check("surname: the first-name-only record goes", ForeverDataBarDB.goldChars["Testeria-Mockrealm"], nil)
+    M.state.surname = nil
+    ForeverDataBarDB.goldChars["Testeria Ironfist-Mockrealm"] = nil
+    M.Fire("PLAYER_MONEY")
     M.Fire("PLAYER_ENTERING_WORLD", false)
     check("reload keeps the session", ForeverDataBarChar.goldSession.gained, 5 * GOLD)
     local part = D.frame.parts.GOLD

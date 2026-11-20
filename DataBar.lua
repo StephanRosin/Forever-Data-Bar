@@ -564,6 +564,22 @@ DataBar.STATS = {
         -- Looked up at the click: bag addons such as Baganator replace it after we load.
         click = function() if ToggleAllBags then ToggleAllBags() end end,
     },
+    -- The chosen combat values (CharInfo.lua).
+    -- No part icon: each value brings its own.
+    -- Each value in a text of its own (FillChar): a secret one is shown, never joined.
+    CHAR = {
+        slots = ns.CharInfo.STATS,
+        value = function() return #ns.CharInfo.Shown() > 0 and "" or nil end,
+        tip = function(self)
+            TipOwner(self)
+            GameTooltip:AddLine(L.DATABAR_PART_CHAR, 1, 1, 1)
+            for _, stat in ipairs(ns.CharInfo.Shown()) do
+                GameTooltip:AddDoubleLine(ns.CharInfo.Icon(stat) .. " " .. L["CHAR_STAT_" .. stat.id:upper()],
+                    (ns.CharInfo.Text(stat, true)), 0.8, 0.8, 0.8, 1, 1, 1)
+            end
+            GameTooltip:Show()
+        end,
+    },
     -- Forever Themes' central theme; nothing without that addon (the hub).
     THEME = {
         icon = "StatTheme",
@@ -616,6 +632,45 @@ function DataBar.ThemedAddons()
     return list
 end
 
+local CHAR_ICON_GAP, CHAR_GAP = 3, 8
+
+-- Widths are measured in a text of their own that never holds a secret:
+-- Forever reports the width of one that did as secret, even for readable
+-- text. keep: the width to keep (a secret value cannot be measured).
+local function Measure(fs, text, keep)
+    if keep then return keep end
+    fs:SetText(text)
+    local w = fs:GetStringWidth()
+    if issecretvalue and issecretvalue(w) then return 0 end
+    return math.ceil(w or 0)
+end
+
+-- The character stats' slots; returns their width. A secret value keeps
+-- the width of the last readable one (or of a sample before any). The
+-- readable texts go to g.plain.
+local function FillChar(g, colour)
+    local x, size, plain = 0, ns.CharInfo.IconSize(), {}
+    for i, stat in ipairs(ns.CharInfo.STATS) do
+        local slot, on = g.slots[i], ns.CharInfo.Chosen(stat.id)
+        slot.icon:SetShown(on)
+        slot.text:SetShown(on)
+        if on then
+            slot.icon:SetTexture(ns.CharInfo.IconFile(stat))
+            slot.icon:SetSize(size, size)
+            slot.icon:ClearAllPoints()
+            slot.icon:SetPoint("LEFT", g, "LEFT", x, 0)
+            local text, readable = ns.CharInfo.Text(stat)
+            if readable then plain[#plain + 1] = text end
+            slot.width = Measure(g.measure, readable and text or (stat.pct and "00.0%" or "0000"), readable and nil or slot.width)
+            slot.text:SetText(text)
+            slot.text:SetTextColor(colour[1], colour[2], colour[3])
+            x = x + size + CHAR_ICON_GAP + slot.width + CHAR_GAP
+        end
+    end
+    g.plain = table.concat(plain, " ")
+    return math.max(0, x - CHAR_GAP)
+end
+
 local function BuildStat(id)
     local def = DataBar.STATS[id]
     local g = CreateFrame("Button", nil, frame)
@@ -628,11 +683,25 @@ local function BuildStat(id)
     g.icon = g:CreateTexture(nil, "ARTWORK")
     g.icon:SetSize(CFG.ICON, CFG.ICON)
     g.icon:SetPoint("LEFT", g, "LEFT", 0, 0)
-    g.icon:SetTexture(CFG.MEDIA .. def.icon)
+    g.icon:SetTexture(def.icon and CFG.MEDIA .. def.icon or nil)
+    g.icon:SetShown(def.icon ~= nil)
     g.text = g:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    g.text:SetPoint("LEFT", g.icon, "RIGHT", CFG.ICON_GAP, 0)
+    if def.icon then g.text:SetPoint("LEFT", g.icon, "RIGHT", CFG.ICON_GAP, 0) else g.text:SetPoint("LEFT", g, "LEFT", 0, 0) end
     for _, p in ipairs(DataBar.PARTS) do if p.id == id then g.key = p.key end end
     Font(g.text, g.key, "size")
+    -- One icon and text per value (the character stats), a point larger: they sit between icons.
+    if def.slots then
+        g.measure = g:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        g.measure:SetAlpha(0)
+        Font(g.measure, g.key, "size", 1)
+        g.slots = {}
+        for i in ipairs(def.slots) do
+            local slot = { icon = g:CreateTexture(nil, "ARTWORK"), text = g:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall") }
+            slot.text:SetPoint("LEFT", slot.icon, "RIGHT", CHAR_ICON_GAP, 0)
+            Font(slot.text, g.key, "size", 1)
+            g.slots[i] = slot
+        end
+    end
     g.id = id
     g:Hide()
     return g
@@ -787,6 +856,7 @@ DataBar.PARTS = {
     { id = "CLOCK", key = "dataBarClock" },
     { id = "PROFS", key = "dataBarProfs" },
     { id = "REPS", key = "dataBarReps" },
+    { id = "CHAR", key = "dataBarChar" },
     { id = "THEME", key = "dataBarTheme" },
 }
 -- Five columns: the first starts at the left edge, the last ends at the
@@ -1173,7 +1243,8 @@ function DataBar.UpdateStats()
                 g.text:SetText(text)
                 colour = colour or DataBar.TextColour(p.key)
                 g.text:SetTextColor(colour[1], colour[2], colour[3])
-                g.width = CFG.ICON + CFG.ICON_GAP + math.ceil(g.text:GetStringWidth() or 0)
+                g.width = (def.icon and CFG.ICON + CFG.ICON_GAP or 0) + math.ceil(g.text:GetStringWidth() or 0)
+                if g.slots then g.width = FillChar(g, colour) end
                 g:SetWidth(g.width)
             else
                 g.width = 0
@@ -1334,6 +1405,8 @@ end
 events:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_LOGIN" then
         DataBar.Apply()
+        -- Buffs, gear and talents all move the combat values: read them each second, as the character window does.
+        C_Timer.NewTicker(1, function() if S("dataBarChar") then DataBar.UpdateStats() end end)
     elseif event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_REGEN_ENABLED" then
         inCombat = event == "PLAYER_REGEN_DISABLED"
         DataBar.UpdateVisibility()

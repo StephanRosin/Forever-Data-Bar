@@ -661,6 +661,9 @@ dofile("themes.lua")(ns, M, check, ROOT)
 section("Forever Themes hub")
 dofile("hub.lua")(ns, M, check)
 
+section("Character stats part")
+dofile("charinfo.lua")(ns, M, check)
+
 section("Data broker feeds")
 dofile("broker.lua")(ns, M, check)
 
