@@ -53,7 +53,7 @@ return function(ns, M, check)
         end
     end
     check("own icon drawn: StatHearth", io.open(ADDONDIR .. "/Media/StatHearth.tga") ~= nil, true)
-    Settings.Set("dataBarOwnIcons", nil)
+    Settings.Set("dataBarOwnIcons", false)
     D.UpdateStats()
     check("game icons again", cur.slots[1].icon._texture, 111)
     currencies[42].quantity = 0
@@ -70,7 +70,7 @@ return function(ns, M, check)
     Settings.Set("dataBarOwnIcons", true)
     D.UpdateStats()
     check("hearthstone: own icon", hearth.icon._texture, D.CFG.MEDIA .. "StatHearth")
-    Settings.Set("dataBarOwnIcons", nil)
+    Settings.Set("dataBarOwnIcons", false)
     D.UpdateStats()
     cd = { 999, 1.5 }
     check("global cooldown: still ready", Hearth.Left(), 0)
@@ -88,4 +88,20 @@ return function(ns, M, check)
     Settings.Set("dataBarHearth", false)
     D.UpdateStats()
     C_Container.GetItemCooldown, C_CurrencyInfo, C_Item, HONOR = nil, nil, nil, nil
+    Settings.Set("dataBarOwnIcons", nil)
+
+    -- Own icons: new installs get them, accounts from before keep the game's.
+    local saved = ForeverDataBarDB
+    ForeverDataBarDB = nil
+    Settings.KeepForExisting()
+    check("first install: own icons", Settings.Get("dataBarOwnIcons"), true)
+    ForeverDataBarDB = { dataBarHeight = 30, themeSets = { CLASSIC = { dataBarHeight = 30 }, WOOD = { dataBarOwnIcons = true } } }
+    Settings.KeepForExisting()
+    check("existing account: the game's icons", Settings.Get("dataBarOwnIcons"), false)
+    check("existing account: in its theme sets too", ForeverDataBarDB.themeSets.CLASSIC.dataBarOwnIcons, false)
+    check("existing account: a set's own choice stays", ForeverDataBarDB.themeSets.WOOD.dataBarOwnIcons, true)
+    Settings.Set("dataBarOwnIcons", true)
+    Settings.KeepForExisting()
+    check("once only: switched on stays on", Settings.Get("dataBarOwnIcons"), true)
+    ForeverDataBarDB = saved
 end

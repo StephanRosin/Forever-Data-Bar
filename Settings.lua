@@ -20,8 +20,9 @@ Settings.DEFAULTS = {
     dataBarGear = true,         -- the options' gear at the right edge
     dataBarProfColours = true,  -- professions and standings in their own colours, not the accent
     -- The bar's own icons (white, tinted) for the character stats, currencies
-    -- and hearthstone instead of the game's; off: as before.
-    dataBarOwnIcons = false,
+    -- and hearthstone instead of the game's. New installs: on; accounts from
+    -- before keep the game's (Settings.KeepForExisting).
+    dataBarOwnIcons = true,
     -- The parts: shown, column (1..5, DataBar.Layout; parts in one column
     -- line up in this order) and a shift to the right (px).
     dataBarXp = true, dataBarXpColumn = 1, dataBarXpX = 0, dataBarXpWidth = 200,
@@ -182,10 +183,32 @@ function Settings.SetHidden(name, value)
     Settings.Changed("hidden")
 end
 
+-- Defaults that changed for new installs: an account from before keeps the
+-- old value, in the live settings and every theme set, once (ForeverDataBarDB.kept).
+-- A first install (no saved settings yet) takes the new defaults.
+Settings.KEPT = { dataBarOwnIcons = false }
+function Settings.KeepForExisting()
+    local fresh = ForeverDataBarDB == nil or next(ForeverDataBarDB) == nil
+    local db = ns.DB()
+    db.kept = db.kept or {}
+    for key, old in pairs(Settings.KEPT) do
+        if not db.kept[key] then
+            db.kept[key] = true
+            if not fresh then
+                if db[key] == nil then db[key] = old end
+                for _, set in pairs(db.themeSets or {}) do
+                    if type(set) == "table" and set[key] == nil then set[key] = old end
+                end
+            end
+        end
+    end
+end
+
 local events = CreateFrame("Frame")
 events:RegisterEvent("ADDON_LOADED")
 events:SetScript("OnEvent", function(self, _, name)
     if name ~= ADDON then return end
     self:UnregisterEvent("ADDON_LOADED")
+    Settings.KeepForExisting()
     Settings.Changed(nil)
 end)

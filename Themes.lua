@@ -135,7 +135,7 @@ Themes.SPECS.GLASS_HD.look.dataBarAlpha = 60
 -- Keys of ForeverDataBarDB that belong to no theme's set (and survive a reset):
 -- the gold records are data, not settings.
 -- The Theme part's switch too: hiding it under one theme hides it under all.
-local META = { language = true, theme = true, themeSets = true, themeColors = true,
+local META = { language = true, theme = true, themeSets = true, themeColors = true, kept = true,
     goldChars = true, goldItems = true, goldWindow = true, dataBarTheme = true }
 Themes.META = META
 
