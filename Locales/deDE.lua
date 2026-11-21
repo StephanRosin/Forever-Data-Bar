@@ -260,6 +260,7 @@ L.TIP_SKILLUPS_UNKNOWN = "Öffne diesen Beruf einmal, damit seine Rezepte gelese
 L.TIP_GATHER_VEINS = "Adern mit Skillpunkten:"
 L.TIP_GATHER_HERBS = "Kräuter mit Skillpunkten:"
 L.TIP_GATHER_SMELTING = "Verhütten mit Skillpunkten:"
+L.TIP_GATHER_NEXT = "Als Nächstes:"
 L.TIP_RICH = "(reich)"
 L.OPT_DATABAR_SKILLUPS = "Rezepte mit Skillpunkten anzeigen („+3“)"
 L.OPT_DATABAR_SKILLUPS_HINT = "Das Spiel gibt die Rezepte eines Berufs nur bei offenem Fenster heraus: jeden Beruf einmal öffnen."

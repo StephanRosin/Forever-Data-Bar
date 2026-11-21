@@ -465,7 +465,7 @@ end
 section("Gathering skill-ups")
 do
     local G = ns.Gathering
-    local function names(list) local t = {} for _, r in ipairs(list) do t[#t + 1] = r.name .. "=" .. r.difficulty end return table.concat(t, ",") end
+    local function names(list) local t = {} for _, r in ipairs(list) do t[#t + 1] = r.name .. (r.difficulty and "=" .. r.difficulty or "") end return table.concat(t, ",") end
     check("gathering: a vein is orange at its skill", G.Difficulty(125, 125, 150, 175, 225), 0)
     check("gathering: yellow at +25, green at +50", G.Difficulty(150, 125, 150, 175, 225) .. G.Difficulty(175, 125, 150, 175, 225), "12")
     check("gathering: grey at +100, nothing", G.Difficulty(225, 125, 150, 175, 225), nil)
@@ -475,6 +475,16 @@ do
     check("gathering: a rich vein marked", names(G.Nodes("MINING", 280, 300)):find("Thorium Ore " .. ns.L.TIP_RICH .. "=0", 1, true) ~= nil, true)
     check("gathering: Outland stays away below 300", names(G.Nodes("MINING", 299, 300)):find("Fel Iron", 1, true), nil)
     check("smelting: Wowhead's numbers", names(G.Smelting(112, 150)), "Silver Bar=2,Bronze Bar=2")
+    local _, nextHerbs = G.Nodes("HERBALISM", 60, 75)
+    check("next: the herb unlocking next", names(nextHerbs), "Briarthorn")
+    local _, nextVeins = G.Nodes("MINING", 70, 75)
+    check("next: all veins at the next skill", #nextVeins .. " " .. nextVeins[1].req, "2 75")
+    local _, nextVanilla = G.Nodes("MINING", 290, 300)
+    check("next: no Outland vein on a 300 cap", #nextVanilla, 0)
+    local _, nextOutland = G.Nodes("MINING", 290, 375)
+    check("next: Fel Iron on a 375 cap", nextOutland[1] and nextOutland[1].req, 300)
+    local _, nextSmelt = G.Smelting(112, 150)
+    check("next: smelting unlocks Iron at 125", nextSmelt[1].name .. " " .. nextSmelt[1].req, "Iron Bar 125")
     check("gathering: no table for crafting", G.Has("ALCHEMY"), false)
     -- The Mining slot (250/375 in the mock) lists veins and smelting, not the window hint.
     local mining = ns.DataBar.frame.profs[2]
@@ -486,6 +496,7 @@ do
     local tip = table.concat(GameTooltip._lines or {}, "\n")
     check("mining tooltip: veins", tip:find(ns.L.TIP_GATHER_VEINS, 1, true) ~= nil and tip:find(ns.L.TIP_GATHER_HERBS, 1, true) == nil and tip:find("|T", 1, true) ~= nil and tip:find("Rich Thorium", 1, true) == nil and tip:find("Thorium Ore", 1, true) ~= nil, true)
     check("mining tooltip: at 250 no smelting gives points, no heading", tip:find(ns.L.TIP_GATHER_SMELTING, 1, true), nil)
+    check("mining tooltip: next vein shown", tip:find(ns.L.TIP_GATHER_NEXT .. " Thorium Ore", 1, true) ~= nil, true)
     check("mining tooltip: no open-the-window hint", tip:find(ns.L.TIP_SKILLUPS_UNKNOWN, 1, true), nil)
 end
 

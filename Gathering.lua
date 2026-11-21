@@ -83,29 +83,38 @@ local function sorted(list)
     return list
 end
 
--- The veins or herbs of a profession key that give points: { name, icon, difficulty, req }.
-function Gathering.Nodes(key, rank, maxRank)
-    local list = {}
-    for _, n in ipairs(NODES[key] or {}) do
-        local req = n[1]
-        local d = Gathering.Difficulty(rank, req, req + 25, req + 50, req + 100, maxRank)
-        if d then
-            local name = itemName(n[2], n[3])
-            if n[4] then name = name .. " " .. ns.L.TIP_RICH end
-            list[#list + 1] = { name = name, icon = itemIcon(n[2]), difficulty = d, req = req }
+-- What gives points now ({ name, icon, difficulty, req }, hardest first), and
+-- what unlocks next: every entry at the lowest required skill above the rank.
+-- Outland items (ids above 20000) are left out of "next" on a 300 cap client.
+local function collect(entries, rank, maxRank, levels)
+    local list, nextList, nextReq = {}, {}, nil
+    for _, e in ipairs(entries) do
+        local req, yellow, green, grey, item, fallback, rich = levels(e)
+        local name = itemName(item, fallback)
+        if rich then name = name .. " " .. ns.L.TIP_RICH end
+        local entry = { name = name, icon = itemIcon(item), req = req }
+        entry.difficulty = Gathering.Difficulty(rank, req, yellow, green, grey, maxRank)
+        if entry.difficulty then
+            list[#list + 1] = entry
+        elseif req > rank and (item < 20000 or (maxRank or 0) > 300) and (not nextReq or req <= nextReq) then
+            if req ~= nextReq then nextList, nextReq = {}, req end
+            nextList[#nextList + 1] = entry
         end
     end
-    return sorted(list)
+    table.sort(nextList, function(a, b) return a.name < b.name end)
+    return sorted(list), nextList
 end
 
--- The smelting recipes that give points, same shape.
+-- The veins or herbs of a profession key, see collect.
+function Gathering.Nodes(key, rank, maxRank)
+    return collect(NODES[key] or {}, rank, maxRank, function(n)
+        return n[1], n[1] + 25, n[1] + 50, n[1] + 100, n[2], n[3], n[4]
+    end)
+end
+
+-- The smelting recipes, see collect.
 function Gathering.Smelting(rank, maxRank)
-    local list = {}
-    for _, s in ipairs(SMELTING) do
-        local d = Gathering.Difficulty(rank, s[1], s[2], s[3], s[4], maxRank)
-        if d then list[#list + 1] = { name = itemName(s[5], s[6]), icon = itemIcon(s[5]), difficulty = d, req = s[1] } end
-    end
-    return sorted(list)
+    return collect(SMELTING, rank, maxRank, function(r) return r[1], r[2], r[3], r[4], r[5], r[6] end)
 end
 
 function Gathering.Has(key) return NODES[key] ~= nil end

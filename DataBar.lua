@@ -366,13 +366,17 @@ function DataBar.AddSkillUps(skillLine, rank)
     end
 end
 
--- A heading and each Gathering entry in its colour; nothing when the list is empty.
-function DataBar.AddGathering(heading, list)
-    if #list == 0 then return end
+-- A heading, each Gathering entry in its colour, then what unlocks next in
+-- grey; nothing when both lists are empty.
+function DataBar.AddGathering(heading, list, nextList)
+    if #list == 0 and #(nextList or {}) == 0 then return end
     GameTooltip:AddLine(heading, 1, 0.82, 0)
     for _, r in ipairs(list) do
         local c = DataBar.DIFFICULTY_COLOURS[r.difficulty]
-        GameTooltip:AddDoubleLine("  " .. (r.icon or "") .. r.name, tostring(r.req), c[1], c[2], c[3], 0.6, 0.6, 0.6)
+        GameTooltip:AddDoubleLine("  " .. r.icon .. r.name, tostring(r.req), c[1], c[2], c[3], 0.6, 0.6, 0.6)
+    end
+    for _, r in ipairs(nextList or {}) do
+        GameTooltip:AddDoubleLine("  " .. r.icon .. L.TIP_GATHER_NEXT .. " " .. r.name, tostring(r.req), 0.6, 0.6, 0.6, 0.6, 0.6, 0.6)
     end
 end
 
