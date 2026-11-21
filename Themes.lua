@@ -394,6 +394,61 @@ function Themes.CopyPlacement(from)
     return undo
 end
 
+-- The look, which stays each theme's own when the parts are spread
+-- (Themes.SpreadParts): every key a theme's look sets, the bar's design,
+-- size, colours and fonts.
+local OWN_LOOK = { dataBarDesign = true, dataBarHeight = true, dataBarAlpha = true, dataBarBgColor = true,
+    dataBarAccent = true, dataBarEdge = true, dataBarProfColours = true, dataBarFont = true, dataBarFontSize = true,
+    dataBarFontOutline = true, dataBarFontColor = true, dataBarClockSizeOwn = true, dataBarClockSize = true }
+function Themes.IsLook(key)
+    if OWN_LOOK[key] then return true end
+    for _, part in ipairs(Settings.FONT_PARTS) do
+        if key:sub(1, #part + 4) == part .. "Font" then return true end
+    end
+    for _, spec in pairs(Themes.SPECS) do
+        if spec.look and spec.look[key] ~= nil then return true end
+    end
+    return false
+end
+
+-- The parts as they are now -- which show, where, and what they show --
+-- written into every other theme's stored set (and CLASSIC's, which
+-- themes not yet used are made from); their looks stay. Returns what it
+-- replaced (Themes.RestoreSpread), or nil and why not.
+function Themes.SpreadParts()
+    local why = refuse()
+    if why then return nil, why end
+    local db, keys = ns.DB(), {}
+    for key in pairs(Settings.DEFAULTS) do keys[key] = true end
+    for key in pairs(db) do keys[key] = true end   -- the feeds' settings
+    local undo, current = {}, Lib.SetKey(Themes.Current())
+    for setKey, set in pairs(storedSets()) do
+        if type(set) == "table" and setKey ~= current then
+            local saved = {}
+            for key in pairs(keys) do
+                if not META[key] and not Themes.IsLook(key) then
+                    saved[key] = { copy(set[key]) }
+                    set[key] = copy(db[key])
+                end
+            end
+            undo[setKey] = saved
+        end
+    end
+    return undo
+end
+
+function Themes.RestoreSpread(undo)
+    if refuse() then return nil end
+    local sets = storedSets()
+    for setKey, saved in pairs(undo) do
+        local set = sets[setKey]
+        if set then
+            for key, box in pairs(saved) do set[key] = box[1] end
+        end
+    end
+    return true
+end
+
 function Themes.Restore(undo)
     if refuse() then return nil end
     local db = ns.DB()

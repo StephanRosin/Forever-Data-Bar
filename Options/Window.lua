@@ -358,6 +358,8 @@ end
 -- What it replaced comes back with "Undo" in the same list, until the theme
 -- changes or /reload.
 local themeUndo
+-- What "Spread to all themes" replaced, until /reload.
+local spreadUndo
 local UNDO_THEME, NONE_THEME = "__undo", "__none"
 local function themeCopyRow()
     return {
@@ -409,6 +411,22 @@ local function dataBarRows()
             end },
         } },
         themeCopyRow(),
+        { type = "text", label = "OPT_THEME_SPREAD_HINT", height = 40 },
+        { type = "buttons", buttons = {
+            { label = "OPT_THEME_SPREAD", width = 240, onClick = function()
+                local saved, why = ns.Themes.SpreadParts()
+                if not saved then return themeRefused(nil, why) end
+                spreadUndo = saved
+                ns.Print(L.MSG_THEME_SPREAD)
+                Window.Refresh()
+            end },
+        } },
+        { type = "buttons", visible = function() return spreadUndo ~= nil end, buttons = {
+            { label = "OPT_THEME_SPREAD_UNDO", width = 240, onClick = function()
+                if spreadUndo and ns.Themes.RestoreSpread(spreadUndo) then spreadUndo = nil end
+                Window.Refresh()
+            end },
+        } },
         { type = "buttons", buttons = {
             { label = "OPT_THEME_RESET", width = 200, onClick = function()
                 themeRefused(ns.Themes.Reset())

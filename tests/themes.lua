@@ -79,6 +79,37 @@ return function(ns, M, check, ROOT)
     check("copy: undo", Themes.Restore(undo), true)
     check("copy: undone", S("dataBarClockX"), 15)
 
+    -- The parts spread to every theme (and classic, which new themes come
+    -- from); each keeps its look. Undo puts them back.
+    Settings.Set("dataBarHearth", true)
+    Settings.Set("dataBarCurrencyColumn", 3)
+    local spread = Themes.SpreadParts()
+    check("spread: done", spread ~= nil, true)
+    check("spread: into wood", ForeverDataBarDB.themeSets.WOOD.dataBarHearth, true)
+    check("spread: into classic", ForeverDataBarDB.themeSets.CLASSIC.dataBarCurrencyColumn, 3)
+    check("spread: positions too", ForeverDataBarDB.themeSets.WOOD.dataBarClockX, 15)
+    check("spread: wood keeps its font", ForeverDataBarDB.themeSets.WOOD.dataBarFont ~= S("dataBarFont"), true)
+    check("spread: classic keeps its height", ForeverDataBarDB.themeSets.CLASSIC.dataBarHeight, 30)
+    check("spread: undo", Themes.RestoreSpread(spread), true)
+    check("spread: undone", ForeverDataBarDB.themeSets.WOOD.dataBarHearth, nil)
+    check("spread: undone, position", ForeverDataBarDB.themeSets.WOOD.dataBarClockX, 50)
+    Themes.SpreadParts()
+    check("spread: wood shows it once switched", Themes.Switch("WOOD") and S("dataBarHearth"), true)
+    check("spread: wood's look", S("dataBarFont"), Themes.SPECS.WOOD.bodyFont or Themes.SPECS.WOOD.font)
+    Themes.SpreadParts()
+    Themes.Switch("PIXEL")
+    check("spread: pixel too", S("dataBarHearth"), true)
+    M.state.combat = true
+    check("spread: refused in combat", select(2, Themes.SpreadParts()), "COMBAT")
+    M.state.combat = false
+    Settings.Set("dataBarHearth", nil)
+    Settings.Set("dataBarCurrencyColumn", nil)
+    Themes.SpreadParts()
+    Settings.Set("dataBarClockX", 15)
+    Themes.Switch("WOOD")
+    Settings.Set("dataBarClockX", 50)
+    Themes.Switch("PIXEL")
+
     -- Back to classic: everything as it was.
     check("back to classic", Themes.Switch("CLASSIC"), true)
     check("classic: own accent", S("dataBarAccent")[2], 0)
