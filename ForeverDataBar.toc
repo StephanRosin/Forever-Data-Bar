@@ -26,6 +26,7 @@ Crafts.lua
 Gathering.lua
 Xp.lua
 CharInfo.lua
+Currencies.lua
 Gold.lua
 GoldLedger.lua
 ThemeArt.lua

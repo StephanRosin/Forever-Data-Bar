@@ -484,6 +484,7 @@ local EQUIPMENT_SLOTS = 18                      -- 1..18; only some have durabil
 local DURABILITY_LOW, DURABILITY_WARN = 25, 50  -- percent: red, yellow below
 local COLOUR_LOW, COLOUR_WARN = { 1, 0.25, 0.2 }, { 1, 0.82, 0 }
 local BAGS_WARN, COLOUR_BAGS_WARN = 3, { 1, 0.5, 0 }  -- this few free: an orange icon; none: red
+local WHITE, READY_COLOUR = { 1, 1, 1 }, { 0.3, 1, 0.3 }   -- game icons untinted; hearthstone ready
 
 function DataBar.GoldText(copper)
     copper = copper or 0
@@ -591,6 +592,10 @@ DataBar.STATS = {
     -- Each value in a text of its own (FillChar): a secret one is shown, never joined.
     CHAR = {
         slots = ns.CharInfo.STATS,
+        slotOn = function(stat) return ns.CharInfo.Chosen(stat.id) end,
+        slotIcon = ns.CharInfo.IconFile,
+        slotText = ns.CharInfo.Text,
+        slotSample = function(stat) return stat.pct and "00.0%" or "0000" end,
         value = function() return #ns.CharInfo.Shown() > 0 and "" or nil end,
         tip = function(self)
             TipOwner(self)
@@ -599,6 +604,45 @@ DataBar.STATS = {
                 GameTooltip:AddDoubleLine(ns.CharInfo.Icon(stat) .. " " .. L["CHAR_STAT_" .. stat.id:upper()],
                     (ns.CharInfo.Text(stat, true)), 0.8, 0.8, 0.8, 1, 1, 1)
             end
+            GameTooltip:Show()
+        end,
+    },
+    -- Currencies and marks held (Currencies.lua), each with the game's icon.
+    CURRENCY = {
+        slots = ns.Currencies.LIST,
+        slotOn = ns.Currencies.On,
+        slotIcon = ns.Currencies.IconFile,
+        slotText = function(entry) return ns.Currencies.Text(entry), true end,
+        value = function() return #ns.Currencies.Shown() > 0 and "" or nil end,
+        tip = function(self)
+            TipOwner(self)
+            GameTooltip:AddLine(L.DATABAR_PART_CURRENCY, 1, 1, 1)
+            for _, entry in ipairs(ns.Currencies.Shown()) do
+                local count, icon, name, max = entry.read()
+                local text = max and ("%d / %d"):format(count, max) or tostring(count)
+                GameTooltip:AddDoubleLine(("|T%s:16|t %s"):format(icon or 134400, name or ""), text, 0.8, 0.8, 0.8, 1, 1, 1)
+            end
+            GameTooltip:Show()
+        end,
+    },
+    -- The hearthstone: time left or ready, in the game's icon; used by the
+    -- secure button over it (DataBar.PlaceHearthClick), never from here.
+    HEARTH = {
+        iconFile = ns.Hearth.Icon,
+        value = function()
+            if not ns.Hearth.Owned() then return nil end
+            local left = ns.Hearth.Left()
+            if left > 0 then return ns.Hearth.Format(left), nil, WHITE end
+            return L.DATABAR_HEARTH_READY, READY_COLOUR, WHITE
+        end,
+        tip = function(self)
+            TipOwner(self)
+            GameTooltip:AddLine(ns.Hearth.Name() or L.DATABAR_PART_HEARTH, 1, 1, 1)
+            local where = GetBindLocation and GetBindLocation()
+            if where and where ~= "" then GameTooltip:AddLine(L.DATABAR_TIP_HEARTH_BOUND:format(where), 0.8, 0.8, 0.8) end
+            local left = ns.Hearth.Left()
+            if left > 0 then GameTooltip:AddLine(ns.Hearth.Format(left), 0.8, 0.8, 0.8) end
+            GameTooltip:AddLine(InCombatLockdown() and L.DATABAR_TIP_HEARTH_COMBAT or L.DATABAR_TIP_HEARTH_CLICK, 0.4, 0.8, 1)
             GameTooltip:Show()
         end,
     },
@@ -667,23 +711,23 @@ local function Measure(fs, text, keep)
     return math.ceil(w or 0)
 end
 
--- The character stats' slots; returns their width. A secret value keeps
--- the width of the last readable one (or of a sample before any). The
--- readable texts go to g.plain.
-local function FillChar(g, colour)
+-- A part's slots (character stats, currencies): an icon and a text each;
+-- returns their width. A secret value keeps the width of the last readable
+-- one (or of the sample before any). The readable texts go to g.plain.
+local function FillSlots(g, def, colour)
     local x, size, plain = 0, ns.CharInfo.IconSize(), {}
-    for i, stat in ipairs(ns.CharInfo.STATS) do
-        local slot, on = g.slots[i], ns.CharInfo.Chosen(stat.id)
+    for i, item in ipairs(def.slots) do
+        local slot, on = g.slots[i], def.slotOn(item)
         slot.icon:SetShown(on)
         slot.text:SetShown(on)
         if on then
-            slot.icon:SetTexture(ns.CharInfo.IconFile(stat))
+            slot.icon:SetTexture(def.slotIcon(item))
             slot.icon:SetSize(size, size)
             slot.icon:ClearAllPoints()
             slot.icon:SetPoint("LEFT", g, "LEFT", x, 0)
-            local text, readable = ns.CharInfo.Text(stat)
+            local text, readable = def.slotText(item)
             if readable then plain[#plain + 1] = text end
-            slot.width = Measure(g.measure, readable and text or (stat.pct and "00.0%" or "0000"), readable and nil or slot.width)
+            slot.width = Measure(g.measure, readable and text or def.slotSample(item), readable and nil or slot.width)
             slot.text:SetText(text)
             slot.text:SetTextColor(colour[1], colour[2], colour[3])
             x = x + size + CHAR_ICON_GAP + slot.width + CHAR_GAP
@@ -706,9 +750,9 @@ local function BuildStat(id)
     g.icon:SetSize(CFG.ICON, CFG.ICON)
     g.icon:SetPoint("LEFT", g, "LEFT", 0, 0)
     g.icon:SetTexture(def.icon and CFG.MEDIA .. def.icon or nil)
-    g.icon:SetShown(def.icon ~= nil)
+    g.icon:SetShown((def.icon or def.iconFile) ~= nil)
     g.text = g:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    if def.icon then g.text:SetPoint("LEFT", g.icon, "RIGHT", CFG.ICON_GAP, 0) else g.text:SetPoint("LEFT", g, "LEFT", 0, 0) end
+    if def.icon or def.iconFile then g.text:SetPoint("LEFT", g.icon, "RIGHT", CFG.ICON_GAP, 0) else g.text:SetPoint("LEFT", g, "LEFT", 0, 0) end
     for _, p in ipairs(DataBar.PARTS) do if p.id == id then g.key = p.key end end
     Font(g.text, g.key, "size")
     -- One icon and text per value (the character stats), a point larger: they sit between icons.
@@ -879,6 +923,8 @@ DataBar.PARTS = {
     { id = "PROFS", key = "dataBarProfs" },
     { id = "REPS", key = "dataBarReps" },
     { id = "CHAR", key = "dataBarChar" },
+    { id = "CURRENCY", key = "dataBarCurrency" },
+    { id = "HEARTH", key = "dataBarHearth" },
     { id = "THEME", key = "dataBarTheme" },
 }
 -- Five columns: the first starts at the left edge, the last ends at the
@@ -930,6 +976,43 @@ function DataBar.PlaceTalentClick()
 end
 DataBar.TalentClick = function() return talentClick end   -- the tests
 
+-- The hearthstone, used as the Info Panel does: a SecureActionButton with
+-- type "item" (using items is protected), by name. Over the part like the
+-- talents' button; in combat hidden (the stone cannot be used there).
+local hearthClick, hearthPending
+function DataBar.PlaceHearthClick()
+    local g = frame and frame.parts.HEARTH
+    if not g then return end
+    if InCombatLockdown() then
+        hearthPending = true
+        return
+    end
+    hearthPending = false
+    if not hearthClick then
+        hearthClick = CreateFrame("Button", "ForeverDataBarHearth", UIParent, "SecureActionButtonTemplate")
+        hearthClick:RegisterForClicks("AnyUp", "AnyDown")
+        hearthClick:SetAttribute("type", "item")
+        hearthClick:SetScript("OnEnter", DataBar.STATS.HEARTH.tip)
+        hearthClick:SetScript("OnLeave", HideTooltip)
+    end
+    UnregisterStateDriver(hearthClick, "visibility")
+    local name, left, bottom = ns.Hearth.Name(), g:GetLeft(), g:GetBottom()
+    if not (name and g:IsVisible() and left) then
+        hearthClick:Hide()
+        return
+    end
+    hearthClick:SetAttribute("item", name)
+    local s = g:GetEffectiveScale() / UIParent:GetEffectiveScale()
+    hearthClick:SetFrameStrata(g:GetFrameStrata())
+    hearthClick:SetFrameLevel(g:GetFrameLevel() + 5)
+    hearthClick:ClearAllPoints()
+    hearthClick:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", left * s, bottom * s)
+    hearthClick:SetSize(g.width * s, g:GetHeight() * s)
+    hearthClick:Show()
+    RegisterStateDriver(hearthClick, "visibility", "[combat] hide; " .. (S("hideInGroup") and "[group] hide; " or "") .. "show")
+end
+DataBar.HearthClick = function() return hearthClick end   -- the tests
+
 function DataBar.Layout()
     if not frame then return end
     local at = { {}, {}, {}, {}, {} }
@@ -970,6 +1053,7 @@ function DataBar.Layout()
         ns.Micro.Hide()
     end
     DataBar.PlaceTalentClick()
+    DataBar.PlaceHearthClick()
 end
 
 -- -----------------------------------------------------------------------------
@@ -1262,11 +1346,12 @@ function DataBar.UpdateStats()
             if text then
                 ic = ic or ns.Themes.IconColor()
                 g.icon:SetVertexColor(ic[1], ic[2], ic[3], 1)
+                if def.iconFile then g.icon:SetTexture(def.iconFile()) end
                 g.text:SetText(text)
                 colour = colour or DataBar.TextColour(p.key)
                 g.text:SetTextColor(colour[1], colour[2], colour[3])
-                g.width = (def.icon and CFG.ICON + CFG.ICON_GAP or 0) + math.ceil(g.text:GetStringWidth() or 0)
-                if g.slots then g.width = FillChar(g, colour) end
+                g.width = ((def.icon or def.iconFile) and CFG.ICON + CFG.ICON_GAP or 0) + math.ceil(g.text:GetStringWidth() or 0)
+                if g.slots then g.width = FillSlots(g, def, colour) end
                 g:SetWidth(g.width)
             else
                 g.width = 0
@@ -1399,6 +1484,7 @@ function DataBar.UpdateVisibility()
     -- Shown again (out of combat, the group left): the icons come back.
     if frame:IsShown() and not was then DataBar.Layout() end
     if talentPending or frame:IsShown() ~= was then DataBar.PlaceTalentClick() end
+    if hearthPending or frame:IsShown() ~= was then DataBar.PlaceHearthClick() end
 end
 
 function DataBar.Apply()
@@ -1421,14 +1507,15 @@ for _, e in ipairs({ "PLAYER_LOGIN", "PLAYER_XP_UPDATE", "UPDATE_EXHAUSTION", "P
     "ENABLE_XP_GAIN", "DISABLE_XP_GAIN", "CHARACTER_POINTS_CHANGED", "PLAYER_TALENT_UPDATE",
     "TRAIT_CONFIG_UPDATED", "ACTIVE_COMBAT_CONFIG_CHANGED", "PLAYER_REGEN_DISABLED",
     "PLAYER_MONEY", "UPDATE_INVENTORY_DURABILITY", "BAG_UPDATE_DELAYED", "BAG_UPDATE", "PLAYER_REGEN_ENABLED",
-    "GROUP_ROSTER_UPDATE", "PLAYER_ENTERING_WORLD" }) do
+    "GROUP_ROSTER_UPDATE", "PLAYER_ENTERING_WORLD", "CURRENCY_DISPLAY_UPDATE", "HEARTHSTONE_BOUND" }) do
     pcall(events.RegisterEvent, events, e)
 end
 events:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_LOGIN" then
         DataBar.Apply()
         -- Buffs, gear and talents all move the combat values: read them each second, as the character window does.
-        C_Timer.NewTicker(1, function() if S("dataBarChar") then DataBar.UpdateStats() end end)
+        -- The hearthstone's time left ticks as well.
+        C_Timer.NewTicker(1, function() if S("dataBarChar") or S("dataBarHearth") then DataBar.UpdateStats() end end)
     elseif event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_REGEN_ENABLED" then
         inCombat = event == "PLAYER_REGEN_DISABLED"
         DataBar.UpdateVisibility()
@@ -1439,7 +1526,8 @@ events:SetScript("OnEvent", function(_, event)
         DataBar.UpdateVisibility()
         DataBar.UpdateXp()
         DataBar.UpdateStats()
-    elseif event == "PLAYER_MONEY" or event == "UPDATE_INVENTORY_DURABILITY" or event:sub(1, 10) == "BAG_UPDATE" then
+    elseif event == "PLAYER_MONEY" or event == "UPDATE_INVENTORY_DURABILITY" or event:sub(1, 10) == "BAG_UPDATE"
+        or event == "CURRENCY_DISPLAY_UPDATE" or event == "HEARTHSTONE_BOUND" then
         DataBar.UpdateStats()
     else
         DataBar.UpdateXp()

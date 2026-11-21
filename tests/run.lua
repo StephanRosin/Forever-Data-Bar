@@ -702,6 +702,9 @@ dofile("hub.lua")(ns, M, check)
 section("Character stats part")
 dofile("charinfo.lua")(ns, M, check)
 
+section("Currencies and hearthstone")
+dofile("currencies.lua")(ns, M, check)
+
 section("Data broker feeds")
 dofile("broker.lua")(ns, M, check)
 

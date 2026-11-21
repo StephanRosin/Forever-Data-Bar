@@ -492,6 +492,14 @@ local function dataBarPartRows()
                 rows[#rows + 1] = show
             end
         end
+        if part.id == "CURRENCY" then
+            for _, key in ipairs(ns.Currencies.KEYS) do
+                local show = check("dataBarCur" .. key, "CURRENCY_" .. key:upper())
+                show.enabled = on
+                rows[#rows + 1] = show
+            end
+            rows[#rows + 1] = { type = "text", label = "OPT_DATABAR_CURRENCY_HINT" }
+        end
         if part.id == "PROFS" then
             local skillUps = check("dataBarSkillUps", "OPT_DATABAR_SKILLUPS")
             skillUps.enabled = on
