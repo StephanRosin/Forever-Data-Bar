@@ -462,6 +462,30 @@ do
 end
 
 
+section("Gathering skill-ups")
+do
+    local G = ns.Gathering
+    local function names(list) local t = {} for _, r in ipairs(list) do t[#t + 1] = r.name .. "=" .. r.difficulty end return table.concat(t, ",") end
+    check("gathering: a vein is orange at its skill", G.Difficulty(125, 125, 150, 175, 225), 0)
+    check("gathering: yellow at +25, green at +50", G.Difficulty(150, 125, 150, 175, 225) .. G.Difficulty(175, 125, 150, 175, 225), "12")
+    check("gathering: grey at +100, nothing", G.Difficulty(225, 125, 150, 175, 225), nil)
+    check("gathering: not reachable yet, nothing", G.Difficulty(124, 125, 150, 175, 225), nil)
+    check("gathering: at the cap, nothing", G.Difficulty(300, 300, 325, 350, 400, 300), nil)
+    check("gathering: herbs at 60, hardest first", names(G.Nodes("HERBALISM", 60, 75)), "Mageroyal=0,Earthroot=1,Bloodthistle=2,Peacebloom=2,Silverleaf=2")
+    check("gathering: a rich vein marked", names(G.Nodes("MINING", 280, 300)):find("Thorium Ore " .. ns.L.TIP_RICH .. "=0", 1, true) ~= nil, true)
+    check("gathering: Outland stays away below 300", names(G.Nodes("MINING", 299, 300)):find("Fel Iron", 1, true), nil)
+    check("smelting: Wowhead's numbers", names(G.Smelting(129, 150)), "Iron Bar=0,Silver Bar=2")
+    check("gathering: no table for crafting", G.Has("ALCHEMY"), false)
+    -- The Mining slot (250/375 in the mock) lists veins and smelting, not the window hint.
+    local mining = ns.DataBar.frame.profs[2]
+    GameTooltip._lines = nil
+    mining:GetScript("OnEnter")(mining)
+    local tip = table.concat(GameTooltip._lines or {}, "\n")
+    check("mining tooltip: veins", tip:find(ns.L.TIP_GATHER_NODES, 1, true) ~= nil and tip:find("Rich Thorium", 1, true) == nil and tip:find("Thorium Ore", 1, true) ~= nil, true)
+    check("mining tooltip: smelting", tip:find(ns.L.TIP_GATHER_SMELTING, 1, true) ~= nil and tip:find("Thorium Bar", 1, true) ~= nil, true)
+    check("mining tooltip: no open-the-window hint", tip:find(ns.L.TIP_SKILLUPS_UNKNOWN, 1, true), nil)
+end
+
 section("Fonts")
 do
     local f = ns.DataBar.frame

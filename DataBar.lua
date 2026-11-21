@@ -366,6 +366,16 @@ function DataBar.AddSkillUps(skillLine, rank)
     end
 end
 
+-- A heading and each Gathering entry in its colour; nothing when the list is empty.
+function DataBar.AddGathering(heading, list)
+    if #list == 0 then return end
+    GameTooltip:AddLine(heading, 1, 0.82, 0)
+    for _, r in ipairs(list) do
+        local c = DataBar.DIFFICULTY_COLOURS[r.difficulty]
+        GameTooltip:AddDoubleLine("  " .. r.name, tostring(r.req), c[1], c[2], c[3], 0.6, 0.6, 0.6)
+    end
+end
+
 -- The rank, and "+3" behind it while recipes giving points can be made.
 function DataBar.ProfValue(rank, skillUps)
     if skillUps > 0 then return ("%d |cff40ff40+%d|r"):format(rank, skillUps) end
@@ -380,7 +390,15 @@ local function ShowProfTooltip(self)
     GameTooltip:AddDoubleLine(L.TIP_RANK, ("%d / %d"):format(d.rank, d.maxRank), 0.8, 0.8, 0.8, 1, 1, 1)
     local remaining = math.max(0, d.maxRank - d.rank)
     GameTooltip:AddDoubleLine(L.TIP_TO_CAP, tostring(remaining), 0.8, 0.8, 0.8, 1, 1, 1)
-    if S("dataBarSkillUps") then DataBar.AddSkillUps(self.skillLine, d.rank) end
+    if S("dataBarSkillUps") then
+        local key = d.prof and d.prof.key
+        if ns.Gathering.Has(key) then
+            DataBar.AddGathering(L.TIP_GATHER_NODES, ns.Gathering.Nodes(key, d.rank, d.maxRank))
+            if key == "MINING" then DataBar.AddGathering(L.TIP_GATHER_SMELTING, ns.Gathering.Smelting(d.rank, d.maxRank)) end
+        else
+            DataBar.AddSkillUps(self.skillLine, d.rank)
+        end
+    end
     if self.spellOffset then GameTooltip:AddLine(L.TIP_CLICK_OPEN, 0.4, 0.8, 1) end
     GameTooltip:Show()
 end
