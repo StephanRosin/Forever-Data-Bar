@@ -22,17 +22,21 @@ return function(ns, M, check)
     Settings.Set("dataBarCurrency", true)
     D.UpdateStats()
     check("currencies: shown", cur:IsShown(), true)
-    check("currencies: only what is held, in order", cur.plain, "1500 7 3")
+    check("currencies: known ones at 0 too, marks only held, in order", cur.plain, "1500 0 7 3")
     check("honour: found by name", select(3, Cur.LIST[1].read()), "Honor")
     check("honour: its cap", select(4, Cur.LIST[1].read()), 25000)
     check("item: the game's icon", Cur.IconFile(Cur.LIST[4]), "icon6265")
     Settings.Set("dataBarCurShards", false)
     D.UpdateStats()
-    check("a kind switched off", cur.plain, "1500 3")
+    check("a kind switched off", cur.plain, "1500 0 3")
     Settings.Set("dataBarCurShards", nil)
     currencies[42].quantity, items[6265], items[20558] = 0, 0, 0
     D.UpdateStats()
-    check("nothing held: the part goes", cur:IsShown(), false)
+    check("nothing held: zeros, no marks", cur.plain, "0 0 0")
+    for _, key in ipairs(Cur.KEYS) do Settings.Set("dataBarCur" .. key, false) end
+    D.UpdateStats()
+    check("all kinds off: the part goes", cur:IsShown(), false)
+    for _, key in ipairs(Cur.KEYS) do Settings.Set("dataBarCur" .. key, nil) end
     Settings.Set("dataBarCurrency", false)
 
     -- Hearthstone: the time left (not the global cooldown), else ready.

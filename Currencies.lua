@@ -6,8 +6,8 @@ Info Panel reckons them.
 
 Currencies: honour, Merchant's Favor, Tarnished Undermine Real (currencies),
 soul shards and the battleground marks (items in the bags). Each kind can be
-switched off (dataBarCur<Key>); only what the character has (count > 0)
-shows.
+switched off (dataBarCur<Key>). As in the Info Panel, the currencies and the
+shards show at 0 too (where the client keeps them), the marks only when held.
 
 Hearthstone: the time left, or ready; the click uses it from a secure button
 (DataBar.PlaceHearthClick).
@@ -72,19 +72,20 @@ Currencies.LIST = {
     { key = "Favor", read = function() return FromCurrency(3402) end },   -- Merchant's Favor
     { key = "Real", read = function() return FromCurrency(3469) end },    -- Tarnished Undermine Real
     { key = "Shards", read = function() return FromItem(6265, "Soul Shard") end },
-    { key = "Marks", read = function() return FromItem(20558, "Warsong Gulch Mark of Honor") end },
-    { key = "Marks", read = function() return FromItem(20559, "Arathi Basin Mark of Honor") end },
-    { key = "Marks", read = function() return FromItem(20560, "Alterac Valley Mark of Honor") end },
-    { key = "Marks", read = function() return FromItem(274895, "Darkspear Islands Mark of Honor") end },
+    { key = "Marks", held = true, read = function() return FromItem(20558, "Warsong Gulch Mark of Honor") end },
+    { key = "Marks", held = true, read = function() return FromItem(20559, "Arathi Basin Mark of Honor") end },
+    { key = "Marks", held = true, read = function() return FromItem(20560, "Alterac Valley Mark of Honor") end },
+    { key = "Marks", held = true, read = function() return FromItem(274895, "Darkspear Islands Mark of Honor") end },
 }
 -- The switches, once each, for the options.
 Currencies.KEYS = { "Honor", "Favor", "Real", "Shards", "Marks" }
 
--- Switched on and held.
+-- Switched on and known to the client (held: the marks, only with some).
 function Currencies.On(entry)
     if not ns.Settings.Get("dataBarCur" .. entry.key) then return false end
     local count = entry.read()
-    return (count or 0) > 0
+    if entry.held then return (count or 0) > 0 end
+    return count ~= nil
 end
 
 function Currencies.Shown()
