@@ -372,7 +372,7 @@ function DataBar.AddGathering(heading, list)
     GameTooltip:AddLine(heading, 1, 0.82, 0)
     for _, r in ipairs(list) do
         local c = DataBar.DIFFICULTY_COLOURS[r.difficulty]
-        GameTooltip:AddDoubleLine("  " .. r.name, tostring(r.req), c[1], c[2], c[3], 0.6, 0.6, 0.6)
+        GameTooltip:AddDoubleLine("  " .. (r.icon or "") .. r.name, tostring(r.req), c[1], c[2], c[3], 0.6, 0.6, 0.6)
     end
 end
 
@@ -393,7 +393,7 @@ local function ShowProfTooltip(self)
     if S("dataBarSkillUps") then
         local key = d.prof and d.prof.key
         if ns.Gathering.Has(key) then
-            DataBar.AddGathering(L.TIP_GATHER_NODES, ns.Gathering.Nodes(key, d.rank, d.maxRank))
+            DataBar.AddGathering(key == "MINING" and L.TIP_GATHER_VEINS or L.TIP_GATHER_HERBS, ns.Gathering.Nodes(key, d.rank, d.maxRank))
             if key == "MINING" then DataBar.AddGathering(L.TIP_GATHER_SMELTING, ns.Gathering.Smelting(d.rank, d.maxRank)) end
         else
             DataBar.AddSkillUps(self.skillLine, d.rank)

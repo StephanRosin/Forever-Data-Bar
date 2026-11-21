@@ -5,9 +5,10 @@ Gathering.lua -- which mining veins, herbs and smelting recipes still give
 skill points at the current rank, for the Mining and Herbalism tooltips.
 
 The game tells none of this without a window, so the levels are a fixed table
-from Wowhead (TBC Classic data; Outland entries simply never show below 300).
+from Wowhead (veins and herbs as in Classic and TBC; Outland ones never show
+below 300, the vanilla cap). Smelting is Classic only, see SMELTING.
 A node is orange from its required skill, yellow at +25, green at +50 and grey
-at +100. Smelting uses Wowhead's four numbers per recipe. Names come from the
+at +100. Names come from the
 item the node gives (or the bar a recipe makes), so they follow the client's
 language; the English name stands in until the item is cached.
 -----------------------------------------------------------------------------]]
@@ -25,7 +26,7 @@ local NODES = {
         { 350, 32464, "Nethercite Ore" }, { 375, 23426, "Khorium Ore" },
     },
     HERBALISM = {
-        { 1, 2447, "Peacebloom" }, { 1, 765, "Silverleaf" }, { 1, 22710, "Bloodthistle" },
+        { 1, 2447, "Peacebloom" }, { 1, 765, "Silverleaf" },
         { 15, 2449, "Earthroot" }, { 50, 785, "Mageroyal" }, { 70, 2450, "Briarthorn" },
         { 85, 3820, "Stranglekelp" }, { 100, 2453, "Bruiseweed" }, { 115, 3355, "Wild Steelbloom" },
         { 120, 3369, "Grave Moss" }, { 125, 3356, "Kingsblood" }, { 150, 3357, "Liferoot" },
@@ -41,23 +42,27 @@ local NODES = {
     },
 }
 
--- { orange, yellow, green, grey, bar made, English fallback }. Wowhead gives
--- Dark Iron and Elementium orange 0 (taught by a quest); their real minimum is set.
+-- { orange, yellow, green, grey, bar made, English fallback }, Wowhead Classic
+-- (Forever has vanilla content; TBC raised Silver and gave points for Mithril
+-- and up). Tin is green from the start. Mithril, Truesilver, Dark Iron and
+-- Thorium are grey as soon as learned there, so they are left out.
 local SMELTING = {
-    { 1, 25, 47, 70, 2840, "Copper Bar" }, { 65, 65, 70, 75, 3576, "Tin Bar" },
-    { 65, 65, 90, 115, 2841, "Bronze Bar" }, { 75, 115, 122, 130, 2842, "Silver Bar" },
-    { 125, 130, 145, 160, 3575, "Iron Bar" }, { 155, 170, 177, 185, 3577, "Gold Bar" },
-    { 165, 165, 165, 165, 3859, "Steel Bar" }, { 175, 175, 202, 230, 3860, "Mithril Bar" },
-    { 230, 235, 242, 250, 6037, "Truesilver Bar" }, { 230, 300, 305, 310, 11371, "Dark Iron Bar" },
-    { 250, 250, 270, 290, 12359, "Thorium Bar" }, { 300, 350, 362, 375, 17771, "Elementium Bar" },
-    { 300, 300, 307, 315, 23445, "Fel Iron Bar" }, { 325, 325, 332, 340, 23446, "Adamantite Bar" },
-    { 350, 350, 357, 365, 23447, "Eternium Bar" }, { 350, 355, 367, 380, 23448, "Felsteel Bar" },
+    { 1, 25, 47, 70, 2840, "Copper Bar" }, { 65, 65, 65, 75, 3576, "Tin Bar" },
+    { 65, 65, 90, 115, 2841, "Bronze Bar" }, { 75, 100, 112, 125, 2842, "Silver Bar" },
+    { 125, 130, 135, 140, 3575, "Iron Bar" }, { 155, 170, 177, 185, 3577, "Gold Bar" },
 }
 
 local function itemName(id, fallback)
     local name = C_Item and C_Item.GetItemNameByID and C_Item.GetItemNameByID(id)
     if not name and C_Item and C_Item.RequestLoadItemDataByID then C_Item.RequestLoadItemDataByID(id) end
     return name or fallback
+end
+
+-- The item's icon as a texture escape; GetItemInfoInstant needs no cache.
+local function itemIcon(id)
+    local icon = C_Item and C_Item.GetItemIconByID and C_Item.GetItemIconByID(id)
+    if not icon and GetItemInfoInstant then icon = select(5, GetItemInfoInstant(id)) end
+    return icon and ("|T%s:14:14|t "):format(icon) or ""
 end
 
 -- 0 orange, 1 yellow, 2 green (DataBar.DIFFICULTY_COLOURS), nil when it gives
@@ -78,7 +83,7 @@ local function sorted(list)
     return list
 end
 
--- The veins or herbs of a profession key that give points: { name, difficulty, req }.
+-- The veins or herbs of a profession key that give points: { name, icon, difficulty, req }.
 function Gathering.Nodes(key, rank, maxRank)
     local list = {}
     for _, n in ipairs(NODES[key] or {}) do
@@ -87,7 +92,7 @@ function Gathering.Nodes(key, rank, maxRank)
         if d then
             local name = itemName(n[2], n[3])
             if n[4] then name = name .. " " .. ns.L.TIP_RICH end
-            list[#list + 1] = { name = name, difficulty = d, req = req }
+            list[#list + 1] = { name = name, icon = itemIcon(n[2]), difficulty = d, req = req }
         end
     end
     return sorted(list)
@@ -98,7 +103,7 @@ function Gathering.Smelting(rank, maxRank)
     local list = {}
     for _, s in ipairs(SMELTING) do
         local d = Gathering.Difficulty(rank, s[1], s[2], s[3], s[4], maxRank)
-        if d then list[#list + 1] = { name = itemName(s[5], s[6]), difficulty = d, req = s[1] } end
+        if d then list[#list + 1] = { name = itemName(s[5], s[6]), icon = itemIcon(s[5]), difficulty = d, req = s[1] } end
     end
     return sorted(list)
 end
