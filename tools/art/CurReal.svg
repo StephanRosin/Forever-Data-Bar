@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24"><!-- goblin cog (Undermine); white, tinted in game -->
+<defs><mask id="m"><rect width="24" height="24" fill="#fff"/><circle cx="12" cy="12" r="3.2" fill="#000"/></mask></defs><path mask="url(#m)" fill="#fff" d="M21.95 9.77 L21.95 14.23 L19.45 14.31 L18.90 15.64 L20.61 17.46 L17.46 20.61 L15.64 18.90 L14.31 19.45 L14.23 21.95 L9.77 21.95 L9.69 19.45 L8.36 18.90 L6.54 20.61 L3.39 17.46 L5.10 15.64 L4.55 14.31 L2.05 14.23 L2.05 9.77 L4.55 9.69 L5.10 8.36 L3.39 6.54 L6.54 3.39 L8.36 5.10 L9.69 4.55 L9.77 2.05 L14.23 2.05 L14.31 4.55 L15.64 5.10 L17.46 3.39 L20.61 6.54 L18.90 8.36 L19.45 9.69Z"/>
+</svg>

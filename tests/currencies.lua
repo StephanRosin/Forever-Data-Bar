@@ -41,6 +41,22 @@ return function(ns, M, check)
     D.UpdateStats()
     check("all kinds off: the part goes", cur:IsShown(), false)
     for _, key in ipairs(Cur.KEYS) do Settings.Set("dataBarCur" .. key, nil) end
+    -- Own icons: the bar's, tinted, at the bar's icon size; every one drawn.
+    currencies[42].quantity = 1500
+    Settings.Set("dataBarOwnIcons", true)
+    D.UpdateStats()
+    check("own icons: honour's", cur.slots[1].icon._texture, D.CFG.MEDIA .. "CurHonor")
+    check("own icons: the bar's size", cur.slots[1].icon:GetWidth(), D.CFG.ICON)
+    for _, list in ipairs({ Cur.LIST, ns.CharInfo.STATS }) do
+        for _, item in ipairs(list) do
+            check("own icon drawn: " .. item.art, io.open(ADDONDIR .. "/Media/" .. item.art .. ".tga") ~= nil, true)
+        end
+    end
+    check("own icon drawn: StatHearth", io.open(ADDONDIR .. "/Media/StatHearth.tga") ~= nil, true)
+    Settings.Set("dataBarOwnIcons", nil)
+    D.UpdateStats()
+    check("game icons again", cur.slots[1].icon._texture, 111)
+    currencies[42].quantity = 0
     Settings.Set("dataBarCurrency", false)
 
     -- Hearthstone: the time left (not the global cooldown), else ready.
@@ -51,6 +67,11 @@ return function(ns, M, check)
     D.UpdateStats()
     check("hearthstone: ready", hearth.text:GetText(), "Ready")
     check("hearthstone: its icon", hearth.icon._texture, "icon6948")
+    Settings.Set("dataBarOwnIcons", true)
+    D.UpdateStats()
+    check("hearthstone: own icon", hearth.icon._texture, D.CFG.MEDIA .. "StatHearth")
+    Settings.Set("dataBarOwnIcons", nil)
+    D.UpdateStats()
     cd = { 999, 1.5 }
     check("global cooldown: still ready", Hearth.Left(), 0)
     cd = { 400, 3600 }

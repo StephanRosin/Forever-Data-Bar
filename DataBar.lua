@@ -628,12 +628,14 @@ DataBar.STATS = {
     -- The hearthstone: time left or ready, in the game's icon; used by the
     -- secure button over it (DataBar.PlaceHearthClick), never from here.
     HEARTH = {
-        iconFile = ns.Hearth.Icon,
+        iconFile = function() return S("dataBarOwnIcons") and CFG.MEDIA .. "StatHearth" or ns.Hearth.Icon() end,
         value = function()
             if not ns.Hearth.Owned() then return nil end
+            -- The game's icon untinted; the own one in the bar's colour (nil).
+            local ic = not S("dataBarOwnIcons") and WHITE or nil
             local left = ns.Hearth.Left()
-            if left > 0 then return ns.Hearth.Format(left), nil, WHITE end
-            return L.DATABAR_HEARTH_READY, READY_COLOUR, WHITE
+            if left > 0 then return ns.Hearth.Format(left), nil, ic end
+            return L.DATABAR_HEARTH_READY, READY_COLOUR, ic
         end,
         tip = function(self)
             TipOwner(self)
@@ -715,14 +717,21 @@ end
 -- returns their width. A secret value keeps the width of the last readable
 -- one (or of the sample before any). The readable texts go to g.plain.
 local function FillSlots(g, def, colour)
-    local x, size, plain = 0, ns.CharInfo.IconSize(), {}
+    local own = S("dataBarOwnIcons")
+    local x, size, plain = 0, own and CFG.ICON or ns.CharInfo.IconSize(), {}
+    local tint = own and ns.Themes.IconColor() or WHITE
+    -- Own icons sit as far from their text as the other parts' do.
+    local gap = own and CFG.ICON_GAP or CHAR_ICON_GAP
     for i, item in ipairs(def.slots) do
         local slot, on = g.slots[i], def.slotOn(item)
         slot.icon:SetShown(on)
         slot.text:SetShown(on)
         if on then
-            slot.icon:SetTexture(def.slotIcon(item))
+            slot.icon:SetTexture(own and CFG.MEDIA .. item.art or def.slotIcon(item))
+            slot.icon:SetVertexColor(tint[1], tint[2], tint[3], 1)
             slot.icon:SetSize(size, size)
+            slot.text:ClearAllPoints()
+            slot.text:SetPoint("LEFT", slot.icon, "RIGHT", gap, 0)
             slot.icon:ClearAllPoints()
             slot.icon:SetPoint("LEFT", g, "LEFT", x, 0)
             local text, readable = def.slotText(item)
@@ -730,7 +739,7 @@ local function FillSlots(g, def, colour)
             slot.width = Measure(g.measure, readable and text or def.slotSample(item), readable and nil or slot.width)
             slot.text:SetText(text)
             slot.text:SetTextColor(colour[1], colour[2], colour[3])
-            x = x + size + CHAR_ICON_GAP + slot.width + CHAR_GAP
+            x = x + size + gap + slot.width + CHAR_GAP
         end
     end
     g.plain = table.concat(plain, " ")

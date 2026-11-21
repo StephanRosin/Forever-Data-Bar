@@ -68,17 +68,18 @@ local function Crit()
 end
 
 -- In the order they line up; pct: a percentage. spell: its icon stands for
--- the value (the game's own), icon: the file when the spell has none.
+-- the value (the game's own), icon: the file when the spell has none; art:
+-- the bar's own icon (dataBarOwnIcons, Media/<art>.tga).
 CharInfo.STATS = {
-    { id = "Spell", read = SpellPower, icon = "Spell_Fire_Fireball02" },
-    { id = "Heal", read = function() return GetSpellBonusHealing() end, icon = "Spell_Holy_FlashHeal" },
-    { id = "Hit", read = Hit, pct = true, spell = 78, icon = "Ability_Rogue_Ambush" },            -- Heroic Strike
-    { id = "Crit", read = Crit, pct = true, spell = 12294, icon = "Ability_Warrior_SavageBlow" }, -- Mortal Strike
-    { id = "AP", read = AttackPower, spell = 6673, icon = "Ability_Warrior_BattleShout" },       -- Battle Shout
-    { id = "Dodge", read = function() return GetDodgeChance() end, pct = true, spell = 81, icon = "Ability_Rogue_Feint" },
-    { id = "Parry", read = function() return GetParryChance() end, pct = true, spell = 3127, icon = "Ability_Parry" },
-    { id = "Armor", read = function() return select(2, UnitArmor("player")) end, icon = "INV_Chest_Cloth_21" },
-    { id = "Block", read = function() return GetBlockChance() end, pct = true, spell = 2565, icon = "Ability_Defend" }, -- Shield Block
+    { id = "Spell", art = "StatSpell", read = SpellPower, icon = "Spell_Fire_Fireball02" },
+    { id = "Heal", art = "StatHeal", read = function() return GetSpellBonusHealing() end, icon = "Spell_Holy_FlashHeal" },
+    { id = "Hit", art = "StatHit", read = Hit, pct = true, spell = 78, icon = "Ability_Rogue_Ambush" },            -- Heroic Strike
+    { id = "Crit", art = "StatCrit", read = Crit, pct = true, spell = 12294, icon = "Ability_Warrior_SavageBlow" }, -- Mortal Strike
+    { id = "AP", art = "StatAP", read = AttackPower, spell = 6673, icon = "Ability_Warrior_BattleShout" },       -- Battle Shout
+    { id = "Dodge", art = "StatDodge", read = function() return GetDodgeChance() end, pct = true, spell = 81, icon = "Ability_Rogue_Feint" },
+    { id = "Parry", art = "StatParry", read = function() return GetParryChance() end, pct = true, spell = 3127, icon = "Ability_Parry" },
+    { id = "Armor", art = "StatArmor", read = function() return select(2, UnitArmor("player")) end, icon = "INV_Chest_Cloth_21" },
+    { id = "Block", art = "StatBlock", read = function() return GetBlockChance() end, pct = true, spell = 2565, icon = "Ability_Defend" }, -- Shield Block
 }
 
 -- Spell power and healing: a damage and a healing spell of the class (as the Info Panel's).

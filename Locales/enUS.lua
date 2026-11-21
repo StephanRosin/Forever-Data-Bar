@@ -217,6 +217,7 @@ L.DATABAR_THEME_AND_COLOR = "%s · %s"
 L.OPT_DATABAR_SHOW = "Show"
 L.OPT_DATABAR_X = "Offset X"
 L.OPT_DATABAR_PROF_COLOURS = "Own colours (professions, standing)"
+L.OPT_DATABAR_OWN_ICONS = "Own icons for stats, currencies and hearthstone"
 -- Hated .. Exalted, short, for the data bar.
 L.DATABAR_STANDING_1 = "Ha"
 L.DATABAR_STANDING_2 = "Hs"

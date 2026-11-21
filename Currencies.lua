@@ -66,17 +66,18 @@ local function FromItem(id, fallback)
     return count, icon, name or fallback
 end
 
--- In the order they line up; key: the switch dataBarCur<key> (the marks share one).
+-- In the order they line up; key: the switch dataBarCur<key> (the marks share one);
+-- art: the bar's own icon (dataBarOwnIcons).
 -- read: count, icon, name, max.
 Currencies.LIST = {
-    { key = "Honor", read = function() return FromCurrency(HonorID()) end },
-    { key = "Favor", read = function() return FromCurrency(3402) end },   -- Merchant's Favor
-    { key = "Real", read = function() return FromCurrency(3469) end },    -- Tarnished Undermine Real
-    { key = "Shards", read = function() return FromItem(6265, "Soul Shard") end },
-    { key = "Marks", held = true, read = function() return FromItem(20558, "Warsong Gulch Mark of Honor") end },
-    { key = "Marks", held = true, read = function() return FromItem(20559, "Arathi Basin Mark of Honor") end },
-    { key = "Marks", held = true, read = function() return FromItem(20560, "Alterac Valley Mark of Honor") end },
-    { key = "Marks", held = true, read = function() return FromItem(274895, "Darkspear Islands Mark of Honor") end },
+    { key = "Honor", art = "CurHonor", read = function() return FromCurrency(HonorID()) end },
+    { key = "Favor", art = "CurFavor", read = function() return FromCurrency(3402) end },   -- Merchant's Favor
+    { key = "Real", art = "CurReal", read = function() return FromCurrency(3469) end },    -- Tarnished Undermine Real
+    { key = "Shards", art = "CurShards", read = function() return FromItem(6265, "Soul Shard") end },
+    { key = "Marks", held = true, art = "MarkWSG", read = function() return FromItem(20558, "Warsong Gulch Mark of Honor") end },
+    { key = "Marks", held = true, art = "MarkAB", read = function() return FromItem(20559, "Arathi Basin Mark of Honor") end },
+    { key = "Marks", held = true, art = "MarkAV", read = function() return FromItem(20560, "Alterac Valley Mark of Honor") end },
+    { key = "Marks", held = true, art = "MarkDS", read = function() return FromItem(274895, "Darkspear Islands Mark of Honor") end },
 }
 -- The switches, once each, for the options.
 Currencies.KEYS = { "Honor", "Favor", "Real", "Shards", "Marks" }

@@ -192,6 +192,7 @@ L.DATABAR_THEME_AND_COLOR = "%s · %s"
 L.OPT_DATABAR_SHOW = "Anzeigen"
 L.OPT_DATABAR_X = "Versatz X"
 L.OPT_DATABAR_PROF_COLOURS = "Eigene Farben (Berufe, Rufstufe)"
+L.OPT_DATABAR_OWN_ICONS = "Eigene Symbole für Werte, Währungen und Ruhestein"
 -- Hated .. Exalted, short, for the data bar.
 L.DATABAR_STANDING_1 = "H"
 L.DATABAR_STANDING_2 = "Fe"

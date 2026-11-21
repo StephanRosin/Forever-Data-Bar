@@ -192,6 +192,7 @@ L.DATABAR_THEME_AND_COLOR = "%s · %s"
 L.OPT_DATABAR_SHOW = "Afficher"
 L.OPT_DATABAR_X = "Décalage X"
 L.OPT_DATABAR_PROF_COLOURS = "Couleurs propres (métiers, réputation)"
+L.OPT_DATABAR_OWN_ICONS = "Icônes propres pour caractéristiques, monnaies et pierre de foyer"
 -- Hated .. Exalted, short, for the data bar.
 L.DATABAR_STANDING_1 = "D"
 L.DATABAR_STANDING_2 = "Hs"

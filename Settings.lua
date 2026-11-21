@@ -19,6 +19,9 @@ Settings.DEFAULTS = {
     dataBarEdge = true,         -- a line in the accent on the side towards the game
     dataBarGear = true,         -- the options' gear at the right edge
     dataBarProfColours = true,  -- professions and standings in their own colours, not the accent
+    -- The bar's own icons (white, tinted) for the character stats, currencies
+    -- and hearthstone instead of the game's; off: as before.
+    dataBarOwnIcons = false,
     -- The parts: shown, column (1..5, DataBar.Layout; parts in one column
     -- line up in this order) and a shift to the right (px).
     dataBarXp = true, dataBarXpColumn = 1, dataBarXpX = 0, dataBarXpWidth = 200,

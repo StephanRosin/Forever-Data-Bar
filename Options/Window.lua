@@ -443,6 +443,7 @@ local function dataBarRows()
         colorRow("dataBarAccent", "OPT_DATABAR_ACCENT", true),
         check("dataBarEdge", "OPT_DATABAR_EDGE"),
         check("dataBarProfColours", "OPT_DATABAR_PROF_COLOURS"),
+        check("dataBarOwnIcons", "OPT_DATABAR_OWN_ICONS"),
         check("dataBarGear", "OPT_DATABAR_GEAR"),
         { type = "header", label = "OPT_HIDE" },
         check("hideInCombat", "OPT_DATABAR_HIDE_COMBAT"),
