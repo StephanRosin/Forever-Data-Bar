@@ -33,6 +33,10 @@ return function(ns, M, check)
     currencies[42].quantity, items[6265], items[20558] = 0, 0, 0
     D.UpdateStats()
     check("nothing held: zeros, no marks", cur.plain, "0 0 0")
+    Settings.Set("dataBarCurZero", false)
+    D.UpdateStats()
+    check("zeros switched off: the part goes", cur:IsShown(), false)
+    Settings.Set("dataBarCurZero", nil)
     for _, key in ipairs(Cur.KEYS) do Settings.Set("dataBarCur" .. key, false) end
     D.UpdateStats()
     check("all kinds off: the part goes", cur:IsShown(), false)

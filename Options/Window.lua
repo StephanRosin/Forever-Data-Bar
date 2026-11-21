@@ -498,6 +498,9 @@ local function dataBarPartRows()
                 show.enabled = on
                 rows[#rows + 1] = show
             end
+            local zero = check("dataBarCurZero", "OPT_DATABAR_CUR_ZERO")
+            zero.enabled = on
+            rows[#rows + 1] = zero
             rows[#rows + 1] = { type = "text", label = "OPT_DATABAR_CURRENCY_HINT" }
         end
         if part.id == "PROFS" then

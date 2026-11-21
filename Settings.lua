@@ -44,6 +44,7 @@ Settings.DEFAULTS = {
     -- Currencies and marks (Currencies.lua), each kind switched on its own; and the hearthstone.
     dataBarCurrency = false, dataBarCurrencyColumn = 2, dataBarCurrencyX = 0,
     dataBarCurHonor = true, dataBarCurFavor = true, dataBarCurReal = true, dataBarCurShards = true, dataBarCurMarks = true,
+    dataBarCurZero = true,      -- currencies and shards at 0 too (the marks only when held)
     dataBarHearth = false, dataBarHearthColumn = 2, dataBarHearthX = 0,
     -- Forever Themes' central theme: shows only while that addon is loaded.
     dataBarTheme = true, dataBarThemeColumn = 5, dataBarThemeX = 0,

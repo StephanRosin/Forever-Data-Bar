@@ -6,8 +6,9 @@ Info Panel reckons them.
 
 Currencies: honour, Merchant's Favor, Tarnished Undermine Real (currencies),
 soul shards and the battleground marks (items in the bags). Each kind can be
-switched off (dataBarCur<Key>). As in the Info Panel, the currencies and the
-shards show at 0 too (where the client keeps them), the marks only when held.
+switched off (dataBarCur<Key>). With dataBarCurZero (on), as in the Info
+Panel, the currencies and the shards show at 0 too (where the client keeps
+them); the marks only when held.
 
 Hearthstone: the time left, or ready; the click uses it from a secure button
 (DataBar.PlaceHearthClick).
@@ -84,7 +85,7 @@ Currencies.KEYS = { "Honor", "Favor", "Real", "Shards", "Marks" }
 function Currencies.On(entry)
     if not ns.Settings.Get("dataBarCur" .. entry.key) then return false end
     local count = entry.read()
-    if entry.held then return (count or 0) > 0 end
+    if entry.held or not ns.Settings.Get("dataBarCurZero") then return (count or 0) > 0 end
     return count ~= nil
 end
 
