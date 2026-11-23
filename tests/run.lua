@@ -803,6 +803,14 @@ do
     check("click: opens the recipe", T.Open(T.LIST[2]) and opened, 17187)
     check("click: not the salt shaker", T.Open(T.LIST[5]), false)
     check("own icon art", T.LIST[1].art, "TimedMooncloth")
+    check("dedicated study: not known, not shown", T.Can(T.LIST[6]), nil)
+    known[1225469] = true
+    C_Spell.GetSpellTexture = function(id) return "SPELL" .. id end
+    check("dedicated study: its spell's icon", T.Icon(T.LIST[6]), "SPELL1225469")
+    cds[1225469] = { startTime = M.state.time - 3600, duration = 82800 }
+    check("dedicated study: time left", T.EntryLeft(T.LIST[6]), 79200)
+    check("dedicated study: no recipe to open", T.Open(T.LIST[6]), false)
+    check("dedicated study: not under a profession", #T.For("ALCHEMY"), 1)
     issecretvalue = function(v) return v == 999 end
     check("secret: unknown", T.Left(999, 5), nil)
     issecretvalue = nil

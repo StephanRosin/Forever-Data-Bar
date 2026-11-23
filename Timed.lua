@@ -4,7 +4,8 @@ local L = ns.L
 --[[---------------------------------------------------------------------------
 Timed.lua -- crafts with a long cooldown (WoW: Forever 1.60.1 spell tables):
 mooncloth, the transmutes (one shared cooldown), iron to gold, mithril to
-truesilver and the salt shaker. Only those this character can make: a recipe
+truesilver, the salt shaker and the legacy talent Dedicated Study (a skill
+point a day in the lowest profession). Only those this character can make: a recipe
 it knows (the spell book, or seen learned in its profession window), the salt
 shaker in the bags. The game keeps the cooldowns; nothing is stored but which
 recipes were seen (ForeverDataBarChar.timed[spellID] = true).
@@ -28,6 +29,8 @@ Timed.LIST = {
     { key = "GOLD", art = "TimedGold", prof = "ALCHEMY", spells = { 11479 } },             -- Iron to Gold
     { key = "TRUESILVER", art = "TimedTruesilver", prof = "ALCHEMY", spells = { 11480 } }, -- Mithril to Truesilver
     { key = "SALT", art = "TimedSalt", prof = "LEATHERWORKING", item = 15846, makes = 15409 }, -- Salt Shaker
+    -- Dedicated Study (SpellCooldowns: category 23 h); no profession, no recipe, its spell's icon.
+    { key = "STUDY", spells = { 1225469 } },
 }
 Timed.IDS = {}
 for _, e in ipairs(Timed.LIST) do for _, id in ipairs(e.spells or {}) do Timed.IDS[id] = true end end
@@ -90,7 +93,7 @@ end
 
 -- Opens its profession on the recipe (as Blizzard's recipe tracker does); not the salt shaker, not in combat.
 function Timed.Open(e)
-    if e.item or InCombatLockdown() then return false end
+    if e.item or not e.prof or InCombatLockdown() then return false end
     local id = Timed.Can(e)
     if not (id and C_TradeSkillUI and C_TradeSkillUI.OpenRecipe) then return false end
     if not ProfessionsFrame and ProfessionsFrame_LoadUI then ProfessionsFrame_LoadUI() end
@@ -104,10 +107,13 @@ function Timed.Name(e)
     return e.label and L[e.label] or C_Spell.GetSpellName(id) or ("spell:" .. id)
 end
 
--- The icon of what it makes (the transmutes: of the first one known, Arcanite before the elements).
+-- The icon of what it makes (the transmutes: of the first one known, Arcanite before the elements);
+-- a spell that makes nothing: its own.
 function Timed.Icon(e)
-    local item = e.makes or Timed.MAKES[Timed.Can(e)]
-    return item and C_Item.GetItemIconByID and C_Item.GetItemIconByID(item) or 134400   -- the question mark
+    local id = Timed.Can(e)
+    local item = e.makes or Timed.MAKES[id]
+    if item then return C_Item.GetItemIconByID and C_Item.GetItemIconByID(item) or 134400 end   -- the question mark
+    return C_Spell.GetSpellTexture and C_Spell.GetSpellTexture(id) or 134400
 end
 
 -- "Ready", "2d 23h", "5h 12m", "40m": short, for the bar.
