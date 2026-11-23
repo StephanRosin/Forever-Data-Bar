@@ -198,6 +198,12 @@ ns.Tip = setmetatable({}, { __index = function(_, method)
     if method == "Hide" then
         return function() active:Hide() end
     end
+    if method == "Show" then
+        return function()
+            if active == GameTooltip then Tooltip.BarFont(GameTooltip) end
+            return active:Show()
+        end
+    end
     return function(_, ...) return active[method](active, ...) end
 end })
 
@@ -206,17 +212,54 @@ function Tooltip.LineHeight()
     return select(2, ns.DataBar.FontFor("dataBar")) + ROW_GAP
 end
 
-local TIP_LINE_FALLBACK, TIP_LINE_SPACING = 12, 2
+local TIP_LINE_SPACING = 2
 
--- A blank line's height in tip: ours from the bar's font, Blizzard's from its font object.
+-- A blank line's height in tip: ours from the bar's font; Blizzard's too,
+-- as Tooltip.BarFont sets its lines in it. Sizes from our own settings,
+-- never read back from the tooltip's lines or frames: those can be secret
+-- values once another addon has filled the tooltip.
 local function BlankHeight(tip)
     if tip ~= GameTooltip then return Tooltip.LineHeight() end
-    -- Sizes from the font object and our own numbers, never read back from
-    -- the tooltip's lines or frames: those can be secret values once another
-    -- addon has filled the tooltip, and arithmetic on them errors.
-    local _, size = GameTooltipText:GetFont()
-    if issecretvalue and issecretvalue(size) then size = nil end
-    return (size or TIP_LINE_FALLBACK) + TIP_LINE_SPACING
+    return select(2, ns.DataBar.FontFor("dataBar")) + TIP_LINE_SPACING
+end
+
+-- Classic: Blizzard's tooltip keeps its frame, but the bar's lines take the
+-- bar's font and text colour (as the reputation table in it), the first
+-- line one size up; red, green and the click hints keep their colour.
+-- What each line had comes back when the tooltip is cleared, so no other
+-- tooltip changes.
+local restyled, hooked = {}, false
+local function RestoreFonts()
+    for fs, font in pairs(restyled) do
+        if font.object then fs:SetFontObject(font.object) else fs:SetFont(font[1], font[2], font[3]) end
+        restyled[fs] = nil
+    end
+end
+
+function Tooltip.BarFont(tip)
+    local path, size, outline, text = ns.DataBar.FontFor("dataBar")
+    if not hooked then
+        hooked = true   -- a flag of our own: nothing written into Blizzard's frame
+        tip:HookScript("OnTooltipCleared", RestoreFonts)
+    end
+    local name = tip:GetName()
+    for i = 1, tip:NumLines() do
+        for _, side in ipairs({ "Left", "Right" }) do
+            local fs = _G[name .. "Text" .. side .. i]
+            if fs then
+                if not restyled[fs] then
+                    local object = fs:GetFontObject()
+                    restyled[fs] = object and { object = object } or { fs:GetFont() }
+                end
+                fs:SetFont(path, size + (i == 1 and 1 or 0), outline)
+                -- White and greys in the bar's text colour (AddLine sets the colour anew each time).
+                local r, g, b = fs:GetTextColor()
+                if not (issecretvalue and issecretvalue(r)) and r == g and g == b and r >= GREY_FROM then
+                    fs:SetTextColor(text[1], text[2], text[3], r)
+                end
+            end
+        end
+    end
 end
 
 -- A frame of our own (f.width, f.height) inside tip, over blank lines: not

@@ -176,6 +176,18 @@ function GameTooltip:GetLeftLine(i)
     return self._left[i]
 end
 function GameTooltip:IsOwned() return true end
+-- Its line font strings, as the client names them, with font objects.
+GameTooltipHeaderText = { name = "GameTooltipHeaderText" }
+for i = 1, 4 do
+    for _, side in ipairs({ "Left", "Right" }) do
+        local fs = GameTooltip:CreateFontString()
+        fs._fontObject = (i == 1 and side == "Left") and GameTooltipHeaderText or GameTooltipText
+        function fs:GetFontObject() return self._fontObject end
+        function fs:GetTextColor() local c = self._textColor or { 1, 1, 1, 1 } return c[1], c[2], c[3], c[4] end
+        function fs:SetFontObject(o) self._fontObject = o; self._font = { "Fonts\\FRIZQT__.TTF", 12, "" } end
+        _G["GameTooltipText" .. side .. i] = fs
+    end
+end
 function GameTooltip:SetMinimumWidth(v) self._minWidth = v end
 DEFAULT_CHAT_FRAME = { AddMessage = function(_, m) M.chat[#M.chat + 1] = m end }
 SlashCmdList = {}
