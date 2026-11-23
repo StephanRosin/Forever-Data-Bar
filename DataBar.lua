@@ -351,18 +351,18 @@ DataBar.DIFFICULTY_COLOURS = { [0] = { 1, 0.5, 0.25 }, { 1, 1, 0 }, { 0.25, 0.75
 -- The tooltip's part of Crafts.SkillUps: each recipe in its colour, how often.
 function DataBar.AddSkillUps(skillLine, rank)
     if not ns.Crafts.Known(skillLine) then
-        GameTooltip:AddLine(L.TIP_SKILLUPS_UNKNOWN, 0.6, 0.6, 0.6, true)
+        ns.Tip:AddLine(L.TIP_SKILLUPS_UNKNOWN, 0.6, 0.6, 0.6, true)
         return
     end
     local list = ns.Crafts.SkillUps(skillLine, rank)
     if #list == 0 then
-        GameTooltip:AddLine(L.TIP_SKILLUPS_NONE, 0.6, 0.6, 0.6)
+        ns.Tip:AddLine(L.TIP_SKILLUPS_NONE, 0.6, 0.6, 0.6)
         return
     end
-    GameTooltip:AddLine(L.TIP_SKILLUPS, 1, 0.82, 0)
+    ns.Tip:AddLine(L.TIP_SKILLUPS, 1, 0.82, 0)
     for _, r in ipairs(list) do
         local c = DataBar.DIFFICULTY_COLOURS[r.difficulty] or DataBar.DIFFICULTY_COLOURS[2]
-        GameTooltip:AddDoubleLine("  " .. r.name, "x" .. r.times, c[1], c[2], c[3], 1, 1, 1)
+        ns.Tip:AddDoubleLine("  " .. r.name, "x" .. r.times, c[1], c[2], c[3], 1, 1, 1)
     end
 end
 
@@ -370,12 +370,12 @@ end
 function DataBar.AddTimed(prof)
     local list = ns.Timed.For(prof)
     if #list == 0 then return end
-    GameTooltip:AddLine(L.TIP_TIMED, 1, 0.82, 0)
+    ns.Tip:AddLine(L.TIP_TIMED, 1, 0.82, 0)
     for _, t in ipairs(list) do
         if t.left == 0 then
-            GameTooltip:AddDoubleLine("  " .. t.name, L.TIP_TIMED_READY, 1, 1, 1, 0.25, 1, 0.25)
+            ns.Tip:AddDoubleLine("  " .. t.name, L.TIP_TIMED_READY, 1, 1, 1, 0.25, 1, 0.25)
         else
-            GameTooltip:AddDoubleLine("  " .. t.name, t.left and ns.Xp.Duration(t.left) or "?", 1, 1, 1, 1, 1, 1)
+            ns.Tip:AddDoubleLine("  " .. t.name, t.left and ns.Xp.Duration(t.left) or "?", 1, 1, 1, 1, 1, 1)
         end
     end
 end
@@ -384,13 +384,13 @@ end
 -- grey; nothing when both lists are empty.
 function DataBar.AddGathering(heading, list, nextList)
     if #list == 0 and #(nextList or {}) == 0 then return end
-    GameTooltip:AddLine(heading, 1, 0.82, 0)
+    ns.Tip:AddLine(heading, 1, 0.82, 0)
     for _, r in ipairs(list) do
         local c = DataBar.DIFFICULTY_COLOURS[r.difficulty]
-        GameTooltip:AddDoubleLine("  " .. r.icon .. r.name, tostring(r.req), c[1], c[2], c[3], 0.6, 0.6, 0.6)
+        ns.Tip:AddDoubleLine("  " .. r.icon .. r.name, tostring(r.req), c[1], c[2], c[3], 0.6, 0.6, 0.6)
     end
     for _, r in ipairs(nextList or {}) do
-        GameTooltip:AddDoubleLine("  " .. r.icon .. L.TIP_GATHER_NEXT .. " " .. r.name, tostring(r.req), 0.6, 0.6, 0.6, 0.6, 0.6, 0.6)
+        ns.Tip:AddDoubleLine("  " .. r.icon .. L.TIP_GATHER_NEXT .. " " .. r.name, tostring(r.req), 0.6, 0.6, 0.6, 0.6, 0.6, 0.6)
     end
 end
 
@@ -403,11 +403,11 @@ end
 local function ShowProfTooltip(self)
     local d = self.data
     if not d then return end
-    GameTooltip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
-    GameTooltip:AddLine(ns.Data.ProfessionLabel(d), 1, 1, 1)
-    GameTooltip:AddDoubleLine(L.TIP_RANK, ("%d / %d"):format(d.rank, d.maxRank), 0.8, 0.8, 0.8, 1, 1, 1)
+    ns.Tip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
+    ns.Tip:AddLine(ns.Data.ProfessionLabel(d), 1, 1, 1)
+    ns.Tip:AddDoubleLine(L.TIP_RANK, ("%d / %d"):format(d.rank, d.maxRank), 0.8, 0.8, 0.8, 1, 1, 1)
     local remaining = math.max(0, d.maxRank - d.rank)
-    GameTooltip:AddDoubleLine(L.TIP_TO_CAP, tostring(remaining), 0.8, 0.8, 0.8, 1, 1, 1)
+    ns.Tip:AddDoubleLine(L.TIP_TO_CAP, tostring(remaining), 0.8, 0.8, 0.8, 1, 1, 1)
     if S("dataBarSkillUps") then
         local key = d.prof and d.prof.key
         if ns.Gathering.Has(key) then
@@ -418,30 +418,44 @@ local function ShowProfTooltip(self)
         end
     end
     DataBar.AddTimed(d.prof and d.prof.key)
-    if self.spellOffset then GameTooltip:AddLine(L.TIP_CLICK_OPEN, 0.4, 0.8, 1) end
-    GameTooltip:Show()
+    if self.spellOffset then ns.Tip:AddLine(L.TIP_CLICK_OPEN, 0.4, 0.8, 1) end
+    ns.Tip:Show()
 end
 
-local function HideTooltip(self)
-    if GameTooltip:IsOwned(self) then GameTooltip:Hide() end
-end
+local function HideTooltip(self) ns.Tooltip.HideFor(self) end
 
 local function TalentTooltip(self)
-    GameTooltip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
-    GameTooltip:AddLine(L.TIP_UNSPENT_TALENTS, 1, 1, 1)
-    GameTooltip:AddLine(L.TIP_UNSPENT_TALENTS_CLICK, 0.4, 0.8, 1)
-    GameTooltip:Show()
+    ns.Tip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
+    ns.Tip:AddLine(L.TIP_UNSPENT_TALENTS, 1, 1, 1)
+    ns.Tip:AddLine(L.TIP_UNSPENT_TALENTS_CLICK, 0.4, 0.8, 1)
+    ns.Tip:Show()
+end
+
+-- Compact reputation (dataBarRepsCompact): every watched faction in one tooltip.
+local function ShowRepsTooltip(self)
+    ns.Tip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
+    ns.Tip:AddLine(L.DATABAR_PART_REPS, 1, 1, 1)
+    for i = 1, ns.CFG.NUM_REP_SLOTS do
+        local d = ns.Data.RepData(i)
+        if d then
+            local c = d.colour or { 1, 1, 1 }
+            ns.Tip:AddDoubleLine(d.name, ("%s  %d / %d"):format(d.standingText or "", d.rank, d.maxRank),
+                0.8, 0.8, 0.8, c[1], c[2], c[3])
+        end
+    end
+    ns.Tip:AddLine(L.TIP_REPS_COMPACT_CLICK, 0.4, 0.8, 1)
+    ns.Tip:Show()
 end
 
 local function ShowRepTooltip(self)
     local d = self.data
     if not d then return end
-    GameTooltip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
-    GameTooltip:AddLine(d.name, 1, 1, 1)
-    GameTooltip:AddDoubleLine(d.standingText or "", ("%d / %d"):format(d.rank, d.maxRank), 0.8, 0.8, 0.8, 1, 1, 1)
-    GameTooltip:AddLine(L.TIP_REP_LEFT, 0.4, 0.8, 1)
-    GameTooltip:AddLine(L.TIP_REP_RIGHT, 0.4, 0.8, 1)
-    GameTooltip:Show()
+    ns.Tip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
+    ns.Tip:AddLine(d.name, 1, 1, 1)
+    ns.Tip:AddDoubleLine(d.standingText or "", ("%d / %d"):format(d.rank, d.maxRank), 0.8, 0.8, 0.8, 1, 1, 1)
+    ns.Tip:AddLine(L.TIP_REP_LEFT, 0.4, 0.8, 1)
+    ns.Tip:AddLine(L.TIP_REP_RIGHT, 0.4, 0.8, 1)
+    ns.Tip:Show()
 end
 
 -- shortcut: opens only through the spellbook route (Forever 1.60 has it);
@@ -545,7 +559,7 @@ function DataBar.CloseColours(a, b)
 end
 
 local function TipOwner(self)
-    GameTooltip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
+    ns.Tip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
 end
 
 -- Each: its icon, its value (text, text colour, icon colour; nil text:
@@ -571,10 +585,10 @@ DataBar.STATS = {
         tip = function(self)
             local _, slot = DataBar.WorstDurability()
             TipOwner(self)
-            GameTooltip:AddLine(L.DATABAR_PART_DURA, 1, 1, 1)
+            ns.Tip:AddLine(L.DATABAR_PART_DURA, 1, 1, 1)
             local link = slot and GetInventoryItemLink and GetInventoryItemLink("player", slot)
-            if link then GameTooltip:AddLine(L.DATABAR_TIP_DURA_WORST:format(link), 0.8, 0.8, 0.8) end
-            GameTooltip:Show()
+            if link then ns.Tip:AddLine(L.DATABAR_TIP_DURA_WORST:format(link), 0.8, 0.8, 0.8) end
+            ns.Tip:Show()
         end,
         -- No click: the character window opened from addon code is tainted,
         -- and its health text then fails on Forever's secret values.
@@ -593,11 +607,11 @@ DataBar.STATS = {
         tip = function(self)
             local free, total, special = DataBar.BagSpace()
             TipOwner(self)
-            GameTooltip:AddLine(L.DATABAR_PART_BAGS, 1, 1, 1)
-            if free then GameTooltip:AddLine(L.DATABAR_TIP_BAGS_FREE:format(free, total), 0.8, 0.8, 0.8) end
-            if (special or 0) > 0 then GameTooltip:AddLine(L.DATABAR_TIP_BAGS_SPECIAL:format(special), 0.8, 0.8, 0.8) end
-            GameTooltip:AddLine(L.DATABAR_TIP_BAGS_CLICK, 0.4, 0.8, 1)
-            GameTooltip:Show()
+            ns.Tip:AddLine(L.DATABAR_PART_BAGS, 1, 1, 1)
+            if free then ns.Tip:AddLine(L.DATABAR_TIP_BAGS_FREE:format(free, total), 0.8, 0.8, 0.8) end
+            if (special or 0) > 0 then ns.Tip:AddLine(L.DATABAR_TIP_BAGS_SPECIAL:format(special), 0.8, 0.8, 0.8) end
+            ns.Tip:AddLine(L.DATABAR_TIP_BAGS_CLICK, 0.4, 0.8, 1)
+            ns.Tip:Show()
         end,
         -- Looked up at the click: bag addons such as Baganator replace it after we load.
         click = function() if ToggleAllBags then ToggleAllBags() end end,
@@ -606,6 +620,7 @@ DataBar.STATS = {
     -- No part icon: each value brings its own.
     -- Each value in a text of its own (FillChar): a secret one is shown, never joined.
     CHAR = {
+        compact = { key = "dataBarCharCompact", icon = "StatChar", label = "DATABAR_COMPACT_CHAR" },
         slots = ns.CharInfo.STATS,
         slotOn = function(stat) return ns.CharInfo.Chosen(stat.id) end,
         slotIcon = ns.CharInfo.IconFile,
@@ -614,16 +629,17 @@ DataBar.STATS = {
         value = function() return #ns.CharInfo.Shown() > 0 and "" or nil end,
         tip = function(self)
             TipOwner(self)
-            GameTooltip:AddLine(L.DATABAR_PART_CHAR, 1, 1, 1)
+            ns.Tip:AddLine(L.DATABAR_PART_CHAR, 1, 1, 1)
             for _, stat in ipairs(ns.CharInfo.Shown()) do
-                GameTooltip:AddDoubleLine(ns.CharInfo.Icon(stat) .. " " .. L["CHAR_STAT_" .. stat.id:upper()],
+                ns.Tip:AddDoubleLine(ns.CharInfo.Icon(stat) .. " " .. L["CHAR_STAT_" .. stat.id:upper()],
                     (ns.CharInfo.Text(stat, true)), 0.8, 0.8, 0.8, 1, 1, 1)
             end
-            GameTooltip:Show()
+            ns.Tip:Show()
         end,
     },
     -- Currencies and marks held (Currencies.lua), each with the game's icon.
     CURRENCY = {
+        compact = { key = "dataBarCurrencyCompact", icon = "StatCurrency", label = "DATABAR_COMPACT_CURRENCY" },
         slots = ns.Currencies.LIST,
         slotOn = ns.Currencies.On,
         slotIcon = ns.Currencies.IconFile,
@@ -631,13 +647,13 @@ DataBar.STATS = {
         value = function() return #ns.Currencies.Shown() > 0 and "" or nil end,
         tip = function(self)
             TipOwner(self)
-            GameTooltip:AddLine(L.DATABAR_PART_CURRENCY, 1, 1, 1)
+            ns.Tip:AddLine(L.DATABAR_PART_CURRENCY, 1, 1, 1)
             for _, entry in ipairs(ns.Currencies.Shown()) do
                 local count, icon, name, max = entry.read()
                 local text = max and ("%d / %d"):format(count, max) or tostring(count)
-                GameTooltip:AddDoubleLine(("|T%s:16|t %s"):format(icon or 134400, name or ""), text, 0.8, 0.8, 0.8, 1, 1, 1)
+                ns.Tip:AddDoubleLine(("|T%s:16|t %s"):format(icon or 134400, name or ""), text, 0.8, 0.8, 0.8, 1, 1, 1)
             end
-            GameTooltip:Show()
+            ns.Tip:Show()
         end,
     },
     -- The hearthstone: time left or ready, in the game's icon; used by the
@@ -654,13 +670,13 @@ DataBar.STATS = {
         end,
         tip = function(self)
             TipOwner(self)
-            GameTooltip:AddLine(ns.Hearth.Name() or L.DATABAR_PART_HEARTH, 1, 1, 1)
+            ns.Tip:AddLine(ns.Hearth.Name() or L.DATABAR_PART_HEARTH, 1, 1, 1)
             local where = GetBindLocation and GetBindLocation()
-            if where and where ~= "" then GameTooltip:AddLine(L.DATABAR_TIP_HEARTH_BOUND:format(where), 0.8, 0.8, 0.8) end
+            if where and where ~= "" then ns.Tip:AddLine(L.DATABAR_TIP_HEARTH_BOUND:format(where), 0.8, 0.8, 0.8) end
             local left = ns.Hearth.Left()
-            if left > 0 then GameTooltip:AddLine(ns.Hearth.Format(left), 0.8, 0.8, 0.8) end
-            GameTooltip:AddLine(InCombatLockdown() and L.DATABAR_TIP_HEARTH_COMBAT or L.DATABAR_TIP_HEARTH_CLICK, 0.4, 0.8, 1)
-            GameTooltip:Show()
+            if left > 0 then ns.Tip:AddLine(ns.Hearth.Format(left), 0.8, 0.8, 0.8) end
+            ns.Tip:AddLine(InCombatLockdown() and L.DATABAR_TIP_HEARTH_COMBAT or L.DATABAR_TIP_HEARTH_CLICK, 0.4, 0.8, 1)
+            ns.Tip:Show()
         end,
     },
     -- Crafts with a long cooldown this character can make (Timed.lua): each in its game icon, ready or the time left.
@@ -676,14 +692,14 @@ DataBar.STATS = {
             TipOwner(owner)
             local left = ns.Timed.EntryLeft(e)
             local c = left == 0 and READY_COLOUR or WHITE
-            GameTooltip:AddDoubleLine(("|T%s:16|t %s"):format(ns.Timed.Icon(e), ns.Timed.Name(e)),
+            ns.Tip:AddDoubleLine(("|T%s:16|t %s"):format(ns.Timed.Icon(e), ns.Timed.Name(e)),
                 left == 0 and L.TIP_TIMED_READY or (left and ns.Xp.Duration(left) or "?"), 1, 1, 1, c[1], c[2], c[3])
             if e.cast then
-                GameTooltip:AddLine(InCombatLockdown() and L.DATABAR_TIP_HEARTH_COMBAT or L.DATABAR_TIP_TIMED_CAST, 0.4, 0.8, 1)
+                ns.Tip:AddLine(InCombatLockdown() and L.DATABAR_TIP_HEARTH_COMBAT or L.DATABAR_TIP_TIMED_CAST, 0.4, 0.8, 1)
             elseif e.prof and not e.item then
-                GameTooltip:AddLine(L.DATABAR_TIP_TIMED_CLICK, 0.4, 0.8, 1)
+                ns.Tip:AddLine(L.DATABAR_TIP_TIMED_CLICK, 0.4, 0.8, 1)
             end
-            GameTooltip:Show()
+            ns.Tip:Show()
         end,
         -- The slot under the cursor opens its recipe (a spell to cast has its secure button, PlaceCastClick).
         click = function(self)
@@ -696,21 +712,22 @@ DataBar.STATS = {
         icon = "StatTheme",
         value = function()
             local hub = LibForeverThemes.Hub()
+            if hub and S("dataBarThemeIconOnly") then return "" end
             return hub and DataBar.ThemeLabel(hub.Theme(), hub.Color())
         end,
         tip = function(self)
             local hub = LibForeverThemes.Hub()
             if not hub then return end
             TipOwner(self)
-            GameTooltip:AddLine(L.DATABAR_PART_THEME, 1, 1, 1)
-            GameTooltip:AddLine(DataBar.ThemeLabel(hub.Theme(), hub.Color()), 0.8, 0.8, 0.8)
+            ns.Tip:AddLine(L.DATABAR_PART_THEME, 1, 1, 1)
+            ns.Tip:AddLine(DataBar.ThemeLabel(hub.Theme(), hub.Color()), 0.8, 0.8, 0.8)
             for _, addon in ipairs(DataBar.ThemedAddons()) do
-                GameTooltip:AddDoubleLine(addon.title, hub.Follows(addon.folder) and L.DATABAR_TIP_THEME_FOLLOWS
+                ns.Tip:AddDoubleLine(addon.title, hub.Follows(addon.folder) and L.DATABAR_TIP_THEME_FOLLOWS
                     or L.DATABAR_TIP_THEME_OWN, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8)
             end
-            GameTooltip:AddLine(L.DATABAR_TIP_THEME_LEFT, 0.4, 0.8, 1)
-            GameTooltip:AddLine(L.DATABAR_TIP_THEME_RIGHT, 0.4, 0.8, 1)
-            GameTooltip:Show()
+            ns.Tip:AddLine(L.DATABAR_TIP_THEME_LEFT, 0.4, 0.8, 1)
+            ns.Tip:AddLine(L.DATABAR_TIP_THEME_RIGHT, 0.4, 0.8, 1)
+            ns.Tip:Show()
         end,
         anyButton = true,
         click = function(self, button)
@@ -809,7 +826,7 @@ local function FollowSlotTip(g)
     local i, item = DataBar.SlotAt(g)
     if i == g.tipSlot then return end
     g.tipSlot = i
-    if item then DataBar.STATS[g.id].slotTip(g, item) elseif GameTooltip:IsOwned(g) then GameTooltip:Hide() end
+    if item then DataBar.STATS[g.id].slotTip(g, item) else ns.Tooltip.HideFor(g) end
 end
 
 local function BuildStat(id)
@@ -941,10 +958,10 @@ local function Build()
     add:RegisterForClicks("LeftButtonUp")
     add:SetScript("OnClick", function(self) ns.OpenFactionMenu(self.slot, self) end)
     add:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
-        GameTooltip:AddLine(L.DATABAR_ADD_REP, 1, 1, 1)
-        GameTooltip:AddLine(L.TIP_REP_LEFT, 0.4, 0.8, 1)
-        GameTooltip:Show()
+        ns.Tip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
+        ns.Tip:AddLine(L.DATABAR_ADD_REP, 1, 1, 1)
+        ns.Tip:AddLine(L.TIP_REP_LEFT, 0.4, 0.8, 1)
+        ns.Tip:Show()
     end)
     add:SetScript("OnLeave", HideTooltip)
     add.text = add:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -953,6 +970,22 @@ local function Build()
     Font(add.text, "dataBarReps", "size", CFG.ADD_PLUS)
     add:Hide()
     frame.addRep = add
+    -- Compact: an icon and a word; the factions in its tooltip, a click opens the reputation tab.
+    local compact = CreateFrame("Button", nil, frame.repBox)
+    compact:SetHeight(CFG.ICON)
+    compact:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    compact:SetScript("OnClick", function() if ToggleCharacter then ToggleCharacter("ReputationFrame") end end)
+    compact:SetScript("OnEnter", ShowRepsTooltip)
+    compact:SetScript("OnLeave", HideTooltip)
+    compact.icon = compact:CreateTexture(nil, "ARTWORK")
+    compact.icon:SetSize(CFG.ICON, CFG.ICON)
+    compact.icon:SetPoint("LEFT", compact, "LEFT", 0, 0)
+    compact.icon:SetTexture(CFG.MEDIA .. "StatRep")
+    compact.text = compact:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    compact.text:SetPoint("LEFT", compact.icon, "RIGHT", CFG.ICON_GAP, 0)
+    Font(compact.text, "dataBarReps")
+    compact:Hide()
+    frame.repCompact = compact
     frame.parts = { XP = frame.xp, CLOCK = frame.clock, PROFS = frame.profBox, REPS = frame.repBox }
     for id in pairs(DataBar.STATS) do frame.parts[id] = BuildStat(id) end
 
@@ -965,9 +998,9 @@ local function Build()
     gear:SetScript("OnClick", function() ns.Window.Toggle() end)
     gear:SetScript("OnEnter", function(self)
         TipOwner(self)
-        GameTooltip:AddLine(L.ADDON_NAME, 1, 1, 1)
-        GameTooltip:AddLine(L.DATABAR_TIP_OPTIONS, 0.4, 0.8, 1)
-        GameTooltip:Show()
+        ns.Tip:AddLine(L.ADDON_NAME, 1, 1, 1)
+        ns.Tip:AddLine(L.DATABAR_TIP_OPTIONS, 0.4, 0.8, 1)
+        ns.Tip:Show()
     end)
     gear:SetScript("OnLeave", HideTooltip)
     gear.icon = gear:CreateTexture(nil, "ARTWORK")
@@ -1465,6 +1498,25 @@ function DataBar.UpdateReps()
     for i = 1, ns.CFG.NUM_REP_SLOTS do datas[i] = ns.Data.RepData(i) end
     local c = Accent()
     frame.addRep.text:SetTextColor(c[1], c[2], c[3])
+    local compact = frame.repCompact
+    if S("dataBarReps") and S("dataBarRepsCompact") then
+        for _, b in ipairs(frame.reps) do b:Hide() end
+        frame.addRep:Hide()
+        compact.text:SetText(L.DATABAR_COMPACT_REPS)
+        local ic = ns.Themes.IconColor()
+        compact.icon:SetVertexColor(ic[1], ic[2], ic[3], 1)
+        local box = frame.repBox
+        box.width = CFG.ICON + CFG.ICON_GAP + math.ceil(compact.text:GetStringWidth() or 0)
+        compact:SetWidth(box.width)
+        compact:ClearAllPoints()
+        compact:SetPoint("LEFT", box, "LEFT", 0, 0)
+        compact:Show()
+        box:SetSize(box.width, CFG.ICON)
+        box:Show()
+        DataBar.Layout()
+        return
+    end
+    compact:Hide()
     FillPart(frame.repBox, frame.reps, datas, S("dataBarReps"), FillRep, frame.addRep)
 end
 
@@ -1486,8 +1538,30 @@ function DataBar.UpdateStats()
                 g.text:SetText(text)
                 colour = colour or DataBar.TextColour(p.key)
                 g.text:SetTextColor(colour[1], colour[2], colour[3])
-                g.width = ((def.icon or def.iconFile) and CFG.ICON + CFG.ICON_GAP or 0) + math.ceil(g.text:GetStringWidth() or 0)
-                if g.slots then g.width = FillSlots(g, def, colour) end
+                local compact = def.compact and S(def.compact.key)
+                if compact then
+                    g.text:SetText(L[def.compact.label])
+                    g.icon:SetTexture(CFG.MEDIA .. def.compact.icon)
+                end
+                local icon = (def.icon or def.iconFile or compact) and true or false
+                g.icon:SetShown(icon)
+                g.text:ClearAllPoints()
+                if icon then g.text:SetPoint("LEFT", g.icon, "RIGHT", CFG.ICON_GAP, 0) else g.text:SetPoint("LEFT", g, "LEFT", 0, 0) end
+                g.text:SetShown(not g.slots or compact)
+                -- An empty text (the theme as its icon alone): the icon, no gap.
+                local textW = text == "" and not compact and 0 or math.ceil(g.text:GetStringWidth() or 0)
+                g.width = (icon and CFG.ICON + (textW > 0 and CFG.ICON_GAP or 0) or 0) + textW
+                if g.slots then
+                    if compact then
+                        for _, slot in ipairs(g.slots) do
+                            slot.icon:Hide()
+                            slot.text:Hide()
+                        end
+                        g.plain = L[def.compact.label]
+                    else
+                        g.width = FillSlots(g, def, colour)
+                    end
+                end
                 g:SetWidth(g.width)
             else
                 g.width = 0
@@ -1525,7 +1599,8 @@ local function FeedTooltip(self)
     elseif obj.OnEnter then
         obj.OnEnter(self)
     elseif obj.OnTooltipShow then
-        TipOwner(self)
+        -- Blizzard's, whatever the theme: a feed may call any of its methods.
+        GameTooltip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
         obj.OnTooltipShow(GameTooltip)
         GameTooltip:Show()
     end

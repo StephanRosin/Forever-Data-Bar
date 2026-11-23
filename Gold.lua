@@ -217,7 +217,7 @@ end
 
 local function Row(label, value, c, lc)
     c, lc = c or WHITE, lc or GREY
-    GameTooltip:AddDoubleLine(label, value, lc[1], lc[2], lc[3], c[1], c[2], c[3])
+    ns.Tip:AddDoubleLine(label, value, lc[1], lc[2], lc[3], c[1], c[2], c[3])
 end
 
 local function SignedRow(label, copper)
@@ -302,42 +302,50 @@ end
 -- insertedFrames would taint Blizzard's callers). It hides with the
 -- tooltip or when the tooltip is cleared for someone else, and then gives
 -- the tooltip its normal width back.
-local tipGraph
-function Gold.TooltipGraph()
-    if tipGraph then return tipGraph end
-    tipGraph = Gold.NewGraph(GameTooltip, PLOT_W, PLOT_H)
-    tipGraph:Hide()
-    tipGraph:SetScript("OnHide", function() GameTooltip:SetMinimumWidth(0) end)
-    GameTooltip:HookScript("OnTooltipCleared", function() tipGraph:Hide() end)
-    return tipGraph
+local tipGraphs = {}   -- per tooltip: Blizzard's (Classic) and ours (Tooltip.lua)
+function Gold.TooltipGraph(tip)
+    tip = tip or GameTooltip
+    if tipGraphs[tip] then return tipGraphs[tip] end
+    local g = Gold.NewGraph(tip, PLOT_W, PLOT_H)
+    g:Hide()
+    g:SetScript("OnHide", function() tip:SetMinimumWidth(0) end)
+    tip:HookScript("OnTooltipCleared", function() g:Hide() end)
+    tipGraphs[tip] = g
+    return g
 end
 
-local function EmbedGraph(g)
-    local first = GameTooltip:NumLines() + 1
+-- A blank line's height in tip: ours from the bar's font (Tooltip.lua), Blizzard's from its font object.
+local function LineHeight(tip)
+    if tip ~= GameTooltip then return ns.Tooltip.LineHeight() end
     -- Sizes from the font object and our own numbers, never read back from
     -- the tooltip's lines or frames: those can be secret values once another
     -- addon has filled the tooltip, and arithmetic on them errors.
     local _, size = GameTooltipText:GetFont()
     if issecretvalue and issecretvalue(size) then size = nil end
-    for _ = 1, math.ceil(g.height / ((size or TIP_LINE_FALLBACK) + TIP_LINE_SPACING)) do GameTooltip:AddLine(" ") end
+    return (size or TIP_LINE_FALLBACK) + TIP_LINE_SPACING
+end
+
+local function EmbedGraph(tip, g)
+    local first = tip:NumLines() + 1
+    for _ = 1, math.ceil(g.height / LineHeight(tip)) do tip:AddLine(" ") end
     g:ClearAllPoints()
-    g:SetPoint("TOPLEFT", GameTooltip:GetLeftLine(first), "TOPLEFT", 0, 0)
-    GameTooltip:SetMinimumWidth(g.width)
+    g:SetPoint("TOPLEFT", tip:GetLeftLine(first), "TOPLEFT", 0, 0)
+    tip:SetMinimumWidth(g.width)
     g:Show()
 end
 
 function Gold.FillTooltip()
     local money, now = GetMoney() or 0, Gold.Now()
     local char = ns.CharDB()
-    GameTooltip:AddLine(L.DATABAR_PART_GOLD, 1, 1, 1)
-    GameTooltip:AddLine(("%dg %ds %dc"):format(math.floor(money / COPPER_PER_GOLD),
+    ns.Tip:AddLine(L.DATABAR_PART_GOLD, 1, 1, 1)
+    ns.Tip:AddLine(("%dg %ds %dc"):format(math.floor(money / COPPER_PER_GOLD),
         math.floor(money % COPPER_PER_GOLD / COPPER_PER_SILVER), money % COPPER_PER_SILVER), 1, 1, 1)
 
     local s = char.goldSession
     if s then
         local seconds = now - s.start
-        GameTooltip:AddLine(" ")
-        GameTooltip:AddLine(L.GOLD_SESSION:format(ns.Xp.Duration(seconds)), 1, 1, 1)
+        ns.Tip:AddLine(" ")
+        ns.Tip:AddLine(L.GOLD_SESSION:format(ns.Xp.Duration(seconds)), 1, 1, 1)
         SignedRow(L.GOLD_GAINED, s.gained)
         SignedRow(L.GOLD_SPENT, -s.spent)
         SignedRow(L.GOLD_NET, s.gained - s.spent)
@@ -346,30 +354,31 @@ function Gold.FillTooltip()
     end
 
     local days = char.goldDays or {}
-    GameTooltip:AddLine(" ")
-    GameTooltip:AddLine(L.GOLD_CHARACTER, 1, 1, 1)
+    ns.Tip:AddLine(" ")
+    ns.Tip:AddLine(L.GOLD_CHARACTER, 1, 1, 1)
     Row(L.GOLD_TODAY, Gold.DayText(Gold.Sum(days, { Gold.DayKey(now) })))
     Row(L.GOLD_YESTERDAY, Gold.DayText(Gold.Sum(days, { Gold.DayKey(now, 1) })))
     Row(L.GOLD_WEEK, Gold.DayText(Gold.Sum(days, Gold.WeekKeys(now))))
 
     local realm = GetRealmName()
     local list, total = Gold.RealmChars(ns.AccountDB(), realm)
-    GameTooltip:AddLine(" ")
-    GameTooltip:AddLine(L.GOLD_REALM:format(Gold.RealmLabel(realm)), 1, 1, 1)
+    ns.Tip:AddLine(" ")
+    ns.Tip:AddLine(L.GOLD_REALM:format(Gold.RealmLabel(realm)), 1, 1, 1)
     for _, c in ipairs(list) do
         local cc = RAID_CLASS_COLORS and RAID_CLASS_COLORS[c.class]
         Row(c.name, Gold.Money(c.money), WHITE, cc and { cc.r, cc.g, cc.b })
     end
     Row(L.GOLD_TOTAL, Gold.Money(total), WHITE, WHITE)
 
-    local g = Gold.TooltipGraph()
+    local tip = ns.Tooltip.Active()
+    local g = Gold.TooltipGraph(tip)
     if Gold.DrawGraph(g, Gold.GraphPoints(days, now, money)) then
-        GameTooltip:AddLine(" ")
-        GameTooltip:AddLine(L.GOLD_GRAPH:format(Gold.GRAPH_DAYS), 1, 1, 1)
-        EmbedGraph(g)
+        ns.Tip:AddLine(" ")
+        ns.Tip:AddLine(L.GOLD_GRAPH:format(Gold.GRAPH_DAYS), 1, 1, 1)
+        EmbedGraph(tip, g)
     end
-    GameTooltip:AddLine(L.GOLD_CLICK, 0.4, 0.8, 1)
-    GameTooltip:Show()
+    ns.Tip:AddLine(L.GOLD_CLICK, 0.4, 0.8, 1)
+    ns.Tip:Show()
 end
 
 local function Record(isLogin)

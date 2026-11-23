@@ -299,6 +299,12 @@ local function paintRims(rims, frame, c, size)
     end
 end
 
+-- How far a tooltip (Tooltip.lua) keeps from its owner: past the window frame's strips.
+function ThemeArt.TooltipGap()
+    local art = ns.Themes.Spec(S("theme")).art
+    return 4 + (art and art.frame and art.windowFrameSize or 0)
+end
+
 -- The rim's size, by which a window's title strip sits inside it.
 function ThemeArt.WindowRim()
     local art = ns.Themes.Spec(S("theme")).art

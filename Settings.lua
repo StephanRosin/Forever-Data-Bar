@@ -42,6 +42,8 @@ Settings.DEFAULTS = {
     dataBarSkillUps = true,     -- "+3": recipes giving skill points whose materials are in the bags (Crafts.lua)
     dataBarRepIcons = "LINES",  -- the standing as icon set or LETTER, see DataBar.STANDING_ICONS
     dataBarReps = true, dataBarRepsColumn = 4, dataBarRepsX = 0, dataBarRepsWidth = 96,
+    -- Compact: only an icon and a word on the bar, the details in the tooltip (reputation, values, currencies).
+    dataBarRepsCompact = false, dataBarCharCompact = false, dataBarCurrencyCompact = false,
     -- The character's combat values (CharInfo.lua), each one chosen.
     -- Which values: per character (CharInfo.Chosen).
     dataBarChar = false, dataBarCharColumn = 4, dataBarCharX = 0,
@@ -54,6 +56,7 @@ Settings.DEFAULTS = {
     dataBarTimed = true, dataBarTimedColumn = 2, dataBarTimedX = 0,
     -- Forever Themes' central theme: shows only while that addon is loaded.
     dataBarTheme = true, dataBarThemeColumn = 5, dataBarThemeX = 0,
+    dataBarThemeIconOnly = false,   -- the theme part as its icon alone
     hideInCombat = false,
     hideInGroup = false,
     -- The font of every part (the Forever Quest Log's); the clock

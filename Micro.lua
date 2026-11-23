@@ -64,9 +64,9 @@ end
 
 local function ShowTooltip(self)
     local blizzard = _G[self.blizzard]
-    GameTooltip:SetOwner(self, ns.DataBar.frame and ns.DataBar.frame.atTop and "ANCHOR_BOTTOM" or "ANCHOR_TOP")
-    GameTooltip:AddLine((blizzard and blizzard.tooltipText) or self.blizzard, 1, 1, 1)
-    GameTooltip:Show()
+    ns.Tip:SetOwner(self, ns.DataBar.frame and ns.DataBar.frame.atTop and "ANCHOR_BOTTOM" or "ANCHOR_TOP")
+    ns.Tip:AddLine((blizzard and blizzard.tooltipText) or self.blizzard, 1, 1, 1)
+    ns.Tip:Show()
 end
 
 local function Build()
@@ -89,7 +89,7 @@ local function Build()
         glow:SetTexture(ns.DataBar.CFG.MEDIA .. b.icon)
         glow:SetBlendMode("ADD")
         button:SetScript("OnEnter", ShowTooltip)
-        button:SetScript("OnLeave", function(self) if GameTooltip:IsOwned(self) then GameTooltip:Hide() end end)
+        button:SetScript("OnLeave", function(self) ns.Tooltip.HideFor(self) end)
         button:Hide()
         buttons[i] = button
     end

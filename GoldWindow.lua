@@ -364,10 +364,10 @@ local function ShowPoint(c)
     c.mark:SetPoint("CENTER", c, "BOTTOMLEFT", h.X(best), h.Y(p.value))
     Tint(c.mark, ns.Themes.Accent(), 1)
     c.mark:Show()
-    GameTooltip:SetOwner(c.mark, "ANCHOR_RIGHT")
-    GameTooltip:SetText(Weekday(p.t) .. " " .. date(L.GOLD_DATE, p.t))
-    GameTooltip:AddLine(ns.Gold.Money(p.value), 1, 1, 1)
-    GameTooltip:Show()
+    ns.Tip:SetOwner(c.mark, "ANCHOR_RIGHT")
+    ns.Tip:SetText(Weekday(p.t) .. " " .. date(L.GOLD_DATE, p.t))
+    ns.Tip:AddLine(ns.Gold.Money(p.value), 1, 1, 1)
+    ns.Tip:Show()
 end
 
 local function Chart(parent)
@@ -395,7 +395,7 @@ local function Chart(parent)
         self:SetScript("OnUpdate", nil)
         self.hoverIndex = nil
         self.mark:Hide()
-        GameTooltip:Hide()
+        ns.Tooltip.HideFor(self.mark)
     end)
     return c
 end

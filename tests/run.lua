@@ -851,6 +851,104 @@ for _, part in ipairs(ns.DataBar.PARTS) do
     check("description for " .. part.id, ns.L["OPT_PART_DESC_" .. part.id] ~= "OPT_PART_DESC_" .. part.id, true)
 end
 
+section("Tooltips in the theme")
+do
+    local D, Themes, Tooltip = ns.DataBar, ns.Themes, ns.Tooltip
+    local owner = CreateFrame("Button")
+    GameTooltip._lines = nil
+    ns.Tip:SetOwner(owner, "ANCHOR_TOPLEFT")
+    ns.Tip:AddLine("Head", 1, 1, 1)
+    ns.Tip:Show()
+    check("classic: Blizzard's tooltip as before", GameTooltip._lines and GameTooltip._lines[1], "Head")
+    check("classic: ours stays unused", Tooltip.Active(), GameTooltip)
+    Themes.Switch("PITWALL")
+    ns.Tip:SetOwner(owner, "ANCHOR_BOTTOMLEFT")
+    ns.Tip:AddLine("Head", 1, 1, 1)
+    ns.Tip:AddDoubleLine("Left", "Right", 0.8, 0.8, 0.8, 0.3, 1, 0.3)
+    ns.Tip:AddLine("Click", 0.4, 0.8, 1)
+    ns.Tip:Show()
+    local own = Tooltip.Own()
+    check("theme: our own tooltip", Tooltip.Active() == own and own:IsShown(), true)
+    check("theme: owned by the part", ns.Tip:IsOwned(owner), true)
+    check("theme: three lines", own:NumLines(), 3)
+    check("theme: double line's right text", own.rows[2].right:GetText(), "Right")
+    local text = select(4, D.FontFor("dataBar"))
+    check("theme: white in the theme's text colour", own.rows[1].left._textColor[1], text[1])
+    check("theme: grey too, a little fainter", own.rows[2].left._textColor[4], 0.8)
+    check("theme: green keeps", own.rows[2].right._textColor[2], 1)
+    check("theme: the click hint in the accent", own.rows[3].left._textColor[1], Themes.Accent()[1])
+    check("theme: the first line in the title font", own.rows[1].left:GetFont() ~= nil, true)
+    check("theme: wide enough for the double line", own._w >= own.rows[2].left:GetStringWidth() + own.rows[2].right:GetStringWidth(), true)
+    check("theme: dressed as the windows", own.rims ~= nil and own.themeBack ~= nil, true)
+    _G.issecretvalue = function(v) return v == 999 end
+    local w = own.rows[1].left.GetStringWidth
+    own.rows[1].left.GetStringWidth = function() return 999 end
+    ns.Tip:Show()
+    check("theme: a secret width counts as some width", own._w > 0, true)
+    own.rows[1].left.GetStringWidth = w
+    _G.issecretvalue = nil
+    Tooltip.HideFor(owner)
+    check("hidden on leave", own:IsShown(), false)
+    -- The gold tooltip's curve: over blank lines of our tooltip.
+    ForeverDataBarChar.goldDays = ForeverDataBarChar.goldDays or {}
+    ForeverDataBarChar.goldDays[ns.Gold.DayKey(ns.Gold.Now(), 1)] = { gained = 0, spent = 0, close = 1, inc = {}, out = {} }
+    local gold = D.frame.parts.GOLD
+    gold:GetScript("OnEnter")(gold)
+    local graph = ns.Gold.TooltipGraph(own)
+    check("gold: the curve in our tooltip", graph:IsShown() and graph:GetParent() == own, true)
+    check("gold: wide enough for it", own.minWidth, graph.width)
+
+    -- The theme part as its icon alone.
+    local follows = {}
+    LibForeverThemes.SetHub({ Follows = function() return true end, Theme = function() return "PITWALL" end,
+        Color = function() return nil end, OpenMenu = function() end, OpenOptions = function() end })
+    local theme = D.frame.parts.THEME
+    ns.Settings.Set("dataBarThemeIconOnly", true)
+    D.UpdateStats()
+    check("theme part: icon only", theme:IsShown() and theme.width, D.CFG.ICON)
+    ns.Settings.Set("dataBarThemeIconOnly", false)
+    D.UpdateStats()
+    check("theme part: with its name again", theme.width > D.CFG.ICON, true)
+    LibForeverThemes.SetHub(nil)
+
+    -- Compact: an icon and a word, the details in the tooltip.
+    ns.Settings.Set("dataBarChar", true)
+    ns.CharInfo.Choose(ns.CharInfo.STATS[1].id, true)
+    D.UpdateStats()
+    local char = D.frame.parts.CHAR
+    check("char: values on the bar", char.slots[1].icon:IsShown(), true)
+    ns.Settings.Set("dataBarCharCompact", true)
+    D.UpdateStats()
+    check("char compact: the word", char.text:IsShown() and char.text:GetText(), ns.L.DATABAR_COMPACT_CHAR)
+    check("char compact: its icon", char.icon:IsShown() and char.icon._texture, D.CFG.MEDIA .. "StatChar")
+    check("char compact: no values on the bar", char.slots[1].icon:IsShown(), false)
+    char:GetScript("OnEnter")(char)
+    check("char compact: the values in the tooltip", own:NumLines() >= 2, true)
+    ns.Settings.Set("dataBarCharCompact", false)
+    D.UpdateStats()
+    check("char: back to the values", char.slots[1].icon:IsShown() and not char.icon:IsShown(), true)
+    ns.Settings.Set("dataBarChar", false)
+    D.UpdateStats()
+
+    local repsWere = ns.Settings.Get("dataBarReps")
+    ns.Settings.Set("dataBarReps", true)
+    ns.Settings.Set("dataBarRepsCompact", true)
+    D.UpdateReps()
+    local reps = D.frame.repCompact
+    check("reps compact: the word", reps:IsShown() and reps.text:GetText(), ns.L.DATABAR_COMPACT_REPS)
+    check("reps compact: no entries", D.frame.reps[1]:IsShown(), false)
+    check("reps compact: its own icon", reps.icon._texture, D.CFG.MEDIA .. "StatRep")
+    reps:GetScript("OnEnter")(reps)
+    check("reps compact: every faction in the tooltip", own:NumLines(), 2 + 4)
+    check("reps compact: name and standing", own.rows[2].left:GetText() ~= nil and own.rows[2].right:GetText():find("/", 1, true) ~= nil, true)
+    ns.Settings.Set("dataBarRepsCompact", false)
+    D.UpdateReps()
+    check("reps: the entries again", D.frame.reps[1]:IsShown() and not reps:IsShown(), true)
+    ns.Settings.Set("dataBarReps", repsWere)
+    D.UpdateReps()
+    Themes.Switch("CLASSIC")
+end
+
 section("Only SavedVariables, nothing private")
 for _, f in ipairs(tocFiles()) do
     local src = io.open(ROOT .. "/" .. f):read("*a")

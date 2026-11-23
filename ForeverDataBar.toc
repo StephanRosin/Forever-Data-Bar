@@ -31,6 +31,7 @@ Currencies.lua
 Gold.lua
 GoldLedger.lua
 ThemeArt.lua
+Tooltip.lua
 Broker.lua
 DataBar.lua
 Clock.lua

@@ -486,6 +486,16 @@ local function dataBarPartRows()
         rows[#rows + 1] = column
         rows[#rows + 1] = order
         rows[#rows + 1] = x
+        if part.id == "THEME" then
+            local iconOnly = check("dataBarThemeIconOnly", "OPT_DATABAR_THEME_ICON_ONLY")
+            iconOnly.enabled = column.enabled
+            rows[#rows + 1] = iconOnly
+        end
+        if part.id == "REPS" or part.id == "CHAR" or part.id == "CURRENCY" then
+            local compact = check(part.key .. "Compact", "OPT_DATABAR_COMPACT")
+            compact.enabled = on
+            rows[#rows + 1] = compact
+        end
         if part.id == "CLOCK" then
             local style = choice("dataBarClockStyle", "OPT_DATABAR_CLOCK_STYLE", ns.Clock.STYLES, "CLOCK_STYLE_")
             local twelve = check("dataBarClock12", "OPT_DATABAR_CLOCK12")

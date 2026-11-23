@@ -36,10 +36,10 @@ function Xp.ShowTooltip(self)
     local grey, white = { 0.8, 0.8, 0.8 }, { 1, 1, 1 }
     local function row(label, value, c)
         c = c or white
-        GameTooltip:AddDoubleLine(label, value, grey[1], grey[2], grey[3], c[1], c[2], c[3])
+        ns.Tip:AddDoubleLine(label, value, grey[1], grey[2], grey[3], c[1], c[2], c[3])
     end
-    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    GameTooltip:AddLine(L.XP_LEVEL:format(UnitLevel("player") or 0), 1, 1, 1)
+    ns.Tip:SetOwner(self, "ANCHOR_RIGHT")
+    ns.Tip:AddLine(L.XP_LEVEL:format(UnitLevel("player") or 0), 1, 1, 1)
     row(L.TIP_XP, ("%s / %s"):format(big(cur), big(max)))
     row(L.TIP_XP_PROGRESS, ("%d%%"):format(math.floor(cur / max * 100)))
     row(L.TIP_XP_TO_LEVEL, big(max - cur))
@@ -47,7 +47,7 @@ function Xp.ShowTooltip(self)
     if rested and rested > 0 then
         row(L.TIP_XP_RESTED, ("%s (%d%%)"):format(big(rested), math.floor(rested / max * 100)), { 0.4, 0.6, 1 })
     end
-    GameTooltip:Show()
+    ns.Tip:Show()
 end
 
 function Xp.HasUnspentTalents()
