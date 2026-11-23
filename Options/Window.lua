@@ -464,6 +464,7 @@ local function dataBarPartRows()
     local rows = { { type = "text", label = "OPT_DATABAR_PARTS_HINT", height = 40 } }
     for _, part in ipairs(ns.DataBar.PARTS) do
         rows[#rows + 1] = { type = "header", label = "DATABAR_PART_" .. part.id }
+        rows[#rows + 1] = { type = "text", label = "OPT_PART_DESC_" .. part.id, height = 36 }
         -- Column and X only while the part shows.
         local function on() return S(part.key) == true end
         rows[#rows + 1] = check(part.key, "OPT_DATABAR_SHOW")

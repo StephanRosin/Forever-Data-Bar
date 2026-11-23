@@ -51,7 +51,7 @@ Settings.DEFAULTS = {
     dataBarCurZero = true,      -- currencies and shards at 0 too (the marks only when held)
     dataBarHearth = false, dataBarHearthColumn = 2, dataBarHearthX = 0,
     -- Crafts with a long cooldown (Timed.lua): those the character can make.
-    dataBarTimed = false, dataBarTimedColumn = 2, dataBarTimedX = 0,
+    dataBarTimed = true, dataBarTimedColumn = 2, dataBarTimedX = 0,
     -- Forever Themes' central theme: shows only while that addon is loaded.
     dataBarTheme = true, dataBarThemeColumn = 5, dataBarThemeX = 0,
     hideInCombat = false,

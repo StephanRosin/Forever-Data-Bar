@@ -781,7 +781,7 @@ do
     check("part text: hours and minutes", T.Text(5 * 3600 + 12 * 60), "5h 12m")
     check("part text: minutes", T.Text(40 * 60), "40m")
     check("part text: secret", T.Text(nil), "?")
-    check("part listed", ns.DataBar.STATS.TIMED ~= nil and ns.Settings.Get("dataBarTimed"), false)
+    check("part listed, on by default", ns.DataBar.STATS.TIMED ~= nil and ns.Settings.DEFAULTS.dataBarTimed, true)
     M.state.time = 1000
     check("cooldown from before the boot (start 2^32 ms late)", math.floor(T.Left(1000 + 2 ^ 32 / 1000 - 3600, 7200) + 0.5), 3600)
     C_Item.GetItemIconByID = function(id) return "ICON" .. id end
@@ -807,6 +807,11 @@ do
     check("secret: unknown", T.Left(999, 5), nil)
     issecretvalue = nil
     ForeverDataBarChar.timed = nil
+end
+
+section("Part descriptions")
+for _, part in ipairs(ns.DataBar.PARTS) do
+    check("description for " .. part.id, ns.L["OPT_PART_DESC_" .. part.id] ~= "OPT_PART_DESC_" .. part.id, true)
 end
 
 section("Only SavedVariables, nothing private")
