@@ -206,6 +206,31 @@ function Tooltip.LineHeight()
     return select(2, ns.DataBar.FontFor("dataBar")) + ROW_GAP
 end
 
+local TIP_LINE_FALLBACK, TIP_LINE_SPACING = 12, 2
+
+-- A blank line's height in tip: ours from the bar's font, Blizzard's from its font object.
+local function BlankHeight(tip)
+    if tip ~= GameTooltip then return Tooltip.LineHeight() end
+    -- Sizes from the font object and our own numbers, never read back from
+    -- the tooltip's lines or frames: those can be secret values once another
+    -- addon has filled the tooltip, and arithmetic on them errors.
+    local _, size = GameTooltipText:GetFont()
+    if issecretvalue and issecretvalue(size) then size = nil end
+    return (size or TIP_LINE_FALLBACK) + TIP_LINE_SPACING
+end
+
+-- A frame of our own (f.width, f.height) inside tip, over blank lines: not
+-- through GameTooltip_InsertFrame (addon code writing the tooltip's
+-- insertedFrames would taint Blizzard's callers).
+function Tooltip.Embed(tip, f)
+    local first = tip:NumLines() + 1
+    for _ = 1, math.ceil(f.height / BlankHeight(tip)) do tip:AddLine(" ") end
+    f:ClearAllPoints()
+    f:SetPoint("TOPLEFT", tip:GetLeftLine(first), "TOPLEFT", 0, 0)
+    tip:SetMinimumWidth(f.width)
+    f:Show()
+end
+
 -- Hides whichever tooltip owner has (Blizzard's or ours).
 function Tooltip.HideFor(owner)
     if GameTooltip:IsOwned(owner) then GameTooltip:Hide() end

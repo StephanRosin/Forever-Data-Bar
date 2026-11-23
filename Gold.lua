@@ -36,7 +36,6 @@ local COLOUR_GAIN, COLOUR_LOSS = { 0.3, 1, 0.3 }, { 1, 0.25, 0.2 }
 local PLOT_W, PLOT_H, LABEL_W, LABEL_GAP, DATE_ROW = 150, 60, 70, 4, 14
 local LINE_THICKNESS, AXIS_ALPHA = 2, 0.35
 -- Blank tooltip lines for the curve: the line's font size plus Blizzard's spacing.
-local TIP_LINE_FALLBACK, TIP_LINE_SPACING = 12, 2
 
 function Gold.Now() return time() end
 
@@ -314,26 +313,6 @@ function Gold.TooltipGraph(tip)
     return g
 end
 
--- A blank line's height in tip: ours from the bar's font (Tooltip.lua), Blizzard's from its font object.
-local function LineHeight(tip)
-    if tip ~= GameTooltip then return ns.Tooltip.LineHeight() end
-    -- Sizes from the font object and our own numbers, never read back from
-    -- the tooltip's lines or frames: those can be secret values once another
-    -- addon has filled the tooltip, and arithmetic on them errors.
-    local _, size = GameTooltipText:GetFont()
-    if issecretvalue and issecretvalue(size) then size = nil end
-    return (size or TIP_LINE_FALLBACK) + TIP_LINE_SPACING
-end
-
-local function EmbedGraph(tip, g)
-    local first = tip:NumLines() + 1
-    for _ = 1, math.ceil(g.height / LineHeight(tip)) do tip:AddLine(" ") end
-    g:ClearAllPoints()
-    g:SetPoint("TOPLEFT", tip:GetLeftLine(first), "TOPLEFT", 0, 0)
-    tip:SetMinimumWidth(g.width)
-    g:Show()
-end
-
 function Gold.FillTooltip()
     local money, now = GetMoney() or 0, Gold.Now()
     local char = ns.CharDB()
@@ -375,7 +354,7 @@ function Gold.FillTooltip()
     if Gold.DrawGraph(g, Gold.GraphPoints(days, now, money)) then
         ns.Tip:AddLine(" ")
         ns.Tip:AddLine(L.GOLD_GRAPH:format(Gold.GRAPH_DAYS), 1, 1, 1)
-        EmbedGraph(tip, g)
+        ns.Tooltip.Embed(tip, g)
     end
     ns.Tip:AddLine(L.GOLD_CLICK, 0.4, 0.8, 1)
     ns.Tip:Show()

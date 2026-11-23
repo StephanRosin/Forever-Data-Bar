@@ -431,18 +431,94 @@ local function TalentTooltip(self)
     ns.Tip:Show()
 end
 
+-- Factions as a table in the tooltip: name, standing and value in columns,
+-- under each row a line as the bar's (design, standing colour). Our own frame
+-- over blank lines (Tooltip.Embed), one per tooltip, hidden with it.
+local REP_COL_GAP, REP_ROW_GAP, REP_MIN_LINE = 14, 6, 160
+local repTables = {}
+DataBar.RepTables = repTables   -- per tooltip, for the tests
+
+local function RepTable(tip)
+    local t = repTables[tip]
+    if t then return t end
+    t = CreateFrame("Frame", nil, tip)
+    t.rows = {}
+    t:Hide()
+    t:SetScript("OnHide", function() tip:SetMinimumWidth(0) end)
+    tip:HookScript("OnTooltipCleared", function() t:Hide() end)
+    repTables[tip] = t
+    return t
+end
+
+local function RepRow(t, i)
+    local r = t.rows[i]
+    if r then return r end
+    r = { name = t:CreateFontString(nil, "OVERLAY"), standing = t:CreateFontString(nil, "OVERLAY"),
+        value = t:CreateFontString(nil, "OVERLAY"), line = NewLine(t, 1) }
+    r.name:SetJustifyH("LEFT")
+    r.standing:SetJustifyH("LEFT")
+    r.value:SetJustifyH("RIGHT")
+    t.rows[i] = r
+    return r
+end
+
+function DataBar.AddRepTable(datas)
+    if #datas == 0 then return end
+    local tip = ns.Tooltip.Active()
+    local t = RepTable(tip)
+    local path, size, outline, c = DataBar.FontFor("dataBar")
+    local design = DataBar.Design()
+    local wName, wStanding, wValue = 0, 0, 0
+    for i, d in ipairs(datas) do
+        local r = RepRow(t, i)
+        SetFont(r.name, path, size, outline)
+        SetFont(r.standing, path, size, outline)
+        SetFont(r.value, path, size, outline)
+        r.name:SetText(d.name)
+        r.standing:SetText(d.standingText or "")
+        r.value:SetText(("%d / %d"):format(d.rank, d.maxRank))
+        wName = math.max(wName, math.ceil(r.name:GetStringWidth() or 0))
+        wStanding = math.max(wStanding, math.ceil(r.standing:GetStringWidth() or 0))
+        wValue = math.max(wValue, math.ceil(r.value:GetStringWidth() or 0))
+    end
+    local width = math.max(REP_MIN_LINE, wName + wStanding + wValue + 2 * REP_COL_GAP)
+    local rowH = size + CFG.TEXT_GAP + design.track
+    local y = 0
+    for i, d in ipairs(datas) do
+        local r, col = t.rows[i], d.colour or { 1, 1, 1 }
+        r.name:SetTextColor(c[1], c[2], c[3], 1)
+        r.standing:SetTextColor(col[1], col[2], col[3], 1)
+        r.value:SetTextColor(c[1], c[2], c[3], 1)
+        r.name:ClearAllPoints()
+        r.name:SetPoint("TOPLEFT", t, "TOPLEFT", 0, -y)
+        r.standing:ClearAllPoints()
+        r.standing:SetPoint("TOPLEFT", t, "TOPLEFT", wName + REP_COL_GAP, -y)
+        r.value:ClearAllPoints()
+        r.value:SetPoint("TOPRIGHT", t, "TOPRIGHT", 0, -y)
+        r.line:ClearAllPoints()
+        r.line:SetPoint("TOPLEFT", t, "TOPLEFT", 0, -(y + size + CFG.TEXT_GAP))
+        r.line:SetWidth(width)
+        r.line.width = width
+        PaintLine(r.line, design, col, d.rank / math.max(1, d.maxRank), 0, design.segments and design.segments[2])
+        for _, part in ipairs({ r.name, r.standing, r.value, r.line }) do part:Show() end
+        y = y + rowH + REP_ROW_GAP
+    end
+    for i = #datas + 1, #t.rows do
+        local r = t.rows[i]
+        for _, part in ipairs({ r.name, r.standing, r.value, r.line }) do part:Hide() end
+    end
+    t.width, t.height = width, y   -- the last gap stays: room before the click hint
+    t:SetSize(t.width, t.height)
+    ns.Tooltip.Embed(tip, t)
+end
+
 -- Compact reputation (dataBarRepsCompact): every watched faction in one tooltip.
 local function ShowRepsTooltip(self)
     ns.Tip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
     ns.Tip:AddLine(L.DATABAR_PART_REPS, 1, 1, 1)
-    for i = 1, ns.CFG.NUM_REP_SLOTS do
-        local d = ns.Data.RepData(i)
-        if d then
-            local c = d.colour or { 1, 1, 1 }
-            ns.Tip:AddDoubleLine(d.name, ("%s  %d / %d"):format(d.standingText or "", d.rank, d.maxRank),
-                0.8, 0.8, 0.8, c[1], c[2], c[3])
-        end
-    end
+    local datas = {}
+    for i = 1, ns.CFG.NUM_REP_SLOTS do datas[#datas + 1] = ns.Data.RepData(i) end
+    DataBar.AddRepTable(datas)
     ns.Tip:AddLine(L.TIP_REPS_COMPACT_CLICK, 0.4, 0.8, 1)
     ns.Tip:Show()
 end
@@ -451,8 +527,8 @@ local function ShowRepTooltip(self)
     local d = self.data
     if not d then return end
     ns.Tip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
-    ns.Tip:AddLine(d.name, 1, 1, 1)
-    ns.Tip:AddDoubleLine(d.standingText or "", ("%d / %d"):format(d.rank, d.maxRank), 0.8, 0.8, 0.8, 1, 1, 1)
+    ns.Tip:AddLine(L.DATABAR_PART_REPS, 1, 1, 1)
+    DataBar.AddRepTable({ d })
     ns.Tip:AddLine(L.TIP_REP_LEFT, 0.4, 0.8, 1)
     ns.Tip:AddLine(L.TIP_REP_RIGHT, 0.4, 0.8, 1)
     ns.Tip:Show()

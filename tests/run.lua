@@ -939,8 +939,13 @@ do
     check("reps compact: no entries", D.frame.reps[1]:IsShown(), false)
     check("reps compact: its own icon", reps.icon._texture, D.CFG.MEDIA .. "StatRep")
     reps:GetScript("OnEnter")(reps)
-    check("reps compact: every faction in the tooltip", own:NumLines(), 2 + 4)
-    check("reps compact: name and standing", own.rows[2].left:GetText() ~= nil and own.rows[2].right:GetText():find("/", 1, true) ~= nil, true)
+    local repTable = D.RepTables[own]
+    check("reps compact: a table in the tooltip", repTable ~= nil and repTable:IsShown(), true)
+    check("reps compact: blank lines under it", own:NumLines() >= 3, true)
+    local row = repTable and repTable.rows[4]
+    check("reps compact: every faction a row with name, standing, value and line", row ~= nil and row.name:IsShown()
+        and row.standing:IsShown() and row.value:GetText():find("/", 1, true) ~= nil and row.line:IsShown(), true)
+    check("reps compact: the tooltip as wide as the table", own.minWidth, repTable and repTable.width)
     ns.Settings.Set("dataBarRepsCompact", false)
     D.UpdateReps()
     check("reps: the entries again", D.frame.reps[1]:IsShown() and not reps:IsShown(), true)
