@@ -366,6 +366,20 @@ function DataBar.AddSkillUps(skillLine, rank)
     end
 end
 
+-- Crafts with a long cooldown (ns.Timed): ready in green, else the time left.
+function DataBar.AddTimed(prof)
+    local list = ns.Timed.For(prof)
+    if #list == 0 then return end
+    GameTooltip:AddLine(L.TIP_TIMED, 1, 0.82, 0)
+    for _, t in ipairs(list) do
+        if t.left == 0 then
+            GameTooltip:AddDoubleLine("  " .. t.name, L.TIP_TIMED_READY, 1, 1, 1, 0.25, 1, 0.25)
+        else
+            GameTooltip:AddDoubleLine("  " .. t.name, t.left and ns.Xp.Duration(t.left) or "?", 1, 1, 1, 1, 1, 1)
+        end
+    end
+end
+
 -- A heading, each Gathering entry in its colour, then what unlocks next in
 -- grey; nothing when both lists are empty.
 function DataBar.AddGathering(heading, list, nextList)
@@ -403,6 +417,7 @@ local function ShowProfTooltip(self)
             DataBar.AddSkillUps(self.skillLine, d.rank)
         end
     end
+    DataBar.AddTimed(d.prof and d.prof.key)
     if self.spellOffset then GameTooltip:AddLine(L.TIP_CLICK_OPEN, 0.4, 0.8, 1) end
     GameTooltip:Show()
 end

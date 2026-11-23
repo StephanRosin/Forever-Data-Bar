@@ -743,6 +743,37 @@ do
 end
 check("library loaded from our copy", LibForeverThemes.FOLDER, ADDON)
 
+section("Timed crafts")
+do
+    local T = ns.Timed
+    local known, cds, items = {}, {}, {}
+    C_SpellBook.IsSpellKnown = function(id) return known[id] == true end
+    C_Spell = { GetSpellCooldown = function(id) return cds[id] or { startTime = 0, duration = 0 } end,
+        GetSpellName = function(id) return "Spell " .. id end }
+    C_Item = { GetItemCount = function(id) return items[id] or 0 end, GetItemNameByID = function(id) return "Item " .. id end }
+    C_Container.GetItemCooldown = function() return M.state.time - 3600, 3 * 86400 end
+    check("nothing known: nothing shown", #T.For("ALCHEMY"), 0)
+    known[17187] = true
+    check("one transmute known: one line", #T.For("ALCHEMY"), 1)
+    check("transmutes under one name", T.For("ALCHEMY")[1].name, ns.L.TIMED_TRANSMUTE)
+    check("ready", T.For("ALCHEMY")[1].left, 0)
+    cds[17187] = { startTime = M.state.time - 10, duration = 100 }
+    check("time left", T.For("ALCHEMY")[1].left, 90)
+    cds[17187] = { startTime = M.state.time, duration = 1.5 }
+    check("global cooldown counts as ready", T.For("ALCHEMY")[1].left, 0)
+    T.Learn(18560)
+    check("seen in the window counts", T.For("TAILORING")[1].name, "Spell 18560")
+    T.Learn(12345)
+    check("other recipes not kept", ForeverDataBarChar.timed[12345], nil)
+    check("salt shaker only in the bags", #T.For("LEATHERWORKING"), 0)
+    items[15846] = 1
+    check("salt shaker: time left", T.For("LEATHERWORKING")[1].left, 2 * 86400 + 82800)
+    issecretvalue = function(v) return v == 999 end
+    check("secret: unknown", T.Left(999, 5), nil)
+    issecretvalue = nil
+    ForeverDataBarChar.timed = nil
+end
+
 section("Only SavedVariables, nothing private")
 for _, f in ipairs(tocFiles()) do
     local src = io.open(ROOT .. "/" .. f):read("*a")

@@ -73,6 +73,7 @@ function Crafts.Scan()
     local list = store()[skillLine] or {}
     for _, id in ipairs(ids) do
         local okInfo, info = pcall(api.GetRecipeInfo, id)
+        if okInfo and type(info) == "table" and info.learned then ns.Timed.Learn(id) end
         if okInfo and type(info) == "table" and info.learned and info.relativeDifficulty then
             if info.relativeDifficulty >= Crafts.TRIVIAL then
                 list[id] = nil

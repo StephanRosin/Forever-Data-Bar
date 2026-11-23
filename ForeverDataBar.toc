@@ -23,6 +23,7 @@ Media.lua
 Themes.lua
 Data.lua
 Crafts.lua
+Timed.lua
 Gathering.lua
 Xp.lua
 CharInfo.lua
