@@ -83,10 +83,7 @@ return function(ns, M, check)
     check("column 1, after the built-in parts", alpha.x, last + D.CFG.PROF_GAP)
     Settings.Set(B.Key("Alpha") .. "X", 30)
     check("X shifts it", alpha.x, last + D.CFG.PROF_GAP + 30)
-    check("placement copied between themes", (function()
-        for _, key in ipairs(ns.Themes.PlacementKeys()) do if key == B.Key("Alpha") .. "X" then return true end end
-        return false
-    end)(), true)
+    check("placement is no look (copied between themes)", ns.Themes.IsLook(B.Key("Alpha") .. "X"), false)
 
     W.Open("feeds")
     check("Data Broker page offered", W.Current(), "feeds")

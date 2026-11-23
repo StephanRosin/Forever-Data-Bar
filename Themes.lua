@@ -362,40 +362,6 @@ function Themes.Stored()
     return list
 end
 
--- Every setting that places something: the bar's edge, each part's column,
--- order and shift (the data broker feeds' too), the side of the XP's extra texts.
-function Themes.PlacementKeys()
-    local keys = { "dataBarPos" }
-    for _, part in ipairs(ns.DataBar.PARTS) do
-        keys[#keys + 1] = part.key .. "Column"
-        keys[#keys + 1] = part.key .. "X"
-        keys[#keys + 1] = part.key .. "Order"
-    end
-    for _, part in ipairs(ns.Broker.Parts()) do
-        keys[#keys + 1] = part.key .. "Column"
-        keys[#keys + 1] = part.key .. "X"
-        keys[#keys + 1] = part.key .. "Order"
-    end
-    for _, info in ipairs(ns.DataBar.XP_INFOS) do keys[#keys + 1] = info.key .. "Place" end
-    return keys
-end
-
--- The positions of theme `from` taken over into the current one. Returns
--- what it replaced (Themes.Restore puts it back), or nil and why not.
-function Themes.CopyPlacement(from)
-    local why = refuse()
-    if why then return nil, why end
-    local source = storedSets()[from]
-    if not source or from == Themes.Current() then return nil, "GONE" end
-    local db, undo = ns.DB(), {}
-    for i, key in ipairs(Themes.PlacementKeys()) do
-        undo[i] = { key, copy(db[key]) }
-        db[key] = copy(source[key])
-    end
-    Settings.Changed(nil)
-    return undo
-end
-
 -- The look, which stays each theme's own when the parts are spread
 -- (Themes.SpreadParts): every key a theme's look sets, the bar's design,
 -- size, colours and fonts.
@@ -413,6 +379,37 @@ function Themes.IsLook(key)
     return false
 end
 
+-- The parts' settings -- which show, where, compact or not, what they
+-- show -- in the given sets: every key but the look and the bookkeeping.
+local function partKeys(...)
+    local keys = {}
+    for key in pairs(Settings.DEFAULTS) do keys[key] = true end
+    for _, set in ipairs({ ... }) do
+        for key in pairs(set) do keys[key] = true end   -- the feeds' settings
+    end
+    for key in pairs(keys) do
+        if META[key] or Themes.IsLook(key) then keys[key] = nil end
+    end
+    return keys
+end
+
+-- The parts of theme `from` taken over into the current one; its look
+-- stays. Returns what it replaced (Themes.Restore puts it back), or nil
+-- and why not.
+function Themes.CopyParts(from)
+    local why = refuse()
+    if why then return nil, why end
+    local source = storedSets()[from]
+    if not source or from == Themes.Current() then return nil, "GONE" end
+    local db, undo = ns.DB(), {}
+    for key in pairs(partKeys(db, source)) do
+        undo[#undo + 1] = { key, copy(db[key]) }
+        db[key] = copy(source[key])
+    end
+    Settings.Changed(nil)
+    return undo
+end
+
 -- The parts as they are now -- which show, where, and what they show --
 -- written into every other theme's stored set (and CLASSIC's, which
 -- themes not yet used are made from); their looks stay. Returns what it
@@ -420,18 +417,14 @@ end
 function Themes.SpreadParts()
     local why = refuse()
     if why then return nil, why end
-    local db, keys = ns.DB(), {}
-    for key in pairs(Settings.DEFAULTS) do keys[key] = true end
-    for key in pairs(db) do keys[key] = true end   -- the feeds' settings
+    local db, keys = ns.DB(), partKeys(ns.DB())
     local undo, current = {}, Lib.SetKey(Themes.Current())
     for setKey, set in pairs(storedSets()) do
         if type(set) == "table" and setKey ~= current then
             local saved = {}
             for key in pairs(keys) do
-                if not META[key] and not Themes.IsLook(key) then
-                    saved[key] = { copy(set[key]) }
-                    set[key] = copy(db[key])
-                end
+                saved[key] = { copy(set[key]) }
+                set[key] = copy(db[key])
             end
             undo[setKey] = saved
         end

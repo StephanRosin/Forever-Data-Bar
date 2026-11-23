@@ -70,14 +70,23 @@ return function(ns, M, check, ROOT)
     check("tech: no corner brackets", Themes.SPECS.TECH.art.ornament, nil)
     check("pixel: two to copy from", #Themes.Stored(), 2)
 
-    -- Positions from another theme, and back.
-    local undo = Themes.CopyPlacement("WOOD")
+    -- The parts' settings from another theme, and back.
+    ForeverDataBarDB.themeSets.WOOD.dataBarCharCompact = true
+    ForeverDataBarDB.themeSets.WOOD.dataBarHearth = false
+    local hearth = S("dataBarHearth")
+    local undo = Themes.CopyParts("WOOD")
     check("copy: done", undo ~= nil, true)
     check("copy: position taken", S("dataBarClockX"), 50)
+    check("copy: compact taken", S("dataBarCharCompact"), true)
+    check("copy: switched off taken", S("dataBarHearth"), false)
     check("copy: look kept", S("dataBarFont"), "VT323")
-    check("copy: sizes are no positions", S("dataBarHeight"), 30)
+    check("copy: height is look", S("dataBarHeight"), 30)
+    check("copy: theme stays", Themes.Current(), "PIXEL")
     check("copy: undo", Themes.Restore(undo), true)
     check("copy: undone", S("dataBarClockX"), 15)
+    check("copy: undone, compact", S("dataBarCharCompact"), false)
+    check("copy: undone, switch", S("dataBarHearth"), hearth)
+    ForeverDataBarDB.themeSets.WOOD.dataBarCharCompact, ForeverDataBarDB.themeSets.WOOD.dataBarHearth = nil, nil
 
     -- The parts spread to every theme (and classic, which new themes come
     -- from); each keeps its look. Undo puts them back.
@@ -137,10 +146,10 @@ return function(ns, M, check, ROOT)
     M.state.combat = true
     check("combat", select(2, Themes.Switch("TECH")), "COMBAT")
     check("combat: registry too", select(2, registry.Switch("TECH")), "COMBAT")
-    check("combat: no copy", select(2, Themes.CopyPlacement("WOOD")), "COMBAT")
+    check("combat: no copy", select(2, Themes.CopyParts("WOOD")), "COMBAT")
     M.state.combat = false
     check("unknown", select(2, Themes.Switch("NOPE")), "UNKNOWN")
-    check("copy from a theme never used", select(2, Themes.CopyPlacement("FROST")), "GONE")
+    check("copy from a theme never used", select(2, Themes.CopyParts("FROST")), "GONE")
 
     -- A changed look (REVISION): stored sets are made anew from classic.
     Themes.Switch("TECH")

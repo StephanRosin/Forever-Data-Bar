@@ -354,7 +354,8 @@ local function themeColorRow()
     }
 end
 
--- The positions another theme's set has, taken over into the current one.
+-- The parts' settings another theme's set has (shown, places, compact ...),
+-- taken over into the current one; the look stays.
 -- What it replaced comes back with "Undo" in the same list, until the theme
 -- changes or /reload.
 local themeUndo
@@ -382,7 +383,7 @@ local function themeCopyRow()
                 if undo then ns.Themes.Restore(undo.saved) end
                 return
             end
-            local saved, why = ns.Themes.CopyPlacement(id)
+            local saved, why = ns.Themes.CopyParts(id)
             if not saved then return themeRefused(nil, why) end
             themeUndo = { theme = ns.Themes.Current(), saved = saved }
         end,
