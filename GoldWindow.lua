@@ -61,7 +61,7 @@ local SHARE_BAR_H, SHARE_ALPHA = 4, 0.55
 local MIN_PLOT_H = 60                    -- the curves take the page's height left, at least this
 local Y_LABEL_W, X_ROW = 74, 16          -- the chart's value column and date row
 local GRID_LINES, GRID_ALPHA = 4, 0.12
-local LINE_THICKNESS, AREA_ALPHA = 2, 0.18
+local LINE_THICKNESS, AREA_ALPHA = 1, 0.18
 local DOT, RING, DOTS_UP_TO = 9, 7, 14   -- rings on every day only on short spans
 local DELTA_W, DELTA_SHARE, DELTA_ALPHA, DELTAS_UP_TO = 10, 0.3, 0.4, 31
 local FLAG_PAD, FLAG_LIFT = 6, 8
@@ -440,7 +440,8 @@ local function DrawChart(c, points, span)
     c.finish:Hide()
     c.empty:SetShown(#points < 2)
     if #points < 2 then return false end
-    local lo, hi = ns.Gold.Range(points)
+    -- From 0 to a round top: heights compare as amounts, the lines read as round sums.
+    local lo, hi = 0, ns.Gold.NiceTop(select(2, ns.Gold.Range(points)), GRID_LINES - 1)
     local accent, text = ns.Themes.Accent(), TextColour()
     -- Always the whole span: days before the first balance stay empty on the
     -- left, so a new character's first days are not stretched over the width.

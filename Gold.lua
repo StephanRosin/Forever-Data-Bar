@@ -183,6 +183,17 @@ function Gold.Range(points)
     return lo, hi
 end
 
+-- A round top for an axis from 0 in `steps` equal steps (1, 2, 2.5 or 5 x 10^n copper each)
+-- that reaches hi: 0-130g in 3 steps becomes 0-150g (50g a line).
+function Gold.NiceTop(hi, steps)
+    if hi <= 0 then return steps end
+    local raw = hi / steps
+    local mag = 10 ^ math.floor(math.log10(raw))
+    for _, m in ipairs({ 1, 2, 2.5, 5, 10 }) do
+        if m * mag >= raw then return m * mag * steps end
+    end
+end
+
 -- -----------------------------------------------------------------------------
 -- The tooltip
 -- -----------------------------------------------------------------------------
