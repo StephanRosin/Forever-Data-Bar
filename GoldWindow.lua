@@ -338,6 +338,38 @@ end
 -- The chart: the balance as an area under a line, a grid with values, the
 -- days below, the day's change as columns, today's value on a flag.
 -- -----------------------------------------------------------------------------
+-- The weekday's short name (os.date's %w: 0 = Sunday).
+local function Weekday(t)
+    local names = {}
+    for n in L.GOLD_WEEKDAYS:gmatch("%S+") do names[#names + 1] = n end
+    return names[tonumber(date("%w", t)) + 1] or ""
+end
+
+-- Hovering the curve: the day nearest the cursor gets a dot and a tooltip
+-- with its date and balance (c.hover, set by DrawChart).
+local function ShowPoint(c)
+    local h = c.hover
+    local left = c:GetLeft()
+    if not (h and left) then return end
+    local x = GetCursorPosition() / c:GetEffectiveScale() - left
+    local best
+    for i = 1, #h.points do
+        if not best or math.abs(h.X(i) - x) < math.abs(h.X(best) - x) then best = i end
+    end
+    if best == c.hoverIndex then return end
+    c.hoverIndex = best
+    local p = h.points[best]
+    c.mark:SetSize(DOT, DOT)
+    c.mark:ClearAllPoints()
+    c.mark:SetPoint("CENTER", c, "BOTTOMLEFT", h.X(best), h.Y(p.value))
+    Tint(c.mark, ns.Themes.Accent(), 1)
+    c.mark:Show()
+    GameTooltip:SetOwner(c.mark, "ANCHOR_RIGHT")
+    GameTooltip:SetText(Weekday(p.t) .. " " .. date(L.GOLD_DATE, p.t))
+    GameTooltip:AddLine(ns.Gold.Money(p.value), 1, 1, 1)
+    GameTooltip:Show()
+end
+
 local function Chart(parent)
     local c = CreateFrame("Frame", nil, parent)
     c.grid, c.yLabels, c.xLabels, c.lines, c.dots, c.deltas, c.lows, c.highs = {}, {}, {}, {}, {}, {}, {}, {}
@@ -354,6 +386,17 @@ local function Chart(parent)
     c.empty = Text(parent, "muted")
     c.empty:SetPoint("CENTER", c, "CENTER")
     c.empty:SetText(L.GOLD_EMPTY_CURVE)
+    c.mark = c:CreateTexture(nil, "OVERLAY", nil, 4)
+    Media(c.mark, "GoldDot")
+    c.mark:Hide()
+    c:EnableMouse(true)
+    c:SetScript("OnEnter", function(self) self:SetScript("OnUpdate", ShowPoint) end)
+    c:SetScript("OnLeave", function(self)
+        self:SetScript("OnUpdate", nil)
+        self.hoverIndex = nil
+        self.mark:Hide()
+        GameTooltip:Hide()
+    end)
     return c
 end
 
@@ -368,13 +411,6 @@ local function Get(list, i, make)
 end
 
 local function HideAll(list) for _, x in ipairs(list) do x:Hide() end end
-
--- The weekday's short name (os.date's %w: 0 = Sunday).
-local function Weekday(t)
-    local names = {}
-    for n in L.GOLD_WEEKDAYS:gmatch("%S+") do names[#names + 1] = n end
-    return names[tonumber(date("%w", t)) + 1] or ""
-end
 
 -- Dark text on a bright accent, light text on a dark one.
 local function FlagInk(c)
@@ -439,6 +475,8 @@ local function DrawChart(c, points, span)
     c.flagText:SetText("")
     c.finish:Hide()
     c.empty:SetShown(#points < 2)
+    c.hover, c.hoverIndex = nil, nil
+    c.mark:Hide()
     if #points < 2 then return false end
     -- From 0 to a round top: heights compare as amounts, the lines read as round sums.
     local lo, hi = 0, ns.Gold.NiceTop(select(2, ns.Gold.Range(points)), GRID_LINES - 1)
@@ -505,6 +543,7 @@ local function DrawChart(c, points, span)
             d:Show()
         end
     end
+    c.hover = { points = points, X = X, Y = Y }
     DayLabels(c, points[#points].t, span, XBack)
     -- Today's value on a flag left above its point.
     local lx, ly = X(#points), Y(points[#points].value)

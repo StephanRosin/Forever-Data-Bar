@@ -305,6 +305,14 @@ return function(ns, M, check)
     for _, fs in ipairs(o.chart.xLabels) do if fs:IsShown() then shown = shown + 1 end end
     check("overview: all seven days labelled", shown, 7)
     check("overview: yesterday one step left of today", o.chart.xLabels[6]._points.BOTTOM[3], o.chart.plotW * 5 / 6)
+    -- Hovering the curve: the nearest day's balance in the tooltip.
+    GameTooltip._lines = nil
+    o.chart:GetScript("OnEnter")(o.chart)
+    o.chart:GetScript("OnUpdate")(o.chart)
+    check("hover: the nearest day's balance", GameTooltip._lines and GameTooltip._lines[1], G.Money(1000))
+    check("hover: its point marked", o.chart.mark:IsShown(), true)
+    o.chart:GetScript("OnLeave")(o.chart)
+    check("hover: gone on leave", o.chart.mark:IsShown() or o.chart:GetScript("OnUpdate") ~= nil, false)
     ForeverDataBarChar.goldDays[G.DayKey(G.Now(), 1)] = nil
     W.Fill()
     check("overview: no burst outside the comic", o.burst:IsShown(), false)
