@@ -811,6 +811,35 @@ do
     check("dedicated study: time left", T.EntryLeft(T.LIST[6]), 79200)
     check("dedicated study: no recipe to open", T.Open(T.LIST[6]), false)
     check("dedicated study: not under a profession", #T.For("ALCHEMY"), 1)
+    check("dedicated study: own icon art", T.LIST[6].art, "TimedStudy")
+    -- On the bar: a secure button casts it; each slot its own tooltip.
+    local D = ns.DataBar
+    ns.Settings.Set("dataBarTimed", true)
+    D.Apply()
+    D.UpdateStats()
+    local g = D.frame.parts.TIMED
+    D.PlaceCastClick()
+    local cast = D.CastClick()
+    check("cast: secure spell button", cast and cast:GetAttribute("type") .. " " .. cast:GetAttribute("spell"), "spell 1225469")
+    check("cast: hidden in combat", cast._driver, "[combat] hide; show")
+    check("cast: over its slot", cast._points.BOTTOMLEFT[3], (g:GetLeft() + g.slots[6].from) * g:GetEffectiveScale() / UIParent:GetEffectiveScale())
+    local realCursor = GetCursorPosition
+    local function hoverSlot(i)
+        GetCursorPosition = function() return (g:GetLeft() + g.slots[i].from + 1) * g:GetEffectiveScale(), 0 end
+        GameTooltip._lines, GameTooltip._left = nil, {}
+    end
+    hoverSlot(2)
+    g:GetScript("OnEnter")(g)
+    local tip2 = GameTooltip._lines and table.concat(GameTooltip._lines, "\n") or ""
+    check("tooltip: only the slot under the cursor", tip2:find(ns.L.TIMED_TRANSMUTE, 1, true) ~= nil and tip2:find("1225469", 1, true) == nil, true)
+    hoverSlot(6)
+    g:GetScript("OnUpdate")(g)
+    local tip6 = GameTooltip._lines and table.concat(GameTooltip._lines, "\n") or ""
+    check("tooltip: follows the cursor", tip6:find("Spell 1225469", 1, true) ~= nil and tip6:find(ns.L.TIMED_TRANSMUTE, 1, true) == nil, true)
+    check("tooltip: the cast hint", tip6:find(ns.L.DATABAR_TIP_TIMED_CAST, 1, true) ~= nil, true)
+    g:GetScript("OnLeave")(g)
+    check("tooltip: stops following on leave", g:GetScript("OnUpdate"), nil)
+    GetCursorPosition = realCursor
     issecretvalue = function(v) return v == 999 end
     check("secret: unknown", T.Left(999, 5), nil)
     issecretvalue = nil

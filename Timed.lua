@@ -29,8 +29,8 @@ Timed.LIST = {
     { key = "GOLD", art = "TimedGold", prof = "ALCHEMY", spells = { 11479 } },             -- Iron to Gold
     { key = "TRUESILVER", art = "TimedTruesilver", prof = "ALCHEMY", spells = { 11480 } }, -- Mithril to Truesilver
     { key = "SALT", art = "TimedSalt", prof = "LEATHERWORKING", item = 15846, makes = 15409 }, -- Salt Shaker
-    -- Dedicated Study (SpellCooldowns: category 23 h); no profession, no recipe, its spell's icon.
-    { key = "STUDY", spells = { 1225469 } },
+    -- Dedicated Study (SpellCooldowns: category 23 h): no profession, no recipe; cast from the bar.
+    { key = "STUDY", art = "TimedStudy", spells = { 1225469 }, cast = true },
 }
 Timed.IDS = {}
 for _, e in ipairs(Timed.LIST) do for _, id in ipairs(e.spells or {}) do Timed.IDS[id] = true end end

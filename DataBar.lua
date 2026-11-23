@@ -671,25 +671,24 @@ DataBar.STATS = {
         slotText = function(e) return ns.Timed.Text(ns.Timed.EntryLeft(e)), true end,
         slotColour = function(e) return ns.Timed.EntryLeft(e) == 0 and READY_COLOUR or nil end,
         value = function() return #ns.Timed.Shown() > 0 and "" or nil end,
-        tip = function(self)
-            TipOwner(self)
-            GameTooltip:AddLine(L.DATABAR_PART_TIMED, 1, 1, 1)
-            for _, e in ipairs(ns.Timed.Shown()) do
-                local left = ns.Timed.EntryLeft(e)
-                local c = left == 0 and READY_COLOUR or WHITE
-                GameTooltip:AddDoubleLine(("|T%s:16|t %s"):format(ns.Timed.Icon(e), ns.Timed.Name(e)),
-                    left == 0 and L.TIP_TIMED_READY or (left and ns.Xp.Duration(left) or "?"), 0.8, 0.8, 0.8, c[1], c[2], c[3])
+        -- One tooltip per craft, for the slot under the cursor (BuildStat).
+        slotTip = function(owner, e)
+            TipOwner(owner)
+            local left = ns.Timed.EntryLeft(e)
+            local c = left == 0 and READY_COLOUR or WHITE
+            GameTooltip:AddDoubleLine(("|T%s:16|t %s"):format(ns.Timed.Icon(e), ns.Timed.Name(e)),
+                left == 0 and L.TIP_TIMED_READY or (left and ns.Xp.Duration(left) or "?"), 1, 1, 1, c[1], c[2], c[3])
+            if e.cast then
+                GameTooltip:AddLine(InCombatLockdown() and L.DATABAR_TIP_HEARTH_COMBAT or L.DATABAR_TIP_TIMED_CAST, 0.4, 0.8, 1)
+            elseif e.prof and not e.item then
+                GameTooltip:AddLine(L.DATABAR_TIP_TIMED_CLICK, 0.4, 0.8, 1)
             end
-            GameTooltip:AddLine(L.DATABAR_TIP_TIMED_CLICK, 0.4, 0.8, 1)
             GameTooltip:Show()
         end,
-        -- The slot under the cursor opens its recipe.
+        -- The slot under the cursor opens its recipe (a spell to cast has its secure button, PlaceCastClick).
         click = function(self)
-            local x = GetCursorPosition() / self:GetEffectiveScale() - (self:GetLeft() or 0)
-            for i, e in ipairs(ns.Timed.LIST) do
-                local slot = self.slots[i]
-                if slot.icon:IsShown() and slot.from and x >= slot.from and x < slot.to then return ns.Timed.Open(e) end
-            end
+            local _, e = DataBar.SlotAt(self)
+            if e then return ns.Timed.Open(e) end
         end,
     },
     -- Forever Themes' central theme; nothing without that addon (the hub).
@@ -795,6 +794,24 @@ local function FillSlots(g, def, colour)
     return math.max(0, x - CHAR_GAP)
 end
 
+-- The shown slot under the cursor of a part with slots: its index and item, else nil.
+function DataBar.SlotAt(g)
+    local x = GetCursorPosition() / g:GetEffectiveScale() - (g:GetLeft() or 0)
+    local def = DataBar.STATS[g.id]
+    for i, item in ipairs(def.slots) do
+        local slot = g.slots[i]
+        if slot.icon:IsShown() and slot.from and x >= slot.from and x < slot.to then return i, item end
+    end
+end
+
+-- A part whose slots have tooltips of their own: the one under the cursor, followed while hovered.
+local function FollowSlotTip(g)
+    local i, item = DataBar.SlotAt(g)
+    if i == g.tipSlot then return end
+    g.tipSlot = i
+    if item then DataBar.STATS[g.id].slotTip(g, item) elseif GameTooltip:IsOwned(g) then GameTooltip:Hide() end
+end
+
 local function BuildStat(id)
     local def = DataBar.STATS[id]
     local g = CreateFrame("Button", nil, frame)
@@ -802,8 +819,20 @@ local function BuildStat(id)
     g:SetHeight(CFG.ICON)
     g:RegisterForClicks(def.anyButton and "AnyUp" or "LeftButtonUp")
     if def.click then g:SetScript("OnClick", def.click) end
-    g:SetScript("OnEnter", def.tip)
-    g:SetScript("OnLeave", HideTooltip)
+    if def.slotTip then
+        g:SetScript("OnEnter", function(self)
+            self.tipSlot = false
+            self:SetScript("OnUpdate", FollowSlotTip)
+            FollowSlotTip(self)
+        end)
+        g:SetScript("OnLeave", function(self)
+            self:SetScript("OnUpdate", nil)
+            HideTooltip(self)
+        end)
+    else
+        g:SetScript("OnEnter", def.tip)
+        g:SetScript("OnLeave", HideTooltip)
+    end
     g.icon = g:CreateTexture(nil, "ARTWORK")
     g.icon:SetSize(CFG.ICON, CFG.ICON)
     g.icon:SetPoint("LEFT", g, "LEFT", 0, 0)
@@ -1072,6 +1101,47 @@ function DataBar.PlaceHearthClick()
 end
 DataBar.HearthClick = function() return hearthClick end   -- the tests
 
+-- A cooldown spell to cast from the bar (Timed.LIST, cast = true: Dedicated Study): as the
+-- hearthstone, a SecureActionButton (type "spell", by ID) over its slot; hidden in combat.
+-- Moved whenever the slots before it change width (UpdateStats).
+local castClick, castPending
+function DataBar.PlaceCastClick()
+    local g = frame and frame.parts.TIMED
+    if not g then return end
+    if InCombatLockdown() then
+        castPending = true
+        return
+    end
+    castPending = false
+    local index, entry
+    for i, e in ipairs(ns.Timed.LIST) do if e.cast then index, entry = i, e end end
+    local slot = index and g.slots[index]
+    local id = entry and ns.Timed.Can(entry)
+    if not castClick then
+        castClick = CreateFrame("Button", "ForeverDataBarCast", UIParent, "SecureActionButtonTemplate")
+        castClick:RegisterForClicks("AnyUp", "AnyDown")
+        castClick:SetAttribute("type", "spell")
+        castClick:SetScript("OnEnter", function(self) DataBar.STATS.TIMED.slotTip(self, entry) end)
+        castClick:SetScript("OnLeave", HideTooltip)
+    end
+    UnregisterStateDriver(castClick, "visibility")
+    local left, bottom = g:GetLeft(), g:GetBottom()
+    if not (id and g:IsVisible() and left and slot.icon:IsShown() and slot.from) then
+        castClick:Hide()
+        return
+    end
+    castClick:SetAttribute("spell", id)
+    local s = g:GetEffectiveScale() / UIParent:GetEffectiveScale()
+    castClick:SetFrameStrata(g:GetFrameStrata())
+    castClick:SetFrameLevel(g:GetFrameLevel() + 5)
+    castClick:ClearAllPoints()
+    castClick:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", (left + slot.from) * s, bottom * s)
+    castClick:SetSize((slot.to - slot.from) * s, g:GetHeight() * s)
+    castClick:Show()
+    RegisterStateDriver(castClick, "visibility", "[combat] hide; " .. (S("hideInGroup") and "[group] hide; " or "") .. "show")
+end
+DataBar.CastClick = function() return castClick end   -- the tests
+
 function DataBar.Layout()
     if not frame then return end
     local at = { {}, {}, {}, {}, {} }
@@ -1119,6 +1189,7 @@ function DataBar.Layout()
     end
     DataBar.PlaceTalentClick()
     DataBar.PlaceHearthClick()
+    DataBar.PlaceCastClick()
 end
 
 -- -----------------------------------------------------------------------------
@@ -1427,6 +1498,11 @@ function DataBar.UpdateStats()
         end
     end
     if moved then DataBar.Layout() end
+    -- The cast slot moves with the times before it, the part's width not always.
+    local timed = frame.parts.TIMED
+    local from = timed and timed:IsShown() and timed.slots and timed.slots[#timed.slots].from
+    if not moved and from ~= frame.castFrom then DataBar.PlaceCastClick() end
+    frame.castFrom = from
 end
 
 -- -----------------------------------------------------------------------------
@@ -1550,6 +1626,7 @@ function DataBar.UpdateVisibility()
     if frame:IsShown() and not was then DataBar.Layout() end
     if talentPending or frame:IsShown() ~= was then DataBar.PlaceTalentClick() end
     if hearthPending or frame:IsShown() ~= was then DataBar.PlaceHearthClick() end
+    if castPending or frame:IsShown() ~= was then DataBar.PlaceCastClick() end
 end
 
 function DataBar.Apply()
