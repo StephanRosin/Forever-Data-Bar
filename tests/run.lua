@@ -768,6 +768,13 @@ do
     check("salt shaker only in the bags", #T.For("LEATHERWORKING"), 0)
     items[15846] = 1
     check("salt shaker: time left", T.For("LEATHERWORKING")[1].left, 2 * 86400 + 82800)
+    check("part: what the character can make", #T.Shown(), 3)
+    check("part text: ready", T.Text(0), ns.L.DATABAR_HEARTH_READY)
+    check("part text: days and hours", T.Text(2 * 86400 + 82800 + 59), "2d 23h")
+    check("part text: hours and minutes", T.Text(5 * 3600 + 12 * 60), "5h 12m")
+    check("part text: minutes", T.Text(40 * 60), "40m")
+    check("part text: secret", T.Text(nil), "?")
+    check("part listed", ns.DataBar.STATS.TIMED ~= nil and ns.Settings.Get("dataBarTimed"), false)
     issecretvalue = function(v) return v == 999 end
     check("secret: unknown", T.Left(999, 5), nil)
     issecretvalue = nil

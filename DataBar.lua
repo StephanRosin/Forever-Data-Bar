@@ -663,6 +663,26 @@ DataBar.STATS = {
             GameTooltip:Show()
         end,
     },
+    -- Crafts with a long cooldown this character can make (Timed.lua): each in its game icon, ready or the time left.
+    TIMED = {
+        slots = ns.Timed.LIST,
+        slotOn = function(e) return ns.Timed.Can(e) ~= nil end,
+        slotIcon = ns.Timed.Icon,
+        slotText = function(e) return ns.Timed.Text(ns.Timed.EntryLeft(e)), true end,
+        slotColour = function(e) return ns.Timed.EntryLeft(e) == 0 and READY_COLOUR or nil end,
+        value = function() return #ns.Timed.Shown() > 0 and "" or nil end,
+        tip = function(self)
+            TipOwner(self)
+            GameTooltip:AddLine(L.DATABAR_PART_TIMED, 1, 1, 1)
+            for _, e in ipairs(ns.Timed.Shown()) do
+                local left = ns.Timed.EntryLeft(e)
+                local c = left == 0 and READY_COLOUR or WHITE
+                GameTooltip:AddDoubleLine(("|T%s:16|t %s"):format(ns.Timed.Icon(e), ns.Timed.Name(e)),
+                    left == 0 and L.TIP_TIMED_READY or (left and ns.Xp.Duration(left) or "?"), 0.8, 0.8, 0.8, c[1], c[2], c[3])
+            end
+            GameTooltip:Show()
+        end,
+    },
     -- Forever Themes' central theme; nothing without that addon (the hub).
     THEME = {
         icon = "StatTheme",
@@ -742,8 +762,11 @@ local function FillSlots(g, def, colour)
         slot.icon:SetShown(on)
         slot.text:SetShown(on)
         if on then
-            slot.icon:SetTexture(own and CFG.MEDIA .. item.art or def.slotIcon(item))
-            slot.icon:SetVertexColor(tint[1], tint[2], tint[3], 1)
+            -- Own art where there is some; else the game's icon, untinted.
+            local mine = own and item.art
+            slot.icon:SetTexture(mine and CFG.MEDIA .. item.art or def.slotIcon(item))
+            local t = mine and tint or WHITE
+            slot.icon:SetVertexColor(t[1], t[2], t[3], 1)
             slot.icon:SetSize(size, size)
             slot.text:ClearAllPoints()
             slot.text:SetPoint("LEFT", slot.icon, "RIGHT", gap, 0)
@@ -753,7 +776,8 @@ local function FillSlots(g, def, colour)
             if readable then plain[#plain + 1] = text end
             slot.width = Measure(g.measure, readable and text or def.slotSample(item), readable and nil or slot.width)
             slot.text:SetText(text)
-            slot.text:SetTextColor(colour[1], colour[2], colour[3])
+            local c = def.slotColour and def.slotColour(item) or colour
+            slot.text:SetTextColor(c[1], c[2], c[3])
             x = x + size + gap + slot.width + CHAR_GAP
         end
     end
@@ -949,6 +973,7 @@ DataBar.PARTS = {
     { id = "CHAR", key = "dataBarChar" },
     { id = "CURRENCY", key = "dataBarCurrency" },
     { id = "HEARTH", key = "dataBarHearth" },
+    { id = "TIMED", key = "dataBarTimed" },
     { id = "THEME", key = "dataBarTheme" },
 }
 -- Five columns: the first starts at the left edge, the last ends at the
@@ -1539,7 +1564,7 @@ events:SetScript("OnEvent", function(_, event)
         DataBar.Apply()
         -- Buffs, gear and talents all move the combat values: read them each second, as the character window does.
         -- The hearthstone's time left ticks as well.
-        C_Timer.NewTicker(1, function() if S("dataBarChar") or S("dataBarHearth") then DataBar.UpdateStats() end end)
+        C_Timer.NewTicker(1, function() if S("dataBarChar") or S("dataBarHearth") or S("dataBarTimed") then DataBar.UpdateStats() end end)
     elseif event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_REGEN_ENABLED" then
         inCombat = event == "PLAYER_REGEN_DISABLED"
         DataBar.UpdateVisibility()

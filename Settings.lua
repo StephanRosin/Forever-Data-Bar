@@ -50,6 +50,8 @@ Settings.DEFAULTS = {
     dataBarCurHonor = true, dataBarCurFavor = true, dataBarCurReal = true, dataBarCurShards = true, dataBarCurMarks = true,
     dataBarCurZero = true,      -- currencies and shards at 0 too (the marks only when held)
     dataBarHearth = false, dataBarHearthColumn = 2, dataBarHearthX = 0,
+    -- Crafts with a long cooldown (Timed.lua): those the character can make.
+    dataBarTimed = false, dataBarTimedColumn = 2, dataBarTimedX = 0,
     -- Forever Themes' central theme: shows only while that addon is loaded.
     dataBarTheme = true, dataBarThemeColumn = 5, dataBarThemeX = 0,
     hideInCombat = false,
@@ -65,7 +67,7 @@ Settings.DEFAULTS = {
 -- A part may have a font of its own: <part key>FontOwn, …Font, …FontSize,
 -- …FontColor (see DataBar.PARTS).
 Settings.FONT_PARTS = { "dataBarXp", "dataBarGold", "dataBarDura", "dataBarBags", "dataBarClock",
-    "dataBarProfs", "dataBarReps", "dataBarChar", "dataBarCurrency", "dataBarHearth", "dataBarTheme" }
+    "dataBarProfs", "dataBarReps", "dataBarChar", "dataBarCurrency", "dataBarHearth", "dataBarTimed", "dataBarTheme" }
 Settings.FONT_SIZES = { 8, 20 }
 for _, key in ipairs(Settings.FONT_PARTS) do
     Settings.DEFAULTS[key .. "FontOwn"] = false
@@ -84,6 +86,7 @@ Settings.RANGES = {
     dataBarDuraX = { -2000, 2000 }, dataBarBagsX = { -2000, 2000 }, dataBarClockX = { -2000, 2000 },
     dataBarProfsX = { -2000, 2000 }, dataBarRepsX = { -2000, 2000 }, dataBarThemeX = { -2000, 2000 },
     dataBarCharX = { -2000, 2000 }, dataBarCurrencyX = { -2000, 2000 }, dataBarHearthX = { -2000, 2000 },
+    dataBarTimedX = { -2000, 2000 },
 }
 Settings.RANGES.dataBarFontSize = Settings.FONT_SIZES
 for _, key in ipairs(Settings.FONT_PARTS) do Settings.RANGES[key .. "FontSize"] = Settings.FONT_SIZES end

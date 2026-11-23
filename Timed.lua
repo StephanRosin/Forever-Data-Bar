@@ -33,7 +33,7 @@ end
 function Timed.Learn(id) if Timed.IDS[id] then seen()[id] = true end end
 
 local function knows(id)
-    return seen()[id] or (C_SpellBook.IsSpellKnown and C_SpellBook.IsSpellKnown(id)) or false
+    return seen()[id] or (C_SpellBook and C_SpellBook.IsSpellKnown and C_SpellBook.IsSpellKnown(id)) or false
 end
 
 -- Seconds left, 0 when ready; nil while the game keeps it secret.
@@ -43,27 +43,54 @@ function Timed.Left(start, duration)
     return math.max(0, start + duration - GetTime())
 end
 
+-- The spell of an entry this character knows (true for the salt shaker in the bags), else nil.
+function Timed.Can(e)
+    -- Guarded as Currencies.lua: early in a session (and in the tests) some C_ tables are partial.
+    if e.item then return C_Item and C_Item.GetItemCount and (C_Item.GetItemCount(e.item) or 0) > 0 or nil end
+    if not (C_Spell and C_Spell.GetSpellCooldown) then return nil end
+    for _, id in ipairs(e.spells) do if knows(id) then return id end end
+end
+
+-- Seconds left on an entry it can make (0: ready; nil: secret).
+function Timed.EntryLeft(e)
+    if e.item then return Timed.Left(C_Container.GetItemCooldown(e.item)) end
+    local cd = C_Spell.GetSpellCooldown(Timed.Can(e))
+    return cd and Timed.Left(cd.startTime, cd.duration) or 0
+end
+
+function Timed.Name(e)
+    if e.item then return C_Item.GetItemNameByID(e.item) or ("item:" .. e.item) end
+    local id = Timed.Can(e)
+    return e.label and L[e.label] or C_Spell.GetSpellName(id) or ("spell:" .. id)
+end
+
+function Timed.Icon(e)
+    if e.item then return C_Item.GetItemIconByID(e.item) or 134400 end
+    return C_Spell.GetSpellTexture(Timed.Can(e)) or 134400   -- the question mark
+end
+
+-- "Ready", "2d 23h", "5h 12m", "40m": short, for the bar.
+function Timed.Text(left)
+    if left == nil then return "?" end
+    if left <= 0 then return L.DATABAR_HEARTH_READY end
+    local d, h, m = math.floor(left / 86400), math.floor(left % 86400 / 3600), math.floor(left % 3600 / 60)
+    if d > 0 then return L.DUR_D:format(d) .. " " .. L.DUR_H:format(h) end
+    if h > 0 then return L.DUR_H:format(h) .. " " .. L.DUR_M:format(m) end
+    return m > 0 and L.DUR_M:format(m) or L.DUR_LESS
+end
+
+-- Every entry this character can make, in LIST order.
+function Timed.Shown()
+    local list = {}
+    for _, e in ipairs(Timed.LIST) do if Timed.Can(e) then list[#list + 1] = e end end
+    return list
+end
+
 -- This character's crafts of a profession (its key, as ns.Data): { name, left } in LIST order.
 function Timed.For(prof)
     local out = {}
-    for _, e in ipairs(Timed.LIST) do
-        if e.prof == prof then
-            if e.item then
-                if (C_Item.GetItemCount(e.item) or 0) > 0 then
-                    out[#out + 1] = { name = C_Item.GetItemNameByID(e.item) or ("item:" .. e.item),
-                        left = Timed.Left(C_Container.GetItemCooldown(e.item)) }
-                end
-            else
-                for _, id in ipairs(e.spells) do
-                    if knows(id) then
-                        local cd = C_Spell.GetSpellCooldown(id)
-                        out[#out + 1] = { name = e.label and L[e.label] or C_Spell.GetSpellName(id) or ("spell:" .. id),
-                            left = cd and Timed.Left(cd.startTime, cd.duration) or 0 }
-                        break
-                    end
-                end
-            end
-        end
+    for _, e in ipairs(Timed.Shown()) do
+        if e.prof == prof then out[#out + 1] = { name = Timed.Name(e), left = Timed.EntryLeft(e) } end
     end
     return out
 end
