@@ -788,6 +788,21 @@ do
     check("icon of what it makes (mooncloth)", T.Icon(T.LIST[1]), "ICON14342")
     check("transmute icon: arcanite", T.Icon(T.LIST[2]), "ICON12360")
     check("salt shaker: the salt", T.Icon(T.LIST[5]), "ICON15409")
+    cds[17187] = { startTime = M.state.time - 10, duration = 100 }
+    check("out of combat: read and kept", T.EntryLeft(T.LIST[2]), 90)
+    M.state.combat = true
+    cds[17187] = nil
+    check("in combat: the kept end, not ready", T.EntryLeft(T.LIST[2]), 90)
+    M.state.serverTime = (M.state.serverTime or 1800000000) + 30
+    check("in combat: the kept end counts down", T.EntryLeft(T.LIST[2]), 60)
+    check("in combat: no recipe opened", T.Open(T.LIST[2]), false)
+    M.state.combat = nil
+    local opened
+    C_TradeSkillUI = C_TradeSkillUI or {}
+    C_TradeSkillUI.OpenRecipe = function(id) opened = id end
+    check("click: opens the recipe", T.Open(T.LIST[2]) and opened, 17187)
+    check("click: not the salt shaker", T.Open(T.LIST[5]), false)
+    check("own icon art", T.LIST[1].art, "TimedMooncloth")
     issecretvalue = function(v) return v == 999 end
     check("secret: unknown", T.Left(999, 5), nil)
     issecretvalue = nil

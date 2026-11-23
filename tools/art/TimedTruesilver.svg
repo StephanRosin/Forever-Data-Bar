@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24"><!-- truesilver bar: a crystal-cut bar, set aslant, its facets cut; white, tinted in game -->
+<defs><mask id="m"><rect width="24" height="24" fill="#fff"/><path fill="none" stroke="#000" stroke-width="1" stroke-linejoin="round" d="M11.2 3.6 9.6 12.8 2.8 14M9.6 12.8l3.6 7.8M9.6 12.8 21 9.8"/></mask></defs><path mask="url(#m)" fill="#fff" d="M2.8 14 11.2 3.6l6.4.6 3.4 5.6-7.8 10.8-6.4-.4Z"/>
+</svg>

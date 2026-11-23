@@ -680,7 +680,16 @@ DataBar.STATS = {
                 GameTooltip:AddDoubleLine(("|T%s:16|t %s"):format(ns.Timed.Icon(e), ns.Timed.Name(e)),
                     left == 0 and L.TIP_TIMED_READY or (left and ns.Xp.Duration(left) or "?"), 0.8, 0.8, 0.8, c[1], c[2], c[3])
             end
+            GameTooltip:AddLine(L.DATABAR_TIP_TIMED_CLICK, 0.4, 0.8, 1)
             GameTooltip:Show()
+        end,
+        -- The slot under the cursor opens its recipe.
+        click = function(self)
+            local x = GetCursorPosition() / self:GetEffectiveScale() - (self:GetLeft() or 0)
+            for i, e in ipairs(ns.Timed.LIST) do
+                local slot = self.slots[i]
+                if slot.icon:IsShown() and slot.from and x >= slot.from and x < slot.to then return ns.Timed.Open(e) end
+            end
         end,
     },
     -- Forever Themes' central theme; nothing without that addon (the hub).
@@ -775,6 +784,7 @@ local function FillSlots(g, def, colour)
             local text, readable = def.slotText(item)
             if readable then plain[#plain + 1] = text end
             slot.width = Measure(g.measure, readable and text or def.slotSample(item), readable and nil or slot.width)
+            slot.from, slot.to = x, x + size + gap + slot.width   -- for a click on one slot
             slot.text:SetText(text)
             local c = def.slotColour and def.slotColour(item) or colour
             slot.text:SetTextColor(c[1], c[2], c[3])
@@ -969,11 +979,11 @@ DataBar.PARTS = {
     { id = "BAGS", key = "dataBarBags" },
     { id = "CLOCK", key = "dataBarClock" },
     { id = "PROFS", key = "dataBarProfs" },
+    { id = "TIMED", key = "dataBarTimed" },   -- under the professions in the options: they belong together
     { id = "REPS", key = "dataBarReps" },
     { id = "CHAR", key = "dataBarChar" },
     { id = "CURRENCY", key = "dataBarCurrency" },
     { id = "HEARTH", key = "dataBarHearth" },
-    { id = "TIMED", key = "dataBarTimed" },
     { id = "THEME", key = "dataBarTheme" },
 }
 -- Five columns: the first starts at the left edge, the last ends at the

@@ -21,12 +21,13 @@ Timed.MAKES = { [18560] = 14342, [17187] = 12360, [1317279] = 251290, [17559] = 
     [17561] = 7080, [17562] = 7082, [17563] = 7080, [17564] = 12808, [17565] = 7076, [17566] = 12803,
     [22430] = 17967, [11479] = 3577, [11480] = 6037 }
 local TRANSMUTES = { 17187, 1317279, 17559, 17560, 17561, 17562, 17563, 17564, 17565, 17566, 22430 }
+-- key: where its end is kept; art: the bar's own icon (dataBarOwnIcons).
 Timed.LIST = {
-    { prof = "TAILORING", spells = { 18560 } },                               -- Mooncloth
-    { prof = "ALCHEMY", spells = TRANSMUTES, label = "TIMED_TRANSMUTE" },     -- Arcanite, Legionite, elements …
-    { prof = "ALCHEMY", spells = { 11479 } },                                 -- Iron to Gold
-    { prof = "ALCHEMY", spells = { 11480 } },                                 -- Mithril to Truesilver
-    { prof = "LEATHERWORKING", item = 15846, makes = 15409 },                 -- Salt Shaker → Refined Deeprock Salt
+    { key = "MOONCLOTH", art = "TimedMooncloth", prof = "TAILORING", spells = { 18560 } },
+    { key = "TRANSMUTE", art = "TimedTransmute", prof = "ALCHEMY", spells = TRANSMUTES, label = "TIMED_TRANSMUTE" },
+    { key = "GOLD", art = "TimedGold", prof = "ALCHEMY", spells = { 11479 } },             -- Iron to Gold
+    { key = "TRUESILVER", art = "TimedTruesilver", prof = "ALCHEMY", spells = { 11480 } }, -- Mithril to Truesilver
+    { key = "SALT", art = "TimedSalt", prof = "LEATHERWORKING", item = 15846, makes = 15409 }, -- Salt Shaker
 }
 Timed.IDS = {}
 for _, e in ipairs(Timed.LIST) do for _, id in ipairs(e.spells or {}) do Timed.IDS[id] = true end end
@@ -60,11 +61,41 @@ function Timed.Can(e)
     for _, id in ipairs(e.spells) do if knows(id) then return id end end
 end
 
--- Seconds left on an entry it can make (0: ready; nil: secret).
-function Timed.EntryLeft(e)
+-- When each entry is ready again (server time), from the last reading out of combat:
+-- in combat Forever answers cooldowns secret or empty, which read as "ready".
+local function ends()
+    local char = ns.CharDB()
+    char.timedUntil = char.timedUntil or {}
+    return char.timedUntil
+end
+
+local function read(e)
     if e.item then return Timed.Left(C_Container.GetItemCooldown(e.item)) end
     local cd = C_Spell.GetSpellCooldown(Timed.Can(e))
-    return cd and Timed.Left(cd.startTime, cd.duration) or 0
+    if not cd then return 0 end
+    return Timed.Left(cd.startTime, cd.duration)
+end
+
+-- Seconds left on an entry it can make (0: ready; nil: never read out of combat).
+function Timed.EntryLeft(e)
+    local now = GetServerTime()
+    local left = not InCombatLockdown() and read(e) or nil
+    if left then
+        ends()[e.key] = now + left
+        return left
+    end
+    local t = ends()[e.key]
+    return t and math.max(0, t - now) or nil
+end
+
+-- Opens its profession on the recipe (as Blizzard's recipe tracker does); not the salt shaker, not in combat.
+function Timed.Open(e)
+    if e.item or InCombatLockdown() then return false end
+    local id = Timed.Can(e)
+    if not (id and C_TradeSkillUI and C_TradeSkillUI.OpenRecipe) then return false end
+    if not ProfessionsFrame and ProfessionsFrame_LoadUI then ProfessionsFrame_LoadUI() end
+    C_TradeSkillUI.OpenRecipe(id)
+    return true
 end
 
 function Timed.Name(e)
