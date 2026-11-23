@@ -18,7 +18,7 @@ local Broker = {}
 ns.Broker = Broker
 
 local LIB = "LibDataBroker-1.1"
-local KEY_PREFIX = "dataBarFeed:"   -- settings: <key>, <key>Column, <key>X
+local KEY_PREFIX = "dataBarFeed:"   -- settings: <key>, <key>Column, <key>X, <key>Order
 local DEFAULT_COLUMN = 5
 local X_RANGE = { -2000, 2000 }
 
@@ -77,6 +77,7 @@ local function add(name)
     local d, r = Settings.DEFAULTS, Settings.RANGES
     d[part.key], d[part.key .. "Column"], d[part.key .. "X"] = false, DEFAULT_COLUMN, 0
     r[part.key .. "X"] = X_RANGE
+    d[part.key .. "Order"], r[part.key .. "Order"] = ns.Settings.ORDER_DEFAULT, ns.Settings.ORDER_RANGE
     return true
 end
 

@@ -469,19 +469,21 @@ local function dataBarPartRows()
         rows[#rows + 1] = check(part.key, "OPT_DATABAR_SHOW")
         local column = choice(part.key .. "Column", "OPT_DATABAR_COLUMN", ns.DataBar.COLUMNS, "DATABAR_COLUMN_")
         local x = num(part.key .. "X", "OPT_DATABAR_X")
-        column.enabled, x.enabled = on, on
+        local order = num(part.key .. "Order", "OPT_DATABAR_ORDER")
+        column.enabled, x.enabled, order.enabled = on, on, on
         if part.id == "THEME" then
             -- Only Forever Themes has a central theme to show.
             local function hub() return LibForeverThemes.Hub() ~= nil end
             rows[#rows].enabled = hub
             column.enabled = function() return hub() and on() end
-            x.enabled = column.enabled
+            x.enabled, order.enabled = column.enabled, column.enabled
             rows[#rows + 1] = { type = "text", label = "OPT_HUB_NEEDED", visible = noHub }
             rows[#rows + 1] = { type = "buttons", visible = noHub, buttons = {
                 { label = hubText("HUB_LINK"), width = 200, onClick = showHubLink },
             } }
         end
         rows[#rows + 1] = column
+        rows[#rows + 1] = order
         rows[#rows + 1] = x
         if part.id == "CLOCK" then
             local style = choice("dataBarClockStyle", "OPT_DATABAR_CLOCK_STYLE", ns.Clock.STYLES, "CLOCK_STYLE_")
@@ -552,8 +554,10 @@ local function feedRows()
         rows[#rows + 1] = check(part.key, "OPT_DATABAR_SHOW")
         local column = choice(part.key .. "Column", "OPT_DATABAR_COLUMN", ns.DataBar.COLUMNS, "DATABAR_COLUMN_")
         local x = num(part.key .. "X", "OPT_DATABAR_X")
-        column.enabled, x.enabled = on, on
+        local order = num(part.key .. "Order", "OPT_DATABAR_ORDER")
+        column.enabled, x.enabled, order.enabled = on, on, on
         rows[#rows + 1] = column
+        rows[#rows + 1] = order
         rows[#rows + 1] = x
     end
     return rows

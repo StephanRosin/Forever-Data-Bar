@@ -362,17 +362,19 @@ function Themes.Stored()
     return list
 end
 
--- Every setting that places something: the bar's edge, each part's column
--- and shift (the data broker feeds' too), the side of the XP's extra texts.
+-- Every setting that places something: the bar's edge, each part's column,
+-- order and shift (the data broker feeds' too), the side of the XP's extra texts.
 function Themes.PlacementKeys()
     local keys = { "dataBarPos" }
     for _, part in ipairs(ns.DataBar.PARTS) do
         keys[#keys + 1] = part.key .. "Column"
         keys[#keys + 1] = part.key .. "X"
+        keys[#keys + 1] = part.key .. "Order"
     end
     for _, part in ipairs(ns.Broker.Parts()) do
         keys[#keys + 1] = part.key .. "Column"
         keys[#keys + 1] = part.key .. "X"
+        keys[#keys + 1] = part.key .. "Order"
     end
     for _, info in ipairs(ns.DataBar.XP_INFOS) do keys[#keys + 1] = info.key .. "Place" end
     return keys

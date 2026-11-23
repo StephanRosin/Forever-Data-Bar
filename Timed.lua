@@ -13,13 +13,20 @@ local Timed = {}
 ns.Timed = Timed
 
 local GCD = 1.5   -- a shorter cooldown is the global one, not the craft's
+-- A cooldown started before the computer's last boot comes with its start 2^32 ms
+-- (49.7 days) too late: GetTime() counts from the boot and the client wraps.
+local WRAP = 2 ^ 32 / 1000
+-- What each spell makes (SpellEffect.EffectItemType, build 1.60.1.71037): its icon is the entry's.
+Timed.MAKES = { [18560] = 14342, [17187] = 12360, [1317279] = 251290, [17559] = 7078, [17560] = 7076,
+    [17561] = 7080, [17562] = 7082, [17563] = 7080, [17564] = 12808, [17565] = 7076, [17566] = 12803,
+    [22430] = 17967, [11479] = 3577, [11480] = 6037 }
 local TRANSMUTES = { 17187, 1317279, 17559, 17560, 17561, 17562, 17563, 17564, 17565, 17566, 22430 }
 Timed.LIST = {
     { prof = "TAILORING", spells = { 18560 } },                               -- Mooncloth
     { prof = "ALCHEMY", spells = TRANSMUTES, label = "TIMED_TRANSMUTE" },     -- Arcanite, Legionite, elements …
     { prof = "ALCHEMY", spells = { 11479 } },                                 -- Iron to Gold
     { prof = "ALCHEMY", spells = { 11480 } },                                 -- Mithril to Truesilver
-    { prof = "LEATHERWORKING", item = 15846 },                                -- Salt Shaker (needs leatherworking)
+    { prof = "LEATHERWORKING", item = 15846, makes = 15409 },                 -- Salt Shaker → Refined Deeprock Salt
 }
 Timed.IDS = {}
 for _, e in ipairs(Timed.LIST) do for _, id in ipairs(e.spells or {}) do Timed.IDS[id] = true end end
@@ -40,7 +47,9 @@ end
 function Timed.Left(start, duration)
     if issecretvalue and (issecretvalue(start) or issecretvalue(duration)) then return nil end
     if not start or start == 0 or not duration or duration <= GCD then return 0 end
-    return math.max(0, start + duration - GetTime())
+    local now = GetTime()
+    if start > now then start = start - WRAP end
+    return math.max(0, start + duration - now)
 end
 
 -- The spell of an entry this character knows (true for the salt shaker in the bags), else nil.
@@ -64,9 +73,10 @@ function Timed.Name(e)
     return e.label and L[e.label] or C_Spell.GetSpellName(id) or ("spell:" .. id)
 end
 
+-- The icon of what it makes (the transmutes: of the first one known, Arcanite before the elements).
 function Timed.Icon(e)
-    if e.item then return C_Item.GetItemIconByID(e.item) or 134400 end
-    return C_Spell.GetSpellTexture(Timed.Can(e)) or 134400   -- the question mark
+    local item = e.makes or Timed.MAKES[Timed.Can(e)]
+    return item and C_Item.GetItemIconByID and C_Item.GetItemIconByID(item) or 134400   -- the question mark
 end
 
 -- "Ready", "2d 23h", "5h 12m", "40m": short, for the bar.

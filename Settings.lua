@@ -69,11 +69,14 @@ Settings.DEFAULTS = {
 Settings.FONT_PARTS = { "dataBarXp", "dataBarGold", "dataBarDura", "dataBarBags", "dataBarClock",
     "dataBarProfs", "dataBarReps", "dataBarChar", "dataBarCurrency", "dataBarHearth", "dataBarTimed", "dataBarTheme" }
 Settings.FONT_SIZES = { 8, 20 }
+-- Within a column: the smaller order further left; the same order keeps DataBar.PARTS'.
+Settings.ORDER_RANGE, Settings.ORDER_DEFAULT = { 1, 20 }, 10
 for _, key in ipairs(Settings.FONT_PARTS) do
     Settings.DEFAULTS[key .. "FontOwn"] = false
     Settings.DEFAULTS[key .. "Font"] = Settings.DEFAULTS.dataBarFont
     Settings.DEFAULTS[key .. "FontSize"] = Settings.DEFAULTS.dataBarFontSize
     Settings.DEFAULTS[key .. "FontColor"] = Settings.DEFAULTS.dataBarFontColor
+    Settings.DEFAULTS[key .. "Order"] = Settings.ORDER_DEFAULT
 end
 
 Settings.RANGES = {
@@ -89,7 +92,10 @@ Settings.RANGES = {
     dataBarTimedX = { -2000, 2000 },
 }
 Settings.RANGES.dataBarFontSize = Settings.FONT_SIZES
-for _, key in ipairs(Settings.FONT_PARTS) do Settings.RANGES[key .. "FontSize"] = Settings.FONT_SIZES end
+for _, key in ipairs(Settings.FONT_PARTS) do
+    Settings.RANGES[key .. "FontSize"] = Settings.FONT_SIZES
+    Settings.RANGES[key .. "Order"] = Settings.ORDER_RANGE
+end
 
 -- The capital cities of the player's side, until other factions are chosen.
 Settings.DEFAULT_REPS = {

@@ -266,6 +266,13 @@ do
     check("durability low: red", dura.text._textColor[2] < 0.5, true)
     check("bags: special bags apart", table.concat({ D.BagSpace() }, ","), "6,26,15")
     check("bags: used of all", bags.text:GetText(), "20/26")
+    D.Layout()
+    check("order: gold left of bags (same order, listed first)", gold.x < bags.x, true)
+    Settings.Set("dataBarGoldOrder", 15)
+    D.Layout()
+    check("order: a larger order moves gold right of bags", gold.x > bags.x, true)
+    Settings.Set("dataBarGoldOrder", 10)
+    D.Layout()
     local accent = ns.Themes.IconColor()
     check("bags: room enough, icon in the accent", bags.icon._vertex[1] .. "," .. bags.icon._vertex[2],
         accent[1] .. "," .. accent[2])
@@ -775,6 +782,12 @@ do
     check("part text: minutes", T.Text(40 * 60), "40m")
     check("part text: secret", T.Text(nil), "?")
     check("part listed", ns.DataBar.STATS.TIMED ~= nil and ns.Settings.Get("dataBarTimed"), false)
+    M.state.time = 1000
+    check("cooldown from before the boot (start 2^32 ms late)", math.floor(T.Left(1000 + 2 ^ 32 / 1000 - 3600, 7200) + 0.5), 3600)
+    C_Item.GetItemIconByID = function(id) return "ICON" .. id end
+    check("icon of what it makes (mooncloth)", T.Icon(T.LIST[1]), "ICON14342")
+    check("transmute icon: arcanite", T.Icon(T.LIST[2]), "ICON12360")
+    check("salt shaker: the salt", T.Icon(T.LIST[5]), "ICON15409")
     issecretvalue = function(v) return v == 999 end
     check("secret: unknown", T.Left(999, 5), nil)
     issecretvalue = nil

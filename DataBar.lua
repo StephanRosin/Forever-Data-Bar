@@ -982,7 +982,7 @@ DataBar.PARTS = {
 DataBar.COLUMNS = { 1, 2, 3, 4, 5 }
 DataBar.COLUMN_CENTRE = { [2] = 0.3, [3] = 0.5, [4] = 0.7 }
 
--- Each column lines its parts up in PARTS order, PROF_GAP apart. A part's
+-- Each column lines its parts up by their Order, then in PARTS order, PROF_GAP apart. A part's
 -- X shifts only itself, so it may run into its neighbour on purpose.
 -- "Talents" opens the tree from secure code, as the micro icons do: a
 -- SecureActionButton clicking Blizzard's TalentMicroButton. Opened from addon
@@ -1069,12 +1069,18 @@ function DataBar.Layout()
         local g = frame.parts[p.id]
         if g and g:IsShown() and g.width > 0 then
             local list = at[tonumber(S(p.key .. "Column"))] or at[1]
-            list[#list + 1] = { g = g, x = S(p.key .. "X") }
+            list[#list + 1] = { g = g, x = S(p.key .. "X"), order = tonumber(S(p.key .. "Order")) or 10, n = #list }
         end
     end
     for _, p in ipairs(DataBar.PARTS) do place(p) end
     -- The data broker feeds after the built-in parts of their column.
     for _, p in ipairs(ns.Broker.Parts()) do place(p) end
+    for _, list in ipairs(at) do
+        table.sort(list, function(a, b)
+            if a.order ~= b.order then return a.order < b.order end
+            return a.n < b.n
+        end)
+    end
     local width = frame:GetWidth()
     if not width or width <= 0 then width = UIParent:GetWidth() or 0 end
     for column, list in ipairs(at) do
