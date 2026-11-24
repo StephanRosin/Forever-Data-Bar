@@ -10,6 +10,8 @@ One thin strip across the whole width of the screen, at the top or the bottom ed
 
 ## Parts
 Each part can be shown or hidden, put into one of five columns (1 = left edge, 3 = middle, 5 = right edge; parts in the same column line up side by side) and nudged left or right.
+
+Need more room? Set up to four bars, each at the top or bottom of the screen; bars at the same edge stack. With more than one bar, every part (and every Data Broker feed) gets a **Bar** choice, and each bar has its own five columns.
 - **Experience**: "75% to level 33" over a thin line, the rested part shown faint. If you like, XP per hour and the time to the next level, left or right of it. While you have unspent talent points, a pulsing **Talents** appears beside it; click it to open the talent tree.
 - **Gold**.
 - **Durability**: your worst equipped item in %, yellow below 50, red below 25; the tooltip names it.

@@ -44,6 +44,40 @@ end
 
 -- Allgemein: what shows, how it is arranged, where it sits.
 
+-- Several bars: the count, each bar's edge, and a part's bar (only while there is more than one).
+local function severalBars() return ns.DataBar.Count() > 1 end
+local function barRows()
+    local count = { label = "OPT_DATABAR_COUNT", min = Settings.RANGES.dataBarCount[1],
+        max = Settings.RANGES.dataBarCount[2], step = 1,
+        get = function() return S("dataBarCount") end, set = function(v) Settings.Set("dataBarCount", v) end }
+    local rows = { count }
+    for i = 1, Settings.RANGES.dataBarCount[2] do
+        local pos = choice(ns.DataBar.PosKey(i), "OPT_DATABAR_POS", { "TOP", "BOTTOM" }, "DATABAR_POS_")
+        pos.label = function() return severalBars() and L.OPT_DATABAR_POS_N:format(i) or L.OPT_DATABAR_POS end
+        if i > 1 then pos.visible = function() return ns.DataBar.Count() >= i end end
+        rows[#rows + 1] = pos
+    end
+    rows[#rows + 1] = { type = "text", label = "OPT_DATABAR_COUNT_HINT", height = 40, visible = severalBars }
+    return rows
+end
+
+local function partBarRow(key, enabled)
+    return {
+        type = "select", label = "OPT_DATABAR_PART_BAR", visible = severalBars, enabled = enabled,
+        choices = function()
+            local list = {}
+            for i = 1, ns.DataBar.Count() do list[i] = { label = L.DATABAR_BAR_N:format(i), value = i } end
+            return list
+        end,
+        -- A bar taken away: the part shows on bar 1 (DataBar.Layout), so does the menu.
+        get = function()
+            local b = tonumber(S(key .. "Bar")) or 1
+            return b <= ns.DataBar.Count() and b or 1
+        end,
+        set = function(v) Settings.Set(key .. "Bar", v) end,
+    }
+end
+
 local function colorRow(key, label, noOpacity)
     return {
         type = "color", label = label, noOpacity = noOpacity,
@@ -392,7 +426,7 @@ end
 
 -- The data bar theme: its look, its place, when it hides.
 local function dataBarRows()
-    return {
+    local rows = {
         { type = "header", label = "OPT_THEME" },
         themeRow(),
         themeColorRow(),
@@ -436,7 +470,9 @@ local function dataBarRows()
         } },
         { type = "header", label = "OPT_DATABAR_BAR" },
         choice("dataBarDesign", "OPT_DATABAR_DESIGN", ns.DataBar.DESIGN_ORDER, "DATABAR_DESIGN_"),
-        choice("dataBarPos", "OPT_DATABAR_POS", { "TOP", "BOTTOM" }, "DATABAR_POS_"),
+    }
+    for _, row in ipairs(barRows()) do rows[#rows + 1] = row end
+    for _, row in ipairs({
         num("dataBarHeight", "OPT_DATABAR_HEIGHT"),
         { label = "OPT_DATABAR_ALPHA", min = 0, max = 100, step = 5, unit = "%",
           get = function() return S("dataBarAlpha") end, set = function(v) Settings.Set("dataBarAlpha", v) end },
@@ -457,10 +493,11 @@ local function dataBarRows()
                 Window.Refresh()
             end },
         } },
-    }
+    }) do rows[#rows + 1] = row end
+    return rows
 end
 
--- Where each part sits: shown, left / middle / right, shifted by X.
+-- Where each part sits: shown, on which bar, left / middle / right, shifted by X.
 local function dataBarPartRows()
     local rows = { { type = "text", label = "OPT_DATABAR_PARTS_HINT", height = 40 } }
     for _, part in ipairs(ns.DataBar.PARTS) do
@@ -484,6 +521,7 @@ local function dataBarPartRows()
                 { label = hubText("HUB_LINK"), width = 200, onClick = showHubLink },
             } }
         end
+        rows[#rows + 1] = partBarRow(part.key, column.enabled)
         rows[#rows + 1] = column
         rows[#rows + 1] = order
         rows[#rows + 1] = x
@@ -568,6 +606,7 @@ local function feedRows()
         local x = num(part.key .. "X", "OPT_DATABAR_X")
         local order = num(part.key .. "Order", "OPT_DATABAR_ORDER")
         column.enabled, x.enabled, order.enabled = on, on, on
+        rows[#rows + 1] = partBarRow(part.key, on)
         rows[#rows + 1] = column
         rows[#rows + 1] = order
         rows[#rows + 1] = x

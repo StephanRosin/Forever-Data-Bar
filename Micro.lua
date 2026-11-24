@@ -64,7 +64,7 @@ end
 
 local function ShowTooltip(self)
     local blizzard = _G[self.blizzard]
-    ns.Tip:SetOwner(self, ns.DataBar.frame and ns.DataBar.frame.atTop and "ANCHOR_BOTTOM" or "ANCHOR_TOP")
+    ns.Tip:SetOwner(self, ns.DataBar.frame and ns.DataBar.BarOf(ns.DataBar.frame.clock).atTop and "ANCHOR_BOTTOM" or "ANCHOR_TOP")
     ns.Tip:AddLine((blizzard and blizzard.tooltipText) or self.blizzard, 1, 1, 1)
     ns.Tip:Show()
 end
@@ -104,9 +104,9 @@ local function Visibility()
     return table.concat(rules, "; ")
 end
 
--- At the clock's place: x from the screen's left edge, the bar's height.
--- left: the room on the left of the clock text, gap: the clock text's.
-function Micro.Place(x, barHeight, atTop, left, gap)
+-- At the clock's place: x from the screen's left edge, centre: from the screen's edge to the
+-- middle of the clock's bar. left: the room on the left of the clock text, gap: the clock text's.
+function Micro.Place(x, centre, atTop, left, gap)
     if InCombatLockdown() then
         pending = true
         return
@@ -122,7 +122,7 @@ function Micro.Place(x, barHeight, atTop, left, gap)
     local step = cfg.ICON + cfg.ICON_GAP
     local nLeft = math.ceil(#shown / 2)
     holder:ClearAllPoints()
-    holder:SetPoint("LEFT", UIParent, atTop and "TOPLEFT" or "BOTTOMLEFT", x, atTop and -barHeight / 2 or barHeight / 2)
+    holder:SetPoint("LEFT", UIParent, atTop and "TOPLEFT" or "BOTTOMLEFT", x, atTop and -centre or centre)
     holder:SetSize(math.max(1, left + gap + (#shown - nLeft) * step), cfg.ICON)
     local colour = ns.Themes.IconColor()
     for _, button in ipairs(buttons) do button:Hide() end

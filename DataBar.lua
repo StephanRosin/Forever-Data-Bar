@@ -108,8 +108,23 @@ function DataBar.Design()
     return themed[key]
 end
 
-local frame
+local frame   -- bar 1: holds the gear and bars 2..4 (they show and hide with it)
+local bars = {}
 local inCombat = false
+
+-- How many bars, and the setting with a bar's edge.
+function DataBar.Count()
+    local range = Settings.RANGES.dataBarCount
+    return math.max(range[1], math.min(range[2], tonumber(S("dataBarCount")) or 1))
+end
+function DataBar.PosKey(i) return i == 1 and "dataBarPos" or "dataBarPos" .. i end
+
+-- The bar of a part's region; a secure button on UIParent names the region it covers (`over`).
+function DataBar.BarOf(region)
+    while region and not region.isBar do region = region.over or region:GetParent() end
+    return region or frame
+end
+local function TipSide(owner) return DataBar.BarOf(owner).atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT" end
 
 local function InGroup()
     if IsInGroup then return IsInGroup() and true or false end
@@ -403,7 +418,7 @@ end
 local function ShowProfTooltip(self)
     local d = self.data
     if not d then return end
-    ns.Tip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
+    ns.Tip:SetOwner(self, TipSide(self))
     ns.Tip:AddLine(ns.Data.ProfessionLabel(d), 1, 1, 1)
     ns.Tip:AddDoubleLine(L.TIP_RANK, ("%d / %d"):format(d.rank, d.maxRank), 0.8, 0.8, 0.8, 1, 1, 1)
     local remaining = math.max(0, d.maxRank - d.rank)
@@ -425,7 +440,7 @@ end
 local function HideTooltip(self) ns.Tooltip.HideFor(self) end
 
 local function TalentTooltip(self)
-    ns.Tip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
+    ns.Tip:SetOwner(self, TipSide(self))
     ns.Tip:AddLine(L.TIP_UNSPENT_TALENTS, 1, 1, 1)
     ns.Tip:AddLine(L.TIP_UNSPENT_TALENTS_CLICK, 0.4, 0.8, 1)
     ns.Tip:Show()
@@ -514,7 +529,7 @@ end
 
 -- Compact reputation (dataBarRepsCompact): every watched faction in one tooltip.
 local function ShowRepsTooltip(self)
-    ns.Tip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
+    ns.Tip:SetOwner(self, TipSide(self))
     ns.Tip:AddLine(L.DATABAR_PART_REPS, 1, 1, 1)
     local datas = {}
     for i = 1, ns.CFG.NUM_REP_SLOTS do datas[#datas + 1] = ns.Data.RepData(i) end
@@ -526,7 +541,7 @@ end
 local function ShowRepTooltip(self)
     local d = self.data
     if not d then return end
-    ns.Tip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
+    ns.Tip:SetOwner(self, TipSide(self))
     ns.Tip:AddLine(L.DATABAR_PART_REPS, 1, 1, 1)
     DataBar.AddRepTable({ d })
     ns.Tip:AddLine(L.TIP_REP_LEFT, 0.4, 0.8, 1)
@@ -635,7 +650,7 @@ function DataBar.CloseColours(a, b)
 end
 
 local function TipOwner(self)
-    ns.Tip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
+    ns.Tip:SetOwner(self, TipSide(self))
 end
 
 -- Each: its icon, its value (text, text colour, icon colour; nil text:
@@ -953,16 +968,32 @@ local function BuildStat(id)
     return g
 end
 
+-- A bar's own textures: background, the edge towards the game, the theme's art.
+local BAR_LEVEL_STEP = 10
+local function BuildBarArt(bar)
+    bar.isBar = true
+    bar.bg = bar:CreateTexture(nil, "BACKGROUND")
+    bar.bg:SetAllPoints(bar)
+    bar.edge = bar:CreateTexture(nil, "BORDER")
+    bar.edge:SetHeight(1)
+    ns.ThemeArt.Build(bar)
+end
+
 local function Build()
     if frame then return end
     frame = CreateFrame("Frame", "ForeverDataBarFrame", UIParent)
     frame:SetFrameStrata("MEDIUM")
     frame:Hide()
-    frame.bg = frame:CreateTexture(nil, "BACKGROUND")
-    frame.bg:SetAllPoints(frame)
-    frame.edge = frame:CreateTexture(nil, "BORDER")
-    frame.edge:SetHeight(1)
-    ns.ThemeArt.Build(frame)
+    BuildBarArt(frame)
+    bars[1] = frame
+    for i = 2, Settings.RANGES.dataBarCount[2] do
+        local bar = CreateFrame("Frame", "ForeverDataBarFrame" .. i, frame)
+        -- Above bar 1's parts, so a theme's shadow falls under the next bar, not over it.
+        bar:SetFrameLevel(frame:GetFrameLevel() + BAR_LEVEL_STEP * (i - 1))
+        bar:Hide()
+        BuildBarArt(bar)
+        bars[i] = bar
+    end
     -- Columns 2 to 5 hang on the width: a new screen size moves them.
     frame:SetScript("OnSizeChanged", function() DataBar.Layout() end)
 
@@ -1034,7 +1065,7 @@ local function Build()
     add:RegisterForClicks("LeftButtonUp")
     add:SetScript("OnClick", function(self) ns.OpenFactionMenu(self.slot, self) end)
     add:SetScript("OnEnter", function(self)
-        ns.Tip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
+        ns.Tip:SetOwner(self, TipSide(self))
         ns.Tip:AddLine(L.DATABAR_ADD_REP, 1, 1, 1)
         ns.Tip:AddLine(L.TIP_REP_LEFT, 0.4, 0.8, 1)
         ns.Tip:Show()
@@ -1103,7 +1134,7 @@ local function Build()
             DataBar.UpdateStats()
         end
     end)
-    DataBar.frame = frame
+    DataBar.frame, DataBar.bars = frame, bars
 end
 
 -- -----------------------------------------------------------------------------
@@ -1166,6 +1197,7 @@ function DataBar.PlaceTalentClick()
     talentClick:SetFrameStrata(t:GetFrameStrata())
     talentClick:SetFrameLevel(t:GetFrameLevel() + 5)
     talentClick:ClearAllPoints()
+    talentClick.over = t
     talentClick:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", left * s, bottom * s)
     talentClick:SetSize(t:GetWidth() * s, t:GetHeight() * s)
     talentClick:Show()
@@ -1203,6 +1235,7 @@ function DataBar.PlaceHearthClick()
     hearthClick:SetFrameStrata(g:GetFrameStrata())
     hearthClick:SetFrameLevel(g:GetFrameLevel() + 5)
     hearthClick:ClearAllPoints()
+    hearthClick.over = g
     hearthClick:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", left * s, bottom * s)
     hearthClick:SetSize(g.width * s, g:GetHeight() * s)
     hearthClick:Show()
@@ -1244,6 +1277,7 @@ function DataBar.PlaceCastClick()
     castClick:SetFrameStrata(g:GetFrameStrata())
     castClick:SetFrameLevel(g:GetFrameLevel() + 5)
     castClick:ClearAllPoints()
+    castClick.over = g
     castClick:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", (left + slot.from) * s, bottom * s)
     castClick:SetSize((slot.to - slot.from) * s, g:GetHeight() * s)
     castClick:Show()
@@ -1251,19 +1285,8 @@ function DataBar.PlaceCastClick()
 end
 DataBar.CastClick = function() return castClick end   -- the tests
 
-function DataBar.Layout()
-    if not frame then return end
-    local at = { {}, {}, {}, {}, {} }
-    local function place(p)
-        local g = frame.parts[p.id]
-        if g and g:IsShown() and g.width > 0 then
-            local list = at[tonumber(S(p.key .. "Column"))] or at[1]
-            list[#list + 1] = { g = g, x = S(p.key .. "X"), order = tonumber(S(p.key .. "Order")) or 10, n = #list }
-        end
-    end
-    for _, p in ipairs(DataBar.PARTS) do place(p) end
-    -- The data broker feeds after the built-in parts of their column.
-    for _, p in ipairs(ns.Broker.Parts()) do place(p) end
+-- One bar's columns; the gear's room only on bar 1.
+local function LayoutBar(bar, at)
     for _, list in ipairs(at) do
         table.sort(list, function(a, b)
             if a.order ~= b.order then return a.order < b.order end
@@ -1272,27 +1295,55 @@ function DataBar.Layout()
     end
     local width = frame:GetWidth()
     if not width or width <= 0 then width = UIParent:GetWidth() or 0 end
+    local gear = bar == frame and frame.gear:IsShown()
     for column, list in ipairs(at) do
         local total = -CFG.PROF_GAP
         for _, e in ipairs(list) do total = total + e.g.width + CFG.PROF_GAP end
         local cursor
         if column == 1 then
-            cursor = ns.ThemeArt.TextStart(frame:GetHeight()) or CFG.PAD
+            cursor = ns.ThemeArt.TextStart(bar:GetHeight()) or CFG.PAD
         elseif column == 5 then
-            cursor = width - CFG.PAD - total - (frame.gear:IsShown() and (CFG.ICON + CFG.PROF_GAP) or 0)
+            cursor = width - CFG.PAD - total - (gear and (CFG.ICON + CFG.PROF_GAP) or 0)
         else
             cursor = width * DataBar.COLUMN_CENTRE[column] - total / 2
         end
         for _, e in ipairs(list) do
             e.g:ClearAllPoints()
-            e.g:SetPoint("LEFT", frame, "LEFT", cursor + e.x, 0)
+            e.g:SetPoint("LEFT", bar, "LEFT", cursor + e.x, 0)
             e.g.x = cursor + e.x
             cursor = cursor + e.g.width + CFG.PROF_GAP
         end
     end
+end
+
+function DataBar.Layout()
+    if not frame then return end
+    local count, at = DataBar.Count(), {}
+    for b = 1, count do at[b] = { {}, {}, {}, {}, {} } end
+    local function place(p)
+        local g = frame.parts[p.id]
+        if g and g:IsShown() and g.width > 0 then
+            -- A bar beyond the count: bar 1, so no part gets lost when bars are taken away.
+            local b = tonumber(S(p.key .. "Bar")) or 1
+            if not at[b] then b = 1 end
+            if g:GetParent() ~= bars[b] then
+                -- SetParent keeps the frame level: raised by hand above the new bar's background
+                -- (its children follow).
+                g:SetParent(bars[b])
+                g:SetFrameLevel(bars[b]:GetFrameLevel() + 1)
+            end
+            local list = at[b][tonumber(S(p.key .. "Column"))] or at[b][1]
+            list[#list + 1] = { g = g, x = S(p.key .. "X"), order = tonumber(S(p.key .. "Order")) or 10, n = #list }
+        end
+    end
+    for _, p in ipairs(DataBar.PARTS) do place(p) end
+    -- The data broker feeds after the built-in parts of their column.
+    for _, p in ipairs(ns.Broker.Parts()) do place(p) end
+    for b = 1, count do LayoutBar(bars[b], at[b]) end
     local clock = frame.clock
+    local clockBar = DataBar.BarOf(clock)
     if frame:IsShown() and clock:IsShown() and clock.micro then
-        ns.Micro.Place(clock.x, frame:GetHeight(), frame.atTop, clock.microLeft, clock.textWidth)
+        ns.Micro.Place(clock.x, (clockBar.offset or 0) + clockBar:GetHeight() / 2, clockBar.atTop, clock.microLeft, clock.textWidth)
     else
         ns.Micro.Hide()
     end
@@ -1321,38 +1372,52 @@ local function RepColour(d)
     return nil
 end
 
-local function ApplyFrame(design)
+-- One bar at its edge, `offset` in from it (the bars before it at that edge), in the look of all bars.
+local function PaintBar(bar, atTop, offset, design)
     local h, alpha = S("dataBarHeight"), S("dataBarAlpha") / 100
-    local atTop = S("dataBarPos") ~= "BOTTOM"
-    frame.atTop = atTop
-    frame:ClearAllPoints()
+    bar.atTop, bar.offset = atTop, offset
+    bar:ClearAllPoints()
     local edge = atTop and "TOP" or "BOTTOM"
-    frame:SetPoint(edge .. "LEFT", UIParent, edge .. "LEFT", 0, 0)
-    frame:SetPoint(edge .. "RIGHT", UIParent, edge .. "RIGHT", 0, 0)
-    frame:SetHeight(h)
+    local y = atTop and -offset or offset
+    bar:SetPoint(edge .. "LEFT", UIParent, edge .. "LEFT", 0, y)
+    bar:SetPoint(edge .. "RIGHT", UIParent, edge .. "RIGHT", 0, y)
+    bar:SetHeight(h)
 
     local bg = S("dataBarBgColor")
-    frame.bg:SetColorTexture(1, 1, 1, 1)
-    if design.fade and frame.bg.SetGradient and CreateColor then
+    bar.bg:SetColorTexture(1, 1, 1, 1)
+    if design.fade and bar.bg.SetGradient and CreateColor then
         -- Solid at the screen edge, gone towards the game. VERTICAL runs
         -- from the bottom colour to the top one.
         local solid, clear = CreateColor(bg[1], bg[2], bg[3], alpha), CreateColor(bg[1], bg[2], bg[3], 0)
-        if atTop then frame.bg:SetGradient("VERTICAL", clear, solid)
-        else frame.bg:SetGradient("VERTICAL", solid, clear) end
+        if atTop then bar.bg:SetGradient("VERTICAL", clear, solid)
+        else bar.bg:SetGradient("VERTICAL", solid, clear) end
     else
-        frame.bg:SetColorTexture(bg[1], bg[2], bg[3], alpha)
-        frame.bg:SetVertexColor(1, 1, 1, 1)
+        bar.bg:SetColorTexture(bg[1], bg[2], bg[3], alpha)
+        bar.bg:SetVertexColor(1, 1, 1, 1)
     end
 
     -- The edge towards the game.
     local inner = atTop and "BOTTOM" or "TOP"
-    frame.edge:ClearAllPoints()
-    frame.edge:SetPoint(inner .. "LEFT", frame, inner .. "LEFT", 0, 0)
-    frame.edge:SetPoint(inner .. "RIGHT", frame, inner .. "RIGHT", 0, 0)
+    bar.edge:ClearAllPoints()
+    bar.edge:SetPoint(inner .. "LEFT", bar, inner .. "LEFT", 0, 0)
+    bar.edge:SetPoint(inner .. "RIGHT", bar, inner .. "RIGHT", 0, 0)
     local c = Accent()
-    frame.edge:SetColorTexture(c[1], c[2], c[3], CFG.EDGE_ALPHA)
-    frame.edge:SetShown(S("dataBarEdge"))
-    ns.ThemeArt.Style(frame, atTop, h)
+    bar.edge:SetColorTexture(c[1], c[2], c[3], CFG.EDGE_ALPHA)
+    bar.edge:SetShown(S("dataBarEdge"))
+    ns.ThemeArt.Style(bar, atTop, h)
+end
+
+local function ApplyFrame(design)
+    -- Bars at one edge stack in their order: bar 1 at the screen's edge.
+    local count, offsets = DataBar.Count(), { TOP = 0, BOTTOM = 0 }
+    for i, bar in ipairs(bars) do
+        if i > 1 then bar:SetShown(i <= count) end   -- bar 1 shows by DataBar.Wanted
+        if i <= count then
+            local edge = S(DataBar.PosKey(i)) == "BOTTOM" and "BOTTOM" or "TOP"
+            PaintBar(bar, edge == "TOP", offsets[edge], design)
+            offsets[edge] = offsets[edge] + S("dataBarHeight")
+        end
+    end
 
     ApplyFonts()
     local xpWidth = S("dataBarXpWidth")
@@ -1669,14 +1734,14 @@ local function FeedTooltip(self)
     -- our GameTooltip for it to fill.
     if obj.tooltip then
         obj.tooltip:ClearAllPoints()
-        if frame.atTop then obj.tooltip:SetPoint("TOP", self, "BOTTOM", 0, -4)
+        if DataBar.BarOf(self).atTop then obj.tooltip:SetPoint("TOP", self, "BOTTOM", 0, -4)
         else obj.tooltip:SetPoint("BOTTOM", self, "TOP", 0, 4) end
         obj.tooltip:Show()
     elseif obj.OnEnter then
         obj.OnEnter(self)
     elseif obj.OnTooltipShow then
         -- Blizzard's, whatever the theme: a feed may call any of its methods.
-        GameTooltip:SetOwner(self, frame.atTop and "ANCHOR_BOTTOMLEFT" or "ANCHOR_TOPLEFT")
+        GameTooltip:SetOwner(self, TipSide(self))
         obj.OnTooltipShow(GameTooltip)
         GameTooltip:Show()
     end

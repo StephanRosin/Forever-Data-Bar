@@ -12,6 +12,10 @@ Settings.DEFAULTS = {
     theme = "CLASSIC",          -- see Themes.lua; switched only through Themes.Switch
     dataBarDesign = "GLASS",    -- see DataBar.DESIGNS
     dataBarPos = "TOP",         -- TOP or BOTTOM edge of the screen
+    -- Up to four bars; 2..4 sit at their own edge, stacked inside the ones before them there.
+    -- Each part says which bar it is on (<part key>Bar); one beyond the count is on bar 1.
+    dataBarCount = 1,
+    dataBarPos2 = "TOP", dataBarPos3 = "TOP", dataBarPos4 = "TOP",
     dataBarHeight = 24,
     dataBarAlpha = 75,          -- the background, percent
     dataBarBgColor = { 0, 0, 0 },
@@ -80,10 +84,12 @@ for _, key in ipairs(Settings.FONT_PARTS) do
     Settings.DEFAULTS[key .. "FontSize"] = Settings.DEFAULTS.dataBarFontSize
     Settings.DEFAULTS[key .. "FontColor"] = Settings.DEFAULTS.dataBarFontColor
     Settings.DEFAULTS[key .. "Order"] = Settings.ORDER_DEFAULT
+    Settings.DEFAULTS[key .. "Bar"] = 1
 end
 
 Settings.RANGES = {
     dataBarHeight = { 16, 40 },
+    dataBarCount = { 1, 4 },
     dataBarClockSize = { 8, 30 },
     dataBarXpWidth = { 80, 800 },
     dataBarProfsWidth = { 40, 400 }, dataBarRepsWidth = { 40, 400 },

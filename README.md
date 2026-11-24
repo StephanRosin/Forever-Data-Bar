@@ -1,6 +1,6 @@
 # Forever Data Bar
 
-One thin strip across the top or bottom of the screen for WoW: Forever:
+One thin strip (or up to four) across the top or bottom of the screen for WoW: Forever:
 experience (with XP per hour, time to the next level and unspent talents),
 gold, durability, bags, the clock, up to four professions and four
 reputations, and other addons' LibDataBroker feeds. Five columns, five designs, eight themes (beta), your own
